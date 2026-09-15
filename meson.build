@@ -19,7 +19,8 @@ install_data('data/style.css', install_dir: appdir / 'data')
 install_subdir('data/third-party', install_dir: appdir / 'data')
 install_subdir('build/extension', install_dir: appdir)
 install_data('COPYING', install_dir: appdir)
-install_subdir('data/icons', install_dir: get_option('datadir'))
+install_data('data/icons/hicolor/scalable/apps/io.github.wallshader.Wallshader.svg',
+  install_dir: get_option('datadir') / 'icons/hicolor/scalable/apps')
 install_data('data/io.github.wallshader.Wallshader.desktop', install_dir: get_option('datadir') / 'applications')
 
 launcher = configuration_data()

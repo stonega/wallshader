@@ -6,6 +6,7 @@
       "!!build",
       "!!build-native",
       "!!artifacts",
+      "!!dist",
       "!!data/third-party",
       "!!data/style.css"
     ]

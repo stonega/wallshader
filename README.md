@@ -29,38 +29,99 @@ On first use, **Set Animated Wallpaper** installs the bundled extension. A newly
 installed extension requires one logout/login for GNOME to discover it. The app
 explains this when needed. Still wallpapers and PNG export work without an extension.
 
-## Run
+## Install
 
-On Fedora:
+Download a package from [GitHub Releases](https://github.com/stonega/wallshader/releases).
+Packages contain the app, renderer, icon, and live wallpaper extension. **Bun,
+Meson, and a source checkout are not needed to run a packaged installation.**
+
+Requires GJS 1.80+, GTK 4.14+, libadwaita 1.5+, WebKitGTK 2.44+ (6.0 API) with WebGL 2,
+and a GNOME desktop for wallpaper integration. Animated wallpapers require
+**GNOME 50 on Wayland**; still wallpapers and PNG export work on older desktops
+that meet the app's runtime requirements.
+
+### Fedora
+
+Download the `.noarch.rpm` asset, then install it from your download directory:
 
 ```sh
-sudo dnf install gjs gtk4 libadwaita webkitgtk6.0
+sudo dnf install ./wallshader-*.noarch.rpm
+```
+
+### Debian / Ubuntu
+
+Use Debian 13, Ubuntu 24.04, or newer, with the required GNOME libraries. Download
+the `_all.deb` asset and install it with APT so runtime dependencies are included:
+
+```sh
+sudo apt install ./wallshader_*_all.deb
+```
+
+Open **Wallshader** from the app grid or run `wallshader`. Installing the package
+does not apply a wallpaper. The first **Set Animated Wallpaper** action installs
+the bundled extension for your user; log out and back in when prompted.
+
+Install a newer downloaded package with the same command to update the app.
+Remove it with `sudo dnf remove wallshader` or `sudo apt remove wallshader`.
+
+### Development packages and archives
+
+Every successful main-branch, pull-request, and manual
+[Build and Release workflow](https://github.com/stonega/wallshader/actions/workflows/build-and-release.yml)
+run provides a `wallshader-packages` artifact. Sign in to GitHub, open the run,
+and download it under **Artifacts**. These builds are also available before the
+first tagged release. Extract the artifact ZIP, then install its RPM or DEB as above.
+
+Each build includes `SHA256SUMS` and a `.tar.zst` archive of the prebuilt `/usr`
+installation tree. To verify downloaded packages, place `SHA256SUMS` beside them:
+
+```sh
+sha256sum --ignore-missing --check SHA256SUMS
+```
+
+The archive is intended for manual installation and packaging; it does not
+resolve runtime dependencies. See the [packaging guide](docs/implementation/setup.md#packages-and-releases).
+
+## Build and install from source
+
+Install [Bun](https://bun.sh/docs/installation) (CI uses 1.3.14), Git, and the
+GNOME runtime and build tools for your distribution.
+
+Fedora:
+
+```sh
+sudo dnf install git gjs gtk4 libadwaita webkitgtk6.0 gsettings-desktop-schemas meson ninja-build desktop-file-utils
+```
+
+Debian / Ubuntu:
+
+```sh
+sudo apt install git gjs gir1.2-gtk-4.0 gir1.2-adw-1 gir1.2-webkit-6.0 gsettings-desktop-schemas meson ninja-build libgtk-4-bin desktop-file-utils
+```
+
+Clone the repository and install for the current user:
+
+```sh
+git clone https://github.com/stonega/wallshader.git
+cd wallshader
+./scripts/install.sh
+```
+
+The installer downloads the pinned shader dependency, builds the renderer and
+extension, and installs the app, launcher, and icon under `~/.local`. Launch it
+from the app grid or run `~/.local/bin/wallshader`.
+
+To run directly from the checkout:
+
+```sh
 bun install --frozen-lockfile
 bun run build
 ./scripts/run.sh
 ```
 
-On Debian/Ubuntu with sufficiently recent GNOME packages:
-
-```sh
-sudo apt install gjs gir1.2-gtk-4.0 gir1.2-adw-1 gir1.2-webkit-6.0
-```
-
-Requires GJS 1.80+, GTK 4.14+, libadwaita 1.5+, WebKitGTK 6.0 with WebGL 2, and a
-GNOME desktop for wallpaper integration. Bun only installs and bundles the shader
-dependency; **the application runs with GJS**. Runtime assets are entirely local.
-
-## Install
-
-With Meson and Ninja installed:
-
-```sh
-./scripts/install.sh
-```
-
-This installs the app, desktop launcher, and icon under `~/.local`. For a custom
-prefix, use `meson setup build-native --prefix=/your/prefix` and
+For a custom prefix, use `meson setup build-native --prefix=/your/prefix` and
 `meson install -C build-native` after installing dependencies and building assets.
+The application runs with GJS; runtime assets are entirely local.
 
 ## Verify
 

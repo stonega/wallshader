@@ -149,3 +149,64 @@ It includes the extension bundle; run `bun run build` before Meson installation
 after changes so this bundle is current.
 The application has no runtime dependency on Bun or the source checkout after
 installation.
+
+## Packages and releases
+
+The [Build and Release workflow](../../.github/workflows/build-and-release.yml)
+checks the code, runs the logic tests, and builds three architecture-independent
+assets on pushes to `main`, pull requests to `main`, and manual runs:
+
+- `wallshader_VERSION_all.deb` for Debian/Ubuntu.
+- `wallshader-VERSION-1.noarch.rpm` for Fedora.
+- `wallshader-vVERSION.tar.zst` containing `wallshader-vVERSION/usr/`.
+
+`SHA256SUMS` covers all three files. The `wallshader-packages` workflow artifact
+contains the packages and checksums. A pushed `vMAJOR.MINOR.PATCH` tag also creates
+a GitHub Release with the same assets and generated release notes. The release
+job uses the repository's `GITHUB_TOKEN` with `contents: write`; builds and pull
+requests have read-only repository permissions. No additional release secret is
+needed.
+
+Before tagging a release, set the same numeric version in `package.json`,
+`meson.build`, and the About dialog in `src/main.js`. The package script rejects
+tags that do not match the package and Meson versions. Commit the release changes,
+then push the version tag, for example:
+
+```sh
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+To reproduce the packages locally, install the normal build tools plus
+`dpkg-deb`, `rpmbuild`, `zstd`, and `desktop-file-validate`. On Debian/Ubuntu:
+
+```sh
+sudo apt install dpkg-dev rpm zstd desktop-file-utils
+bun install --frozen-lockfile
+bun run package
+```
+
+Pass an explicit tag with `bun run package v0.1.0` to perform the release-version
+check. Outputs are written to `dist/`. The script rebuilds the renderer and
+extension, stages Meson's `/usr` installation in a temporary `DESTDIR`, validates
+the launcher and required assets, and packages that staging tree. It does not
+install to the host or contact GNOME Shell. Only the selected application icon is
+installed; design sources and preview PNGs stay in the checkout. Both package
+formats declare native runtime dependencies, and all formats retain Paper's
+LICENSE and NOTICE. RPM relies on Fedora's file triggers for desktop/icon cache
+updates; the DEB refreshes those caches when installed or removed.
+
+For a manual archive installation, install the runtime dependencies listed in the
+README first, then extract the chosen archive and copy its `usr/` contents into
+`/usr/`. For version 0.1.0:
+
+```sh
+tar --zstd -xf wallshader-v0.1.0.tar.zst
+sudo cp -a wallshader-v0.1.0/usr/. /usr/
+sudo update-desktop-database /usr/share/applications
+sudo gtk-update-icon-cache -f -t /usr/share/icons/hicolor
+```
+
+The archive's launcher targets `/usr/share/wallshader`; it is not relocatable.
+Use Meson's custom-prefix source installation for another location. The RPM or
+DEB is preferred for package-manager upgrades and removal.

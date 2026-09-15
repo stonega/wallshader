@@ -1,0 +1,541 @@
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GdkPixbuf from 'gi://GdkPixbuf';
+import Gtk from 'gi://Gtk?version=4.0';
+import Adw from 'gi://Adw?version=1';
+import {
+  PRESETS,
+  SHADERS,
+  createPreset,
+  fromPaperParams,
+  presetIdForShader,
+} from '../src/catalog.js';
+import { importImage } from '../src/images.js';
+import { exportSettings } from '../src/sharing.js';
+import { showSharingDialog } from '../src/sharing-dialog.js';
+import { ROOT } from '../src/paths.js';
+import { Store, watchDebugInfo } from '../src/storage.js';
+import { pngBytes, savePng } from '../src/wallpaper.js';
+
+function assert(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+function settle() {
+  return new Promise((resolve) =>
+    GLib.timeout_add(GLib.PRIORITY_DEFAULT, 900, () => {
+      resolve();
+      return GLib.SOURCE_REMOVE;
+    }),
+  );
+}
+
+async function screenshot(window, path) {
+  const paintable = new Gtk.WidgetPaintable({ widget: window });
+  // Resizing a Wayland window may unmap it briefly; wait for a painted allocation.
+  for (let attempt = 0; attempt < 5; attempt++) {
+    window.queue_draw();
+    await settle();
+    const snapshot = new Gtk.Snapshot();
+    paintable.snapshot(snapshot, window.get_width(), window.get_height());
+    const node = snapshot.to_node();
+    if (!node) continue;
+    const texture = window
+      .get_native()
+      .get_renderer()
+      .render_texture(node, null);
+    assert(texture.save_to_png(path), 'Could not save window screenshot');
+    return;
+  }
+  throw new Error('Window snapshot was empty; keep the test window visible.');
+}
+
+function checkImage(uri, width, height) {
+  const loader = new GdkPixbuf.PixbufLoader();
+  loader.write(pngBytes(uri));
+  loader.close();
+  const image = loader.get_pixbuf();
+  assert(
+    image.get_width() === width && image.get_height() === height,
+    'Export dimensions do not match',
+  );
+  const pixels = image.get_pixels();
+  const colors = new Set();
+  for (let y = 0; y < height; y += Math.max(1, Math.floor(height / 40))) {
+    for (let x = 0; x < width; x += Math.max(1, Math.floor(width / 43))) {
+      const offset = y * image.get_rowstride() + x * image.get_n_channels();
+      colors.add(
+        `${pixels[offset]},${pixels[offset + 1]},${pixels[offset + 2]},${image.get_n_channels() === 4 ? pixels[offset + 3] : 255}`,
+      );
+    }
+  }
+  assert(
+    colors.size > 1,
+    `Shader rendered a blank or flat frame (${colors.size} colors)`,
+  );
+}
+
+async function checkAnimatedWallpaper(window) {
+  const live = window.live;
+  const showError = window.showError;
+  const request = window.preview.request;
+  const apply = window.wallpaper.apply;
+  const settings = window.wallpaper.settings;
+  const applied = [];
+  const errors = [];
+  // Exercise the editor and real PNG/GSettings path without contacting Shell.
+  window.live = {
+    status: { available: true, active: false },
+    async apply(preset, fps) {
+      applied.push({
+        preset,
+        fps,
+        uri: settings.get_string('picture-uri'),
+      });
+    },
+  };
+  window.showError = (error) => errors.push(error.message);
+  window.wallpaperMode.selected = 1;
+  window.resolution.selected = 1;
+  window._paused = true;
+  await window.preview.pause(true);
+  try {
+    for (const [frame, speed, fps] of [
+      [0, 0, 30],
+      [-8000, -2, 60],
+    ]) {
+      window.preset = { ...window.preset, frame, speed };
+      window.liveFps.selected = fps === 60 ? 1 : 0;
+      await window.applyWallpaper();
+      assert(errors.length === 0, `Animated apply failed: ${errors}`);
+      const result = applied.at(-1);
+      assert(
+        result?.preset.frame === frame &&
+          result.preset.speed === speed &&
+          result.fps === fps,
+        'Animated apply lost the starting frame, speed, or frame rate',
+      );
+      assert(
+        result.uri.startsWith(
+          Gio.File.new_for_path(GLib.get_user_data_dir()).get_uri(),
+        ) &&
+          settings.get_string('picture-uri-dark') === result.uri &&
+          settings.get_string('picture-options') === 'zoom',
+        'Both static backgrounds must be installed before animation starts',
+      );
+      const [, contents] = Gio.File.new_for_uri(result.uri).load_contents(null);
+      const image = `data:image/png;base64,${GLib.base64_encode(contents)}`;
+      checkImage(image, 1920, 1080);
+      // Move the preview ahead: an explicit capture must still use the first frame.
+      await window.preview.select({ ...result.preset, frame: frame + 8000 });
+      const expected = await window.preview.request('capture', {
+        width: 1920,
+        height: 1080,
+        frame,
+      });
+      assert(
+        image === expected,
+        'Static wallpaper differs from the animation’s first frame',
+      );
+      assert(window.wallpaper.canRestore, 'Animated apply must enable restore');
+      assert(!window._busy, 'Animated apply left the editor busy');
+    }
+    assert(applied.length === 2, 'Animated reapply did not start animation');
+    const previous = settings.get_string('picture-uri');
+    window.preview.request = function (method, args) {
+      if (method === 'capture')
+        return Promise.reject(new Error('Capture failed'));
+      return request.call(this, method, args);
+    };
+    await window.applyWallpaper();
+    assert(
+      errors.pop() === 'Capture failed',
+      'Capture failure was not reported',
+    );
+    assert(
+      applied.length === 2 && settings.get_string('picture-uri') === previous,
+      'A failed capture must not start animation or replace the background',
+    );
+    window.preview.request = request;
+    window.wallpaper.apply = async () => {
+      throw new Error('Save failed');
+    };
+    await window.applyWallpaper();
+    assert(
+      errors.pop() === 'Save failed',
+      'Static wallpaper failure was not reported',
+    );
+    assert(
+      applied.length === 2 && settings.get_string('picture-uri') === previous,
+      'A failed static wallpaper save must not start animation',
+    );
+    window.wallpaper.apply = apply;
+    window.live.apply = async () => {
+      throw new Error('Animation unavailable');
+    };
+    await window.applyWallpaper();
+    assert(
+      errors.pop() === 'Animation unavailable',
+      'Animation failure was not reported',
+    );
+    assert(
+      settings.get_string('picture-uri') !== previous &&
+        window.wallpaper.canRestore,
+      'Animation failure must leave the static first frame and restore backup available',
+    );
+    assert(
+      !window._busy && window.applyButton.sensitive,
+      'Failed apply did not restore editor controls',
+    );
+  } finally {
+    window.live = live;
+    window.showError = showError;
+    window.preview.request = request;
+    window.wallpaper.apply = apply;
+    window.wallpaperMode.selected = 0;
+    window._syncAvailability();
+  }
+  console.log(
+    'Verified animated first-frame wallpaper, reapply, and failure handling.',
+  );
+}
+
+async function checkAnimatedPreview(window, artifacts) {
+  const original = window.preset;
+  const preset = createPreset('paper-dithering');
+  preset.params.colorBack = '#80FF80';
+  preset.params.colorFront = '#FF80FF';
+  await window.preview.select(preset);
+  await window.preview.pause(false);
+  const widget = window.preview.widget;
+  const paintable = new Gtk.WidgetPaintable({ widget });
+  widget.queue_draw();
+  await settle();
+  const first = await window.preview.request('state');
+  let initialPixels;
+  let changed = false;
+  try {
+    for (let frame = 0; frame < 120; frame++) {
+      const snapshot = new Gtk.Snapshot();
+      paintable.snapshot(snapshot, widget.get_width(), widget.get_height());
+      const node = snapshot.to_node();
+      assert(node, 'Animated preview snapshot was empty');
+      const texture = window.get_renderer().render_texture(node, null);
+      const bytes = texture.save_to_png_bytes();
+      const loader = new GdkPixbuf.PixbufLoader();
+      loader.write_bytes(bytes);
+      loader.close();
+      const image = loader.get_pixbuf();
+      const pixels = image.get_pixels();
+      for (let y = 16; y < image.get_height() - 16; y += 11) {
+        for (let x = 16; x < image.get_width() - 16; x += 11) {
+          const offset = y * image.get_rowstride() + x * image.get_n_channels();
+          if (initialPixels)
+            changed ||=
+              pixels[offset] !== initialPixels[offset] ||
+              pixels[offset + 1] !== initialPixels[offset + 1] ||
+              pixels[offset + 2] !== initialPixels[offset + 2];
+          if (
+            pixels[offset] < 60 ||
+            pixels[offset + 1] < 60 ||
+            pixels[offset + 2] < 60
+          ) {
+            if (artifacts)
+              texture.save_to_png(`${artifacts}/preview-animation-failure.png`);
+            throw new Error(
+              `Cleared animated preview pixel at ${x},${y} (frame ${frame})`,
+            );
+          }
+        }
+      }
+      if (!initialPixels) initialPixels = Uint8Array.from(pixels);
+      if (frame === 119 && artifacts)
+        texture.save_to_png(`${artifacts}/preview-animation.png`);
+      await new Promise((resolve) =>
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 50, () => {
+          resolve();
+          return GLib.SOURCE_REMOVE;
+        }),
+      );
+    }
+    const last = await window.preview.request('state');
+    assert(last.frame > first.frame + 100, 'Preview clock did not advance');
+    assert(changed, 'Animated preview kept displaying the same pixels');
+    console.log(
+      'Verified 120 animated preview frames after gallery generation.',
+    );
+  } finally {
+    await window.preview.pause(true);
+    await window.preview.select(original);
+  }
+}
+
+async function checkDebugInfo(window) {
+  assert(!window.store.state.debugInfo, 'Debug info must default to off');
+  const settings = window.wallpaper.settings;
+  const background = settings.get_string('picture-uri');
+  window._save();
+  let observed;
+  const monitor = watchDebugInfo((enabled) => {
+    observed = enabled;
+  });
+  try {
+    window.debugAction.activate(null);
+    await settle();
+    assert(
+      new Store().state.debugInfo && observed,
+      'Debug preference did not persist or notify',
+    );
+    assert(
+      window.debugAction.state.deepUnpack(),
+      'Debug menu did not reflect enabled preference',
+    );
+    assert(
+      !window.preview._debugEnabled && !window.preview.debug,
+      'Desktop debug preference affected the preview',
+    );
+    window.debugAction.activate(null);
+    await settle();
+    assert(
+      !new Store().state.debugInfo && !observed,
+      'Debug toggle did not turn off and persist',
+    );
+    assert(
+      settings.get_string('picture-uri') === background,
+      'Debug toggle changed the wallpaper',
+    );
+  } finally {
+    monitor.cancel();
+    window.setDebugInfo(false);
+  }
+  console.log(
+    'Verified saved desktop debug toggle without affecting preview or background settings.',
+  );
+}
+
+export async function run(window) {
+  assert(
+    GLib.getenv('GSETTINGS_BACKEND') === 'memory',
+    'Smoke tests require isolated settings',
+  );
+  assert(
+    GLib.getenv('XDG_CONFIG_HOME')?.includes('wallshader-test.'),
+    'Smoke tests require an isolated configuration',
+  );
+  await window.ready;
+  assert(window._ready, 'Preview did not initialize');
+  for (const { name, id } of PRESETS)
+    assert(
+      window._cards.get(id).picture.get_paintable(),
+      `${name} thumbnail did not render`,
+    );
+  await window.preview.pause(true);
+  await settle();
+  assert(
+    window.preview.widget.get_height() > 300,
+    'Preview collapsed vertically',
+  );
+  assert(
+    window._cards.get('aurora').picture.get_height() > 80,
+    'Gallery thumbnails collapsed vertically',
+  );
+  const artifacts = GLib.getenv('WALLSHADER_ARTIFACTS');
+  if (artifacts) GLib.mkdir_with_parents(artifacts, 0o755);
+  await checkAnimatedPreview(window, artifacts);
+  await checkDebugInfo(window);
+  if (artifacts) {
+    const style = Adw.StyleManager.get_default();
+    style.color_scheme = Adw.ColorScheme.FORCE_LIGHT;
+    await screenshot(window, `${artifacts}/window-light.png`);
+    style.color_scheme = Adw.ColorScheme.FORCE_DARK;
+    await screenshot(window, `${artifacts}/window-dark.png`);
+    window.set_default_size(700, 800);
+    await screenshot(window, `${artifacts}/window-narrow.png`);
+    assert(
+      window.split.collapsed,
+      'Inspector did not collapse at narrow width',
+    );
+    window.split.show_sidebar = true;
+    await screenshot(window, `${artifacts}/window-narrow-controls.png`);
+    window.set_default_size(1040, 900);
+    style.color_scheme = Adw.ColorScheme.DEFAULT;
+    await settle();
+  }
+  for (const preset of PRESETS) {
+    await window.selectPreset(preset.id);
+    const uri = await window.preview.request('capture', {
+      width: 640,
+      height: 360,
+    });
+    if (artifacts)
+      await savePng(
+        Gio.File.new_for_path(`${artifacts}/${preset.id}.png`),
+        uri,
+      );
+    try {
+      checkImage(uri, 640, 360);
+    } catch (error) {
+      throw new Error(`${preset.name}: ${error.message}`);
+    }
+    console.log(`Rendered ${preset.name}: 640 × 360`);
+  }
+  await window.selectPreset('aurora');
+  window._changeFrame();
+  assert(
+    window.editor.numericControls.get('frame').spin.get_value() ===
+      window.preset.frame,
+    'Frame input did not follow the next-frame button',
+  );
+  const dialog = showSharingDialog(window, {
+    title: 'Wallpaper Settings',
+    content: exportSettings(window.preset),
+  });
+  // Adw.Dialog is hosted inside its parent window; snapshot the painted root.
+  if (artifacts) await screenshot(window, `${artifacts}/settings-dialog.png`);
+  dialog.close();
+  window.editor.numericControls.get('params.grainMixer').spin.set_value(0.55);
+  assert(
+    window.preset.params.grainMixer === 0.55,
+    'Exact numeric input did not update shader state',
+  );
+  window.editor.setColorCount(10);
+  assert(window.preset.colors.length === 10, 'Color count did not expand');
+  const firstColor = window.preset.colors[0];
+  window.editor.moveColor(0, 1);
+  assert(window.preset.colors[1] === firstColor, 'Color reordering failed');
+  window.editor.numericControls.get('offsetX').spin.set_value(-0.4);
+  window.editor.numericControls.get('speed').spin.set_value(-2);
+  assert(
+    window.preset.offsetX === -0.4 && window.preset.speed === -2,
+    'Position and reverse speed controls did not update',
+  );
+  window.selectPaperPreset(1);
+  assert(
+    window.preset.colors.length === 2 && window.preset.rotation === 90,
+    'Paper Ink preset was not applied',
+  );
+  const shared = exportSettings(window.preset);
+  window.selectPreset('moss');
+  window.importSettings(shared);
+  assert(
+    window.preset.colors.length === 2 && window.preset.rotation === 90,
+    'Settings import lost Paper properties',
+  );
+  window.selectPreset('aurora');
+  window._toggleFavorite();
+  assert(
+    window.store.state.favorites.includes('aurora'),
+    'Favorite was not added',
+  );
+  window.preset.scale = 1.75;
+  window._changed();
+  window._save();
+  const persisted = new Store();
+  assert(
+    persisted.state.presets.aurora.scale === 1.75,
+    'Edited scale did not persist',
+  );
+  assert(
+    persisted.state.favorites.includes('aurora'),
+    'Favorite did not persist',
+  );
+  window.resetPreset();
+  assert(window.preset.scale === 1, 'Reset failed');
+  await window.preview.select(window.preset);
+  const still = await window.preview.request('capture', {
+    width: 1920,
+    height: 1080,
+  });
+  checkImage(still, 1920, 1080);
+  window.preview.widget.set_visible(false);
+  const hidden = await window.preview.request('capture', {
+    width: 640,
+    height: 360,
+  });
+  checkImage(hidden, 640, 360);
+  window.preview.widget.set_visible(true);
+  const uhd = await window.preview.request('capture', {
+    width: 3840,
+    height: 2160,
+  });
+  checkImage(uhd, 3840, 2160);
+  const portrait = await window.preview.request('capture', {
+    width: 360,
+    height: 640,
+  });
+  checkImage(portrait, 360, 640);
+  if (artifacts) {
+    const uri = await importImage(
+      Gio.File.new_for_path(`${artifacts}/aurora.png`),
+    );
+    const logoUri = await importImage(
+      Gio.File.new_for_path(`${ROOT}/src/renderer/sample-logo.svg`),
+    );
+    for (const shader of [
+      'image-dithering',
+      'heatmap',
+      'liquid-metal',
+      'gem-smoke',
+    ]) {
+      const custom = fromPaperParams(presetIdForShader(shader), {
+        ...SHADERS[shader].defaults,
+        image: shader === 'image-dithering' ? uri : logoUri,
+      });
+      await window.preview.select(custom);
+      const result = await window.preview.request('capture', {
+        width: 640,
+        height: 360,
+      });
+      checkImage(result, 640, 360);
+      await savePng(
+        Gio.File.new_for_path(`${artifacts}/custom-${shader}.png`),
+        result,
+      );
+    }
+    console.log(
+      'Verified local image import and all three logo preprocessors.',
+    );
+  }
+  const settings = window.wallpaper.settings;
+  settings.set_string('picture-uri', 'file:///tmp/original-light.png');
+  settings.set_string('picture-uri-dark', 'file:///tmp/original-dark.png');
+  settings.set_string('picture-options', 'scaled');
+  await checkAnimatedWallpaper(window);
+  const file = await window.wallpaper.apply(still, 'aurora');
+  assert(
+    settings.get_string('picture-uri') === file.get_uri(),
+    'Light wallpaper URI was not set',
+  );
+  assert(
+    settings.get_string('picture-uri-dark') === file.get_uri(),
+    'Dark wallpaper URI was not set',
+  );
+  await window.wallpaper.apply(still, 'aurora');
+  window.wallpaper.restore();
+  assert(
+    settings.get_string('picture-uri') === 'file:///tmp/original-light.png',
+    'Original light wallpaper was not restored',
+  );
+  assert(
+    settings.get_string('picture-uri-dark') === 'file:///tmp/original-dark.png',
+    'Original dark wallpaper was not restored',
+  );
+  assert(
+    settings.get_string('picture-options') === 'scaled',
+    'Original wallpaper layout was not restored',
+  );
+  assert(
+    !window.wallpaper.canRestore,
+    'Wallpaper backup should be cleared after restore',
+  );
+  console.log(
+    'Verified settings persistence, PNG export, and wallpaper apply/restore.',
+  );
+  if (GLib.getenv('WALLSHADER_TEST_HOLD') === '1')
+    await new Promise((resolve) =>
+      GLib.timeout_add(GLib.PRIORITY_DEFAULT, 15000, () => {
+        resolve();
+        return GLib.SOURCE_REMOVE;
+      }),
+    );
+}

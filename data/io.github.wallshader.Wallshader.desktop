@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Wallshader
+Comment=Make your desktop a little more colorful
+Exec=wallshader
+Icon=io.github.wallshader.Wallshader
+Terminal=false
+Type=Application
+Categories=GNOME;GTK;Utility;
+Keywords=Wallpaper;Background;Shader;Paper;Gradient;
+StartupNotify=true

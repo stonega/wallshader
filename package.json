@@ -1,0 +1,23 @@
+{
+  "name": "wallshader",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Native GNOME wallpapers made with Paper Shaders",
+  "scripts": {
+    "build": "bun scripts/build.js && bun scripts/build-extension.js",
+    "build:extension": "bun run build",
+    "start": "./scripts/run.sh",
+    "check": "biome check .",
+    "format": "biome check --write .",
+    "test": "bun test",
+    "test:native": "./scripts/test-native.sh",
+    "test:shell": "./scripts/test-shell.sh"
+  },
+  "dependencies": {
+    "@paper-design/shaders": "0.0.80"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.6"
+  }
+}

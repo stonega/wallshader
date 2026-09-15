@@ -1,0 +1,9 @@
+{
+  "id": "aurora",
+  "colors": ["#171346", "#6456C8", "#A1CEE8", "#E4AFE5"],
+  "speed": 0.25,
+  "scale": 1,
+  "rotation": 0,
+  "frame": 6200,
+  "params": { "distortion": 0.8, "swirl": 0.35, "grainOverlay": 0.035 }
+}

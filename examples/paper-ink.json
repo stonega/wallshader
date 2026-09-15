@@ -1,0 +1,23 @@
+{
+  "format": "wallshader-paper",
+  "version": 1,
+  "shader": "mesh",
+  "params": {
+    "colors": ["#ffffff", "#000000"],
+    "distortion": 1,
+    "swirl": 0.2,
+    "grainMixer": 0,
+    "grainOverlay": 0,
+    "scale": 1,
+    "rotation": 90,
+    "offsetX": 0,
+    "offsetY": 0,
+    "originX": 0.5,
+    "originY": 0.5,
+    "worldWidth": 0,
+    "worldHeight": 0,
+    "speed": 1,
+    "frame": 0,
+    "fit": "contain"
+  }
+}

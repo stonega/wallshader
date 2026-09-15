@@ -1,0 +1,28 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.6/schema.json",
+  "files": {
+    "includes": [
+      "**",
+      "!!build",
+      "!!build-native",
+      "!!artifacts",
+      "!!data/third-party",
+      "!!data/style.css"
+    ]
+  },
+  "formatter": { "indentStyle": "space", "indentWidth": 2 },
+  "javascript": { "formatter": { "quoteStyle": "single" } },
+  "linter": {
+    "enabled": true,
+    "rules": { "recommended": true, "style": { "useImportType": "off" } }
+  },
+  "assist": { "actions": { "source": { "organizeImports": "off" } } },
+  "overrides": [
+    {
+      "includes": ["src/renderer/renderer.js", "scripts/sync-paper.js"],
+      "linter": {
+        "rules": { "performance": { "noDynamicNamespaceImportAccess": "off" } }
+      }
+    }
+  ]
+}

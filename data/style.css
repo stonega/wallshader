@@ -1,0 +1,101 @@
+/* Native Adwaita colors follow the desktop's appearance and accent. */
+.workspace {
+  padding: 20px 28px 28px;
+}
+.preview-frame {
+  border-radius: 14px;
+  background: #171346;
+}
+.preview-toolbar {
+  padding: 10px 0;
+}
+.preview-status {
+  font-size: 12px;
+  opacity: 0.65;
+}
+.gallery-heading {
+  margin-top: 22px;
+  margin-bottom: 10px;
+}
+.gallery-card {
+  padding: 0;
+  border-radius: 10px;
+  background: transparent;
+}
+.gallery-card .thumbnail {
+  border-radius: 9px;
+  background: alpha(@window_fg_color, 0.06);
+}
+.gallery-card .card-label {
+  padding: 9px 3px 2px;
+}
+.gallery-card .card-label label {
+  font-weight: 600;
+}
+.gallery-card.selected .thumbnail {
+  outline: 3px solid @accent_bg_color;
+  outline-offset: -3px;
+}
+.gallery-card.selected .card-label label {
+  color: @accent_color;
+}
+.gallery-card:hover .thumbnail {
+  filter: brightness(1.08);
+}
+.inspector {
+  padding: 18px;
+}
+.inspector-title {
+  margin-bottom: 4px;
+}
+.control-label {
+  margin-top: 12px;
+}
+.control-value {
+  font-size: 12px;
+  opacity: 0.65;
+}
+.palette button {
+  min-width: 32px;
+  min-height: 32px;
+  border-radius: 50%;
+  padding: 0;
+}
+.palette {
+  margin-top: 12px;
+  margin-bottom: 6px;
+}
+.section-label {
+  font-weight: 700;
+  margin-top: 24px;
+  margin-bottom: 4px;
+}
+.export-actions {
+  margin-top: 22px;
+}
+.attribution {
+  margin-top: 24px;
+  font-size: 12px;
+}
+.subtitle {
+  opacity: 0.6;
+}
+.debug-info {
+  background: rgba(25, 25, 25, 0.84);
+  color: #ffffff;
+  border-radius: 5px;
+  padding: 8px 10px;
+  font-family: monospace;
+  font-size: 10px;
+}
+flowboxchild {
+  padding: 5px;
+}
+flowboxchild:selected {
+  background: transparent;
+}
+.filter-button {
+  border-radius: 999px;
+  padding: 5px 12px;
+  min-height: 24px;
+}

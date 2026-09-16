@@ -192,7 +192,7 @@ then submit it to all configured Fedora targets. Direct binary RPM uploads are
 not enabled on this COPR instance. This requires `rpmbuild` and `copr-cli`:
 
 ```sh
-release_tag=v0.1.2
+release_tag=v0.1.3
 release_version=${release_tag#v}
 release_dir=$(mktemp -d /tmp/wallshader-release.XXXXXX)
 gh release download "$release_tag" --repo stonega/wallshader --dir "$release_dir"
@@ -220,8 +220,8 @@ Commit the release changes,
 then push the version tag, for example:
 
 ```sh
-git tag v0.1.2
-git push origin v0.1.2
+git tag v0.1.3
+git push origin v0.1.3
 ```
 
 To reproduce the packages locally, install the normal build tools plus
@@ -233,7 +233,7 @@ bun install --frozen-lockfile
 bun run package
 ```
 
-Pass an explicit tag with `bun run package v0.1.2` to perform the release-version
+Pass an explicit tag with `bun run package v0.1.3` to perform the release-version
 check. Outputs are written to `dist/`. The script rebuilds the renderer and
 extension, stages Meson's `/usr` installation in a temporary `DESTDIR`, validates
 the launcher and required assets, and packages that staging tree. It does not
@@ -246,11 +246,11 @@ updates; the DEB refreshes those caches when installed or removed.
 
 For a manual archive installation, install the runtime dependencies listed in the
 README first, then extract the chosen archive and copy its `usr/` contents into
-`/usr/`. For version 0.1.2:
+`/usr/`. For version 0.1.3:
 
 ```sh
-tar --zstd -xf wallshader-v0.1.2.tar.zst
-sudo cp -a wallshader-v0.1.2/usr/. /usr/
+tar --zstd -xf wallshader-v0.1.3.tar.zst
+sudo cp -a wallshader-v0.1.3/usr/. /usr/
 sudo update-desktop-database /usr/share/applications
 sudo gtk-update-icon-cache -f -t /usr/share/icons/hicolor
 ```

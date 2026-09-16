@@ -183,9 +183,40 @@ job uses the repository's `GITHUB_TOKEN` with `contents: write`; builds and pull
 requests have read-only repository permissions. No additional release secret is
 needed.
 
+Every release, including patch releases, must also be published to the existing
+[Fedora COPR project](https://copr.fedorainfracloud.org/coprs/stonegate/wallshader/)
+`stonegate/wallshader`. The GitHub workflow does not perform this step. After it
+has published the release assets, use the configured COPR CLI credentials to
+build an SRPM from the verified release archive with `data/wallshader-copr.spec`,
+then submit it to all configured Fedora targets. Direct binary RPM uploads are
+not enabled on this COPR instance. This requires `rpmbuild` and `copr-cli`:
+
+```sh
+release_tag=v0.1.2
+release_version=${release_tag#v}
+release_dir=$(mktemp -d /tmp/wallshader-release.XXXXXX)
+gh release download "$release_tag" --repo stonega/wallshader --dir "$release_dir"
+(cd "$release_dir" && sha256sum --check SHA256SUMS)
+rpmbuild -bs --define "_topdir $release_dir/rpmbuild" \
+  --define "_sourcedir $release_dir" data/wallshader-copr.spec
+rpmbuild --rebuild --define "_topdir $release_dir/rebuild" \
+  "$release_dir/rpmbuild/SRPMS/wallshader-$release_version-1.src.rpm"
+copr-cli build --nowait stonegate/wallshader \
+  "$release_dir/rpmbuild/SRPMS/wallshader-$release_version-1.src.rpm"
+```
+
+The spec packages the same installed application files as the GitHub release;
+its `tar` and `zstd` build dependencies let COPR unpack the release archive.
+The upload uses all configured targets unless explicitly restricted: Fedora 43,
+44, 45, and Rawhide, each on x86_64 and aarch64. Use `copr-cli watch-build` with
+the returned build ID to wait for publication. Confirm that every target succeeds
+and its repository metadata contains the new version before declaring the release
+complete. Existing COPR users then receive the update through `sudo dnf upgrade`.
+
 Before tagging a release, set the same numeric version in `package.json`,
-`meson.build`, and the About dialog in `src/main.js`. The package script rejects
-tags that do not match the package and Meson versions. Commit the release changes,
+`meson.build`, `data/wallshader-copr.spec`, and the About dialog in `src/main.js`.
+The package script rejects tags that do not match the package and Meson versions.
+Commit the release changes,
 then push the version tag, for example:
 
 ```sh

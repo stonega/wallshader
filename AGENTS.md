@@ -59,3 +59,23 @@ pause, or stop against the user's running Shell during verification.
 - `bun test`: logic tests
 - `bun run test:native`: native renderer and wallpaper integration smoke test
 - `./scripts/install.sh`: install for the current user
+
+## Releases
+
+- Publish every release, including patch releases, to both GitHub Releases and
+  the existing Fedora COPR project `stonegate/wallshader`. A GitHub tag alone
+  does not complete a release.
+- Follow the version bump and publishing steps in
+  `docs/implementation/setup.md`. Keep the versions in `package.json`,
+  `meson.build`, `src/main.js`, and `data/wallshader-copr.spec` aligned.
+  After the GitHub release workflow succeeds, download its packages and
+  `SHA256SUMS`, and verify the checksums.
+- Build an SRPM from the verified release archive using
+  `data/wallshader-copr.spec`, then submit it with
+  `copr-cli build --nowait stonegate/wallshader /path/to/wallshader-VERSION-1.src.rpm`.
+  Verify the SRPM rebuilds independently before submitting it. Direct binary RPM
+  uploads are not enabled on this COPR instance. Use all configured COPR targets,
+  currently Fedora 43, 44, 45, and Rawhide, on x86_64 and aarch64. Do not limit
+  targets unless explicitly requested.
+- Wait for COPR to succeed and verify that every target's repository metadata
+  offers the released version before reporting publication complete.

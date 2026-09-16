@@ -1,7 +1,10 @@
 # Using Wallshader
 
-1. Choose a wallpaper from the collection. Use search or the category filters to
-   narrow it down. Each template thumbnail shows its first **Original** preset.
+1. Choose a wallpaper from the collection. Use search or the category tabs above
+   the gallery to narrow it down: **Gradients** (selected initially), **Patterns**,
+   **Image filters**, **Logo effects**, and **Favorites**. Scroll the tabs
+   horizontally if they do not all fit. Each template thumbnail shows its first
+   **Original** preset.
    Selecting a template scrolls back to the preview at the top.
    Star a wallpaper to keep it in Favorites.
 2. Choose a preset thumbnail in the grid below the preview.
@@ -103,6 +106,9 @@ original background until you restore it.
 
 On a narrow window, use the edit button in the header to show the controls.
 Keyboard shortcuts: Ctrl+F for search and Ctrl+Q to quit.
+
+To report a bug, open **About Wallshader** from the app menu and choose
+**Report an Issue** to open the project's [GitHub issues](https://github.com/stonega/wallshader/issues).
 
 Enable **Show Debug Info** in the app menu for a compact overlay on each live
 wallpaper, in the lower-left corner clear of GNOME's top bar. The app preview

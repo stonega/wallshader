@@ -21,6 +21,12 @@
   margin-top: 22px;
   margin-bottom: 10px;
 }
+.category-tab {
+  min-height: 26px;
+  padding: 4px 12px;
+  border-radius: 9px;
+  font-weight: 700;
+}
 .gallery-card {
   padding: 0;
   border-radius: 10px;

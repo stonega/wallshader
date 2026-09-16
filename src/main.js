@@ -55,6 +55,7 @@ app.connect('startup', () => {
         'A little color for your desktop. Native GNOME wallpapers made with Paper Shaders.',
       license_type: Gtk.License.GPL_3_0,
       website: 'https://github.com/stonega/wallshader',
+      issue_url: 'https://github.com/stonega/wallshader/issues',
     });
     about.add_acknowledgement_section('Shaders', [
       'Paper Shaders by Lost Coast Labs, Inc. — Apache-2.0',

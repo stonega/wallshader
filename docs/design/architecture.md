@@ -14,9 +14,12 @@ the output aspect ratio, and the gallery uses two or three columns. Gallery rows
 stay at their natural height so surplus vertical space does not stretch the cards.
 Gallery thumbnails show each template's first **Original** preset, independent of
 saved edits or the selected preset.
-The gallery shows its category filter and right-aligned wallpaper count on one
-row without a Collection heading. Selected gallery and preset tiles use
-accent-colored label text as their selection indicator.
+The gallery shows native, mutually exclusive category tabs with an icon and label,
+using a rounded neutral background for the active tab. Gradients is selected on
+startup, followed by Patterns, Image filters, Logo effects, and Favorites; there is
+no All tab, wallpaper count, or Collection heading. The tab row scrolls horizontally
+when needed, and switching tabs retains the current search. Selected gallery and
+preset tiles use accent-colored label text as their selection indicator.
 The preview header shows the wallpaper name followed by Save Preset, Export PNG (an image icon), Reset Changes,
 and favorite icon buttons, without a subtitle. Play/pause sits inside the preview's
 bottom-left corner on a circular black background at 60% opacity. The presets and

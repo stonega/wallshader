@@ -58,7 +58,7 @@ export const WallshaderWindow = GObject.registerClass(
         this.store.state.selected,
         this.store.state.presets[this.store.state.selected],
       );
-      this._category = 'All';
+      this._category = 'Gradients';
       this._paused = !Gtk.Settings.get_default().gtk_enable_animations;
       this._busy = false;
       this._ready = false;
@@ -93,6 +93,7 @@ export const WallshaderWindow = GObject.registerClass(
       breakpoint.add_setter(this.split, 'collapsed', true);
       this.add_breakpoint(breakpoint);
       this._refreshSelection();
+      this._filter();
       this.set_focus(this.searchButton);
       this._syncAvailability();
       this.live.refresh();
@@ -253,33 +254,49 @@ export const WallshaderWindow = GObject.registerClass(
       this.presetGrid.set_margin_top(16);
       content.append(this.presetGrid);
 
-      const filters = new Gtk.Box({
-        spacing: 6,
-        css_classes: ['gallery-heading'],
-      });
       const categories = [
-        'All',
-        'Gradients',
-        'Patterns',
-        'Image filters',
-        'Logo effects',
-        'Favorites',
+        ['Gradients', 'color-select-symbolic'],
+        ['Patterns', 'view-grid-symbolic'],
+        ['Image filters', 'image-x-generic-symbolic'],
+        ['Logo effects', 'applications-graphics-symbolic'],
+        ['Favorites', 'starred-symbolic'],
       ];
-      const category = new Gtk.DropDown({
-        model: Gtk.StringList.new(categories),
-        tooltip_text: 'Filter collection',
+      const categoryTabs = new Gtk.Box({
+        spacing: 4,
+        css_classes: ['category-tabs'],
       });
-      category.connect('notify::selected', () => {
-        this._category = categories[category.selected];
-        this._filter();
-      });
-      filters.append(category);
-      this.countLabel = label(`${PRESETS.length} wallpapers`, ['dim-label'], {
-        hexpand: true,
-        xalign: 1,
-      });
-      filters.append(this.countLabel);
-      content.append(filters);
+      let firstTab;
+      for (const [category, icon] of categories) {
+        const tabContent = new Gtk.Box({
+          spacing: 6,
+          halign: Gtk.Align.CENTER,
+        });
+        tabContent.append(new Gtk.Image({ icon_name: icon, pixel_size: 16 }));
+        tabContent.append(label(category));
+        const tab = new Gtk.ToggleButton({
+          child: tabContent,
+          tooltip_text: category,
+          css_classes: ['flat', 'category-tab'],
+        });
+        if (firstTab) tab.set_group(firstTab);
+        else firstTab = tab;
+        tab.set_active(category === this._category);
+        tab.connect('toggled', () => {
+          if (!tab.active) return;
+          this._category = category;
+          this._filter();
+        });
+        categoryTabs.append(tab);
+      }
+      content.append(
+        new Gtk.ScrolledWindow({
+          hscrollbar_policy: Gtk.PolicyType.AUTOMATIC,
+          vscrollbar_policy: Gtk.PolicyType.NEVER,
+          hexpand: true,
+          css_classes: ['gallery-heading'],
+          child: categoryTabs,
+        }),
+      );
       this.gallery = new Gtk.FlowBox({
         selection_mode: Gtk.SelectionMode.NONE,
         homogeneous: true,
@@ -733,9 +750,6 @@ export const WallshaderWindow = GObject.registerClass(
       );
       for (const [id, { child }] of this._cards)
         child.set_visible(matches.has(id));
-      this.countLabel.set_label(
-        `${matches.size} ${matches.size === 1 ? 'wallpaper' : 'wallpapers'}`,
-      );
       this.empty.set_visible(matches.size === 0);
       this.gallery.set_visible(matches.size > 0);
       this.empty.set_description(

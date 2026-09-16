@@ -15,7 +15,7 @@ import {
 import { Store } from './storage.js';
 import { Wallpaper, pngBytes, savePng } from './wallpaper.js';
 import { Preview } from './preview.js';
-import { LiveWallpaper } from './live.js';
+import { LiveWallpaper, LoginRequiredError } from './live.js';
 import { AspectBox } from './aspect.js';
 import { ShaderEditor } from './editor.js';
 import { PresetGrid } from './preset-grid.js';
@@ -985,7 +985,18 @@ export const WallshaderWindow = GObject.registerClass(
           }),
         );
       } catch (error) {
-        this.showError(error);
+        if (error instanceof LoginRequiredError) {
+          if (!this._closed) {
+            const dialog = new Adw.AlertDialog({
+              heading: 'Log Out to Finish Setup',
+              body: error.message,
+              default_response: 'ok',
+              close_response: 'ok',
+            });
+            dialog.add_response('ok', 'Got It');
+            dialog.present(this);
+          }
+        } else this.showError(error);
       } finally {
         this._busy = false;
         this._syncAvailability();

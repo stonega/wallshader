@@ -251,5 +251,7 @@ original GNOME background. The extension itself does not write background settin
 `scripts/build-extension.js` produces a self-contained bundle with the renderer,
 shared modules, and third-party notices. The native installer copies it into the
 user's extension directory and enables only its own UUID. GNOME discovers new
-extensions at login, so first installation may require logout/login. There is no
-automatic logout or Shell restart.
+extensions at login, so first installation may require logout/login. `live.js`
+signals this with `LoginRequiredError`; animated apply presents a native
+`Adw.AlertDialog` explaining the one-time logout/login and subsequent apply.
+The notice stays open until dismissed. There is no automatic logout or Shell restart.

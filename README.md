@@ -31,7 +31,8 @@ explains this when needed. Still wallpapers and PNG export work without an exten
 
 ## Install
 
-Download a package from [GitHub Releases](https://github.com/stonega/wallshader/releases).
+Install from Fedora COPR below, or download a package from
+[GitHub Releases](https://github.com/stonega/wallshader/releases).
 Packages contain the app, renderer, icon, and live wallpaper extension. **Bun,
 Meson, and a source checkout are not needed to run a packaged installation.**
 
@@ -42,7 +43,18 @@ that meet the app's runtime requirements.
 
 ### Fedora
 
-Download the `.noarch.rpm` asset, then install it from your download directory:
+Enable the [Wallshader COPR repository](https://copr.fedorainfracloud.org/coprs/stonegate/wallshader/)
+and install on Fedora 43, 44, 45, or Rawhide (x86_64 and aarch64):
+
+```sh
+sudo dnf copr enable stonegate/wallshader
+sudo dnf install wallshader
+```
+
+Updates arrive through `sudo dnf upgrade`.
+
+Alternatively, download the `.noarch.rpm` asset from GitHub Releases and install
+it from your download directory:
 
 ```sh
 sudo dnf install ./wallshader-*.noarch.rpm

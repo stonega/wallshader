@@ -51,8 +51,11 @@ desktop frame rate, and output resolution remain separate in Wallpaper Settings.
 For an animated desktop, open **Wallpaper Settings**, keep **Wallpaper mode**
 on **Animated shader**, and choose 30 or 60 FPS. Close the dialog, then click
 **Set Animated Wallpaper**. First use installs the bundled
-GNOME 50 extension. If GNOME has not seen it before, log out and back in once and
-apply again. Applying also sets the animation's first frame as a still background
+GNOME 50 extension. If GNOME has not seen it before, a **Log Out to Finish Setup**
+dialog explains that you need to log out and back in once so GNOME can discover
+it. Dismiss it with **Got It**, then log out when ready. After logging back in,
+open Wallshader and choose **Set Animated Wallpaper** again.
+Applying also sets the animation's first frame as a still background
 for both light and dark appearances, at the selected output resolution. It uses
 the frame where the animation starts, including your chosen frame time. This still
 image remains available even if animation support needs setup or the renderer stops.

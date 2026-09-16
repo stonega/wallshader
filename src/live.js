@@ -60,6 +60,15 @@ function copyDirectory(source, destination) {
   }
 }
 
+export class LoginRequiredError extends Error {
+  constructor() {
+    super(
+      'Animation support is installed. Log out and back in once so GNOME can discover it. Then open Wallshader and choose “Set Animated Wallpaper” again.',
+    );
+    this.name = 'LoginRequiredError';
+  }
+}
+
 export class LiveWallpaper {
   constructor(onChange = () => {}) {
     this.status = { available: false, active: false };
@@ -148,9 +157,7 @@ export class LiveWallpaper {
           ...extensions,
           EXTENSION_UUID,
         ]);
-      throw new Error(
-        'Animation support is installed. Log out and back in once, then choose “Set Animated Wallpaper”.',
-      );
+      throw new LoginRequiredError();
     }
     for (let attempt = 0; attempt < 10; attempt++) {
       if ((await this.refresh()).available) return;

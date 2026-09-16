@@ -3,6 +3,8 @@
 A native GNOME wallpaper app, written in **GJS, GTK 4, and libadwaita**, using
 [Paper Shaders](https://github.com/paper-design/shaders).
 
+![Wallshader showing the Heatmap shader preview, wallpaper gallery, and customization controls](docs/images/wallshader-screenshot.png)
+
 Edit all **30 shaders and 124 Paper presets** from the pinned Paper library with
 native controls. Choose from 36 gallery wallpapers, including nine original
 palettes. Adjust shader parameters with sliders and exact numeric inputs, change

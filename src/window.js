@@ -156,7 +156,7 @@ export const WallshaderWindow = GObject.registerClass(
       );
       toolbar.add_top_bar(header);
 
-      const scroll = new Gtk.ScrolledWindow({
+      this.contentScroll = new Gtk.ScrolledWindow({
         hscrollbar_policy: Gtk.PolicyType.NEVER,
       });
       const content = vertical(0, { css_classes: ['workspace'] });
@@ -347,8 +347,8 @@ export const WallshaderWindow = GObject.registerClass(
         css_classes: ['attribution', 'flat'],
       });
       content.append(credit);
-      scroll.set_child(content);
-      toolbar.set_content(scroll);
+      this.contentScroll.set_child(content);
+      toolbar.set_content(this.contentScroll);
       return toolbar;
     }
 
@@ -682,6 +682,8 @@ export const WallshaderWindow = GObject.registerClass(
       this.preset = normalizePreset(id, this.store.state.presets[id]);
       this.store.state.selected = this.preset.id;
       this._refreshSelection();
+      const adjustment = this.contentScroll.get_vadjustment();
+      adjustment.set_value(adjustment.get_lower());
       const rendered = this._ready ? this._renderPreset() : Promise.resolve();
       this._saveSoon();
       return rendered;

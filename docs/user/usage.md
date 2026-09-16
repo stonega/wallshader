@@ -2,6 +2,7 @@
 
 1. Choose a wallpaper from the collection. Use search or the category filters to
    narrow it down. Each template thumbnail shows its first **Original** preset.
+   Selecting a template scrolls back to the preview at the top.
    Star a wallpaper to keep it in Favorites.
 2. Choose a preset thumbnail in the grid below the preview.
    Every shader from Paper 0.0.80 is available through the collection, with its

@@ -522,13 +522,9 @@ export const WallshaderWindow = GObject.registerClass(
       if (this.store.warning) this.showError(new Error(this.store.warning));
       for (const item of PRESETS) {
         if (this._closed) return;
-        const custom = normalizePreset(
-          item.id,
-          this.store.state.presets[item.id],
-        );
         try {
           const uri = await this.preview.request('thumbnail', {
-            preset: custom,
+            preset: createPreset(item.id),
           });
           this._cards
             .get(item.id)

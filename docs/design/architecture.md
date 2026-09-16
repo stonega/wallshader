@@ -12,6 +12,8 @@ pane; a trailing inspector holds composition and export controls. Below 880 px,
 the inspector becomes an overlay. Labels are left aligned, the preview follows
 the output aspect ratio, and the gallery uses two or three columns. Gallery rows
 stay at their natural height so surplus vertical space does not stretch the cards.
+Gallery thumbnails show each template's first **Original** preset, independent of
+saved edits or the selected preset.
 
 The palette uses Adwaita's window background, foreground and accent with neutral
 text; the initial artwork uses midnight `#171346`, violet `#6456C8`, sky

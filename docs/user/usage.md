@@ -1,7 +1,8 @@
 # Using Wallshader
 
 1. Choose a wallpaper from the collection. Use search or the category filters to
-   narrow it down. Star a wallpaper to keep it in Favorites.
+   narrow it down. Each template thumbnail shows its first **Original** preset.
+   Star a wallpaper to keep it in Favorites.
 2. Choose a **Shader** and **Paper preset** in the inspector. Every shader from
    Paper 0.0.80 is available, with its original settings and presets. Editing a
    value changes the preset label to **Custom / saved**.

@@ -36,15 +36,13 @@ export const AspectBox = GObject.registerClass(
     _init({
       ratio = 16 / 9,
       thumbnail = false,
+      minimumWidth = thumbnail ? 140 : 280,
+      naturalWidth = thumbnail ? 210 : 640,
       child = null,
       ...properties
     } = {}) {
       super._init({ orientation: Gtk.Orientation.VERTICAL, ...properties });
-      this._aspectLayout = new AspectLayout(
-        ratio,
-        thumbnail ? 140 : 280,
-        thumbnail ? 210 : 640,
-      );
+      this._aspectLayout = new AspectLayout(ratio, minimumWidth, naturalWidth);
       this.set_layout_manager(this._aspectLayout);
       if (child) this.append(child);
     }

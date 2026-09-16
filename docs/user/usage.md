@@ -3,9 +3,12 @@
 1. Choose a wallpaper from the collection. Use search or the category filters to
    narrow it down. Each template thumbnail shows its first **Original** preset.
    Star a wallpaper to keep it in Favorites.
-2. Choose a **Shader** and **Paper preset** in the inspector. Every shader from
-   Paper 0.0.80 is available, with its original settings and presets. Editing a
-   value changes the preset label to **Custom / saved**.
+2. Choose a preset thumbnail in the grid below the preview.
+   Every shader from Paper 0.0.80 is available through the collection, with its
+   original settings and presets. The grid includes the wallpaper's **Original**,
+   Paper presets, and your saved configurations for that shader. The selected
+   tile uses accent-colored label text; edits that differ from every tile clear
+   the selection.
 3. Choose a color swatch for the native picker with opacity, or type a hex, RGB,
    or HSL value and press Enter. Change the color count and use the arrows to
    reorder colors. **Shader settings** contains the effect's sliders, exact
@@ -13,19 +16,41 @@
    favorites are saved automatically.
 4. Expand **Position & size** for scale, rotation, offsets, origin, fit, and world
    dimensions. A world dimension of 0 follows the canvas.
-5. Pause the preview to hold a frame, or use the next-frame button to jump ahead.
-   Expand **Animation** for an exact frame time in milliseconds and speed.
+5. Use the circular play/pause button in the preview's bottom-left corner to hold
+   or resume a frame. Expand **Animation** to choose an exact frame time in
+   milliseconds and speed.
    Negative speed plays in reverse; 0 holds a frame.
    Speed changes only the live preview. The preview pauses when you leave the app
    and respects GNOME's reduced animation setting at startup.
-6. Choose an output resolution. “This display” uses the monitor containing the
-   app window, including its scale. Explicit sizes include 1080p, 1440p, 4K and
-   ultrawide. The preview follows the selected aspect ratio.
-7. Click **Set as Wallpaper** to apply the current frame as a still background for
-   both light and dark appearances, or **Export PNG…** to choose a file location.
+6. Click the **Wallpaper Settings** gear icon to the right of the wallpaper apply
+   button to choose the wallpaper mode and output resolution. **Animated shader**
+   is selected by default when the app opens. “This display” uses
+   the monitor containing the app window, including its scale. Explicit sizes include 1080p,
+   1440p, 4K and ultrawide. The preview follows the selected aspect ratio.
+7. Click **Set Animated Wallpaper** to animate the shader on your desktop. For a
+   still background, select **Still image** in Wallpaper Settings, then click
+   **Set as Wallpaper**. Use the **Export PNG…** image icon above the preview to save
+   the current frame to a file.
 
-For an animated desktop, change **Wallpaper** to **Animated shader**, choose 30 or
-60 FPS, then click **Set Animated Wallpaper**. First use installs the bundled
+Applying a wallpaper automatically saves a new preset if its configuration does
+not match a built-in or saved preset. The new tile uses a random hex color name
+such as **#A3F07C** and keeps the applied frame. Applying the same configuration
+again reuses the existing preset.
+
+To keep a named configuration, click the **Save Preset…** bookmark icon immediately
+to the left of Export PNG. The dialog shows a still preview and a random hex color
+name; keep or edit the name, then click **Save**. Its thumbnail appears in the same preset grid with a delete icon
+button on the right. Click that button to remove the saved configuration and its
+thumbnail; the current preview and desktop wallpaper stay unchanged.
+Names must be unique within a shader. Saving retains all shader controls,
+colors, source image, speed, and the captured animation frame. Later edits do not
+change that saved copy. Select its tile to restore it, including after restarting
+the app. Saving and selecting presets do not apply a wallpaper. Wallpaper mode,
+desktop frame rate, and output resolution remain separate in Wallpaper Settings.
+
+For an animated desktop, open **Wallpaper Settings**, keep **Wallpaper mode**
+on **Animated shader**, and choose 30 or 60 FPS. Close the dialog, then click
+**Set Animated Wallpaper**. First use installs the bundled
 GNOME 50 extension. If GNOME has not seen it before, log out and back in once and
 apply again. Applying also sets the animation's first frame as a still background
 for both light and dark appearances, at the selected output resolution. It uses
@@ -33,7 +58,7 @@ the frame where the animation starts, including your chosen frame time. This sti
 image remains available even if animation support needs setup or the renderer stops.
 
 The shader plays on all displays and continues after you close Wallshader. Use
-**Pause / Resume** and **Stop** in the Wallpaper section. Edit a shader and apply
+**Pause / Resume** and **Stop** in **Wallpaper Settings**. Edit a shader and apply
 again to update the running wallpaper. Speed 0 remains still; negative speed plays
 in reverse. Stop reveals the animation's static first frame. Applying a still image
 also stops animation. PNG export always captures a still frame.
@@ -66,8 +91,9 @@ choose the image locally after import. **Copy Settings…** preserves all proper
 `image={"sample"}` or local file URIs with an image URL available to that project.
 An importable example is included in `examples/paper-ink.json`.
 
-Use **Reset Changes** to restore the selected wallpaper's original palette and
-composition. Open the menu and choose **Restore Previous Wallpaper** to return
+Use the **Reset Changes** icon immediately left of the favorite star to restore
+the selected wallpaper's original palette and composition. Open the menu and
+choose **Restore Previous Wallpaper** to return
 to the background you had before the first apply. Multiple applies preserve that
 original background until you restore it.
 
@@ -84,7 +110,8 @@ in the menu. PNG exports and still wallpapers contain only
 the shader. FPS counts animation frames observed by WebKit; it does not measure
 GPU completion, compositor presentation, or dropped frames.
 
-Settings are stored at `~/.config/wallshader/state.json`; wallpapers are kept at
+Settings and named configurations are stored at `~/.config/wallshader/state.json`;
+saved previews are kept at `~/.local/share/wallshader/presets/`. Wallpapers are kept at
 `~/.local/share/wallshader/wallpapers/`, and source images at
 `~/.local/share/wallshader/images/` (or your XDG equivalents). Exported PNGs
 are independent of the app. Removing the app does not remove these files.

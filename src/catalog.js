@@ -297,7 +297,36 @@ export function normalizeState(input = {}) {
         normalizePreset(preset.id, input.presets[preset.id]),
       ]),
     ),
+    savedPresets: normalizeSavedPresets(input.savedPresets),
   };
+}
+
+export function normalizeSavedPresets(input) {
+  const ids = new Set();
+  return (Array.isArray(input) ? input : []).flatMap((item) => {
+    if (
+      !item ||
+      typeof item.id !== 'string' ||
+      !/^[a-z0-9-]{1,80}$/.test(item.id) ||
+      ids.has(item.id) ||
+      typeof item.name !== 'string' ||
+      !item.name.trim() ||
+      !PRESETS.some(
+        (preset) =>
+          preset.id === item.preset?.id &&
+          preset.shader === item.preset?.shader,
+      )
+    )
+      return [];
+    ids.add(item.id);
+    return [
+      {
+        id: item.id,
+        name: item.name.trim().slice(0, 80),
+        preset: normalizePreset(item.preset.id, item.preset),
+      },
+    ];
+  });
 }
 
 export function filterPresets(category, query, favorites) {

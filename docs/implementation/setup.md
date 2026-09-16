@@ -24,6 +24,18 @@ start, pause, or stop wallpapers in the user's running Shell.
 After gallery generation it samples 120 frames of the animated preview, checking
 for missing/cleared regions and verifying that both shader time and visible pixels
 change. `artifacts/preview-animation-failure.png` preserves the failing frame.
+The native test also saves a named configuration through the preview dialog,
+reloads its settings and PNG, selects Paper and saved grid tiles, and checks
+cancellation, duplicate names, failed writes, and missing-thumbnail recovery.
+Deletion checks cover saved-entry and thumbnail removal, failed-write preservation,
+and keeping the editor configuration and desktop wallpaper unchanged.
+Apply checks cover automatic saving for still and animated wallpapers, exact-frame
+thumbnails, hex default names, duplicate prevention for built-in and saved presets,
+and save failures after a successful apply. Logic tests cover generated-name
+collisions within a shader.
+`artifacts/save-preset-dialog.png` and `artifacts/preset-grid-{light,dark}.png`
+show the dialog and thumbnail grid. Logic tests cover saved-state normalization,
+immutable copies, selection matching, and image restoration across presets.
 
 `bun run test:shell` needs GNOME Shell 50 with its headless Wayland backend. It
 starts a separate Shell on a private D-Bus session, with private runtime, data,
@@ -145,6 +157,10 @@ requirements. Run it only against the pinned, reviewed upstream source.
 
 Meson builds the renderer and installs native modules under `share/wallshader`,
 with a launcher in `bin` and the desktop file and icon in their standard locations.
+Bundled toolbar icons live under `share/wallshader/data/icons/hicolor`, matching
+the app's module-relative icon search path. The supplied Save Preset SVG is
+preserved in `data/icons/sources/`; conversion details are included in
+`data/third-party/Save-Preset-Icon-NOTICE`.
 It includes the extension bundle; run `bun run build` before Meson installation
 after changes so this bundle is current.
 The application has no runtime dependency on Bun or the source checkout after
@@ -191,7 +207,8 @@ check. Outputs are written to `dist/`. The script rebuilds the renderer and
 extension, stages Meson's `/usr` installation in a temporary `DESTDIR`, validates
 the launcher and required assets, and packages that staging tree. It does not
 install to the host or contact GNOME Shell. Only the selected application icon is
-installed; design sources and preview PNGs stay in the checkout. Both package
+installed globally; toolbar icons remain in the app's private data directory.
+Design sources and preview PNGs stay in the checkout. Both package
 formats declare native runtime dependencies, and all formats retain Paper's
 LICENSE and NOTICE. RPM relies on Fedora's file triggers for desktop/icon cache
 updates; the DEB refreshes those caches when installed or removed.

@@ -8,17 +8,34 @@ framework, Electron process, or network service.
 
 The artwork carries the visual identity. Adwaita supplies the system font,
 window colors, controls, and accent. The collection and preview occupy the main
-pane; a trailing inspector holds composition and export controls. Below 880 px,
+pane; a trailing inspector holds composition and wallpaper apply controls. Below 880 px,
 the inspector becomes an overlay. Labels are left aligned, the preview follows
 the output aspect ratio, and the gallery uses two or three columns. Gallery rows
 stay at their natural height so surplus vertical space does not stretch the cards.
 Gallery thumbnails show each template's first **Original** preset, independent of
 saved edits or the selected preset.
+The gallery shows its category filter and right-aligned wallpaper count on one
+row without a Collection heading. Selected gallery and preset tiles use
+accent-colored label text as their selection indicator.
+The preview header shows the wallpaper name followed by Save Preset, Export PNG (an image icon), Reset Changes,
+and favorite icon buttons, without a subtitle. Play/pause sits inside the preview's
+bottom-left corner on a circular black background at 60% opacity. The presets and
+saved configurations sit directly below the preview in the main pane, above the
+collection, with no intervening status toolbar or visible grid heading.
+Save Preset uses the supplied stacked-bookmark artwork with a bolder 2.5-unit stroke
+as a named symbolic icon. Its strokes are expanded to filled paths for GTK 4.14 compatibility, so it
+inherits widget foreground colors in light, dark, and high-contrast appearances.
+The Wallpaper Settings icon sits in a circular 44 × 44 px button, vertically
+centered to the right of the apply button. It opens an adaptive native dialog for
+wallpaper mode, animation frame rate, desktop playback controls, and output resolution. The dialog retains
+its selections when closed and reopened during the same app session. Wallpaper mode
+defaults to Animated shader when the app opens.
 
 The palette uses Adwaita's window background, foreground and accent with neutral
 text; the initial artwork uses midnight `#171346`, violet `#6456C8`, sky
 `#A1CEE8`, and lilac `#E4AFE5`. System colors remain authoritative in light and
 dark appearances. This keeps visual emphasis on actual shader output.
+Favorited stars in the preview header and gallery use yellow `#F5C211`.
 
 ## Rendering
 
@@ -92,6 +109,37 @@ a GTK adjustment between their slider and spin button. Variable palettes support
 opacity and ordering, while independent colors retain their own shader properties.
 The renderer converts state into the same uniform values as Paper's wrappers,
 including image presence flags, mipmaps, and the library's shared noise texture.
+
+`preset-grid.js` presents the wallpaper default, upstream Paper presets, and named
+configurations for the current shader in a native thumbnail grid below the preview,
+with three to six columns depending on available width.
+Thumbnails use independent captures through the existing renderer queue; a bounded
+texture cache avoids repeated renders. Generation checks discard obsolete work
+when the selected wallpaper changes. Selection compares complete shader parameters,
+so edits cannot leave a stale selection highlight. Saved configurations remain usable
+across collection entries sharing a shader, without modifying the saved copy.
+Saved tiles have a delete icon button on the right of their caption, separate
+from the selection button. Deletion persists before removing the cached PNG;
+a failed settings write leaves the saved entry and preview intact. Deleting a
+preset keeps the current editor configuration and desktop wallpaper unchanged.
+
+The Save Preset dialog captures the current configuration and animation frame,
+shows its preview, and suggests an editable random hex color name such as
+`#A3F07C`. Generated names avoid existing names for the same shader.
+Applying a still or animated wallpaper also saves a named configuration when
+neither the editor settings nor the captured settings match an Original, Paper,
+or saved preset. Matching the editor settings before playback advances prevents
+duplicate saves on repeated applies. A new preset retains the applied frame and
+becomes the selected tile. Auto-save starts after the still wallpaper is applied,
+so failed captures or wallpaper writes do not add presets. A preset save failure
+is reported without cancelling the wallpaper or animation request.
+`saved-presets.js` writes a private PNG
+under the XDG data directory's `wallshader/presets/`, then atomically saves a new
+`savedPresets` entry in state.json. A failed settings write removes the new PNG
+and leaves in-memory state intact. The additive state field retains version 2
+compatibility. Invalid entries are discarded individually during normalization;
+missing or damaged thumbnails are rendered again from their settings. Desktop
+playback and output preferences are independent of these shader configurations.
 
 `images.js` imports images through GdkPixbuf, limits input to 32 MB, normalizes it to
 a PNG at most 2048 pixels per side, and stores it in the app's data directory.

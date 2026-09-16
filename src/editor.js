@@ -20,12 +20,9 @@ function button(icon, tooltip, callback) {
 
 export const ShaderEditor = GObject.registerClass(
   class ShaderEditor extends Gtk.Box {
-    _init({ onChange, onShader, onPreset, onReset, onError, parentWindow }) {
+    _init({ onChange, onError, parentWindow }) {
       super._init({ orientation: Gtk.Orientation.VERTICAL, spacing: 16 });
       this.onChange = onChange;
-      this.onShader = onShader;
-      this.onPreset = onPreset;
-      this.onReset = onReset;
       this.onError = onError;
       this.parentWindow = parentWindow;
       this.numericControls = new Map();
@@ -39,31 +36,6 @@ export const ShaderEditor = GObject.registerClass(
       this.numericControls.clear();
       while (this.get_first_child()) this.remove(this.get_first_child());
       const definition = SHADERS[preset.shader];
-      const shaders = Object.entries(SHADERS).sort((a, b) =>
-        a[1].name.localeCompare(b[1].name),
-      );
-      this.shaderChoice = this._choice(
-        'Shader',
-        shaders.map(([, item]) => item.name),
-        shaders.findIndex(([id]) => id === preset.shader),
-        (index) => this.onShader(shaders[index][0]),
-      );
-      this.append(this.shaderChoice.box);
-      const variantNames = [
-        'Custom / saved',
-        'Wallpaper default',
-        ...definition.presets.map((item) => item.name),
-      ];
-      this.presetChoice = this._choice(
-        'Paper preset',
-        variantNames,
-        preset.paperPreset === null ? 0 : preset.paperPreset + 2,
-        (index) => {
-          if (index === 1) this.onReset();
-          else if (index >= 2) this.onPreset(index - 2);
-        },
-      );
-      this.append(this.presetChoice.box);
       if (definition.hasImage) this.append(this._imageControls());
       this.palette = column(6);
       this.append(this.palette);
@@ -233,9 +205,6 @@ export const ShaderEditor = GObject.registerClass(
     _emit() {
       if (this._updating) return;
       this.preset.paperPreset = null;
-      this._updating = true;
-      this.presetChoice.choice.selected = 0;
-      this._updating = false;
       this.onChange();
     }
 

@@ -60,6 +60,8 @@ for file in \
   extension/app/build/renderer/renderer.js \
   data/third-party/Paper-Shaders-LICENSE \
   data/third-party/Paper-Shaders-NOTICE \
+  data/third-party/Save-Preset-Icon-NOTICE \
+  data/icons/hicolor/scalable/actions/wallshader-save-preset-symbolic.svg \
   COPYING; do
   if [[ ! -s "$install_root/usr/share/wallshader/$file" ]]; then
     printf 'Missing installed runtime asset: %s\n' "$file" >&2

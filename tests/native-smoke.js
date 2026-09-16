@@ -9,6 +9,7 @@ import {
   createPreset,
   fromPaperParams,
   presetIdForShader,
+  normalizePreset,
 } from '../src/catalog.js';
 import { importImage } from '../src/images.js';
 import { exportSettings } from '../src/sharing.js';
@@ -16,6 +17,12 @@ import { showSharingDialog } from '../src/sharing-dialog.js';
 import { ROOT } from '../src/paths.js';
 import { Store, watchDebugInfo } from '../src/storage.js';
 import { pngBytes, savePng } from '../src/wallpaper.js';
+import {
+  deleteNamedPreset,
+  savedPreviewFile,
+  saveNamedPreset,
+} from '../src/saved-presets.js';
+import { presetFingerprint } from '../src/preset-options.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -139,8 +146,27 @@ async function checkAnimatedWallpaper(window) {
       );
       assert(window.wallpaper.canRestore, 'Animated apply must enable restore');
       assert(!window._busy, 'Animated apply left the editor busy');
+      const saved = new Store().state.savedPresets.find(
+        (item) =>
+          presetFingerprint(item.preset) === presetFingerprint(result.preset),
+      );
+      assert(
+        saved &&
+          /^#[0-9A-F]{6}$/.test(saved.name) &&
+          savedPreviewFile(saved.id).query_exists(null) &&
+          window.presetGrid.selectedKey === `saved:${saved.id}`,
+        'Animated apply did not save and select the applied configuration',
+      );
     }
     assert(applied.length === 2, 'Animated reapply did not start animation');
+    const savedCount = window.store.state.savedPresets.length;
+    await window.applyWallpaper();
+    assert(
+      applied.length === 3 &&
+        window.store.state.savedPresets.length === savedCount,
+      'Reapplying a saved animated configuration created a duplicate',
+    );
+    window.preset = { ...window.preset, scale: 2.15 };
     const previous = settings.get_string('picture-uri');
     window.preview.request = function (method, args) {
       if (method === 'capture')
@@ -153,8 +179,10 @@ async function checkAnimatedWallpaper(window) {
       'Capture failure was not reported',
     );
     assert(
-      applied.length === 2 && settings.get_string('picture-uri') === previous,
-      'A failed capture must not start animation or replace the background',
+      applied.length === 3 &&
+        settings.get_string('picture-uri') === previous &&
+        window.store.state.savedPresets.length === savedCount,
+      'A failed capture must not start animation, replace the background, or save a preset',
     );
     window.preview.request = request;
     window.wallpaper.apply = async () => {
@@ -166,8 +194,10 @@ async function checkAnimatedWallpaper(window) {
       'Static wallpaper failure was not reported',
     );
     assert(
-      applied.length === 2 && settings.get_string('picture-uri') === previous,
-      'A failed static wallpaper save must not start animation',
+      applied.length === 3 &&
+        settings.get_string('picture-uri') === previous &&
+        window.store.state.savedPresets.length === savedCount,
+      'A failed static wallpaper save must not start animation or save a preset',
     );
     window.wallpaper.apply = apply;
     window.live.apply = async () => {
@@ -180,8 +210,9 @@ async function checkAnimatedWallpaper(window) {
     );
     assert(
       settings.get_string('picture-uri') !== previous &&
-        window.wallpaper.canRestore,
-      'Animation failure must leave the static first frame and restore backup available',
+        window.wallpaper.canRestore &&
+        window.store.state.savedPresets.length === savedCount + 1,
+      'Animation failure must leave the static first frame, its preset, and restore backup available',
     );
     assert(
       !window._busy && window.applyButton.sensitive,
@@ -197,6 +228,88 @@ async function checkAnimatedWallpaper(window) {
   }
   console.log(
     'Verified animated first-frame wallpaper, reapply, and failure handling.',
+  );
+}
+
+async function checkStillWallpaperPresets(window) {
+  const live = window.live;
+  const showError = window.showError;
+  const request = window.preview.request;
+  const storePath = window.store.path;
+  const errors = [];
+  let frame = 4321;
+  // Keep every wallpaper operation on isolated GSettings, away from real Shell.
+  window.live = { status: { active: false }, async stop() {} };
+  window.showError = (error) => errors.push(error.message);
+  window.preview.request = function (method, args) {
+    if (method === 'state') return Promise.resolve({ frame });
+    return request.call(this, method, args);
+  };
+  window.wallpaperMode.selected = 0;
+  try {
+    const initialCount = window.store.state.savedPresets.length;
+    window.resetPreset();
+    await window.applyWallpaper();
+    window.selectPaperPreset(1);
+    await window.applyWallpaper();
+    assert(
+      window.store.state.savedPresets.length === initialCount,
+      'Applying Original or Paper settings at a later frame added a duplicate preset',
+    );
+    window.preset.scale = 2.37;
+    window._changed();
+    await window.applyWallpaper();
+    const saved = new Store().state.savedPresets.at(-1);
+    assert(
+      errors.length === 0 &&
+        window.store.state.savedPresets.length === initialCount + 1 &&
+        /^#[0-9A-F]{6}$/.test(saved.name) &&
+        saved.preset.frame === frame &&
+        saved.preset.scale === 2.37 &&
+        presetFingerprint(saved.preset) === presetFingerprint(window.preset) &&
+        window.presetGrid.selectedKey === `saved:${saved.id}`,
+      'Still apply did not save and select the exact captured configuration',
+    );
+    const [, bytes] = savedPreviewFile(saved.id).load_contents(null);
+    const expected = await request.call(window.preview, 'thumbnail', {
+      preset: saved.preset,
+    });
+    assert(
+      `data:image/png;base64,${GLib.base64_encode(bytes)}` === expected,
+      'Auto-saved thumbnail does not match its captured frame',
+    );
+    frame = 9876;
+    await window.applyWallpaper();
+    assert(
+      window.store.state.savedPresets.length === initialCount + 1,
+      'Reapplying saved still settings after playback advanced added a duplicate',
+    );
+    // Let the editor's pending save finish before injecting a preset write failure.
+    await settle();
+    window.preset = { ...window.preset, scale: 3.14 };
+    window.store.path = savedPreviewFile(saved.id).get_parent().get_path();
+    const previous = window.wallpaper.settings.get_string('picture-uri');
+    await window.applyWallpaper();
+    assert(
+      errors.length === 1 &&
+        errors[0].startsWith(
+          'Wallpaper applied, but the preset could not be saved:',
+        ) &&
+        window.store.state.savedPresets.length === initialCount + 1 &&
+        window.wallpaper.settings.get_string('picture-uri') !== previous &&
+        !window._busy &&
+        window.applyButton.sensitive,
+      'A preset write failure must be reported while leaving the applied wallpaper usable',
+    );
+  } finally {
+    window.store.path = storePath;
+    window.live = live;
+    window.showError = showError;
+    window.preview.request = request;
+    window._syncAvailability();
+  }
+  console.log(
+    'Verified still wallpaper auto-save, exact previews, built-in/reapply deduplication, and save failures.',
   );
 }
 
@@ -313,6 +426,221 @@ async function checkDebugInfo(window) {
   );
 }
 
+async function checkSavedPresets(window, artifacts) {
+  const initial = normalizePreset(window.preset.id, window.preset);
+  const background = window.wallpaper.settings.get_string('picture-uri');
+  await window.selectPreset('aurora');
+  window.editor.numericControls.get('params.distortion').spin.set_value(0.63);
+  window.editor.numericControls.get('speed').spin.set_value(-0.75);
+  assert(
+    window.savePresetButton.get_next_sibling() === window.exportButton,
+    'Save preset button must sit immediately left of export',
+  );
+  window.savePresetButton.emit('clicked');
+  const dialog = window.savePresetDialog;
+  assert(dialog, 'Save button did not open the dialog');
+  await dialog.ready;
+  assert(dialog.picture.get_paintable(), 'Save dialog has no preview');
+  assert(
+    /^#[0-9A-F]{6}$/.test(dialog.nameEntry.text) && dialog.saveButton.sensitive,
+    'Save dialog must suggest a usable random hex color name',
+  );
+  dialog.nameEntry.set_text('   ');
+  assert(!dialog.saveButton.sensitive, 'Blank names must not be saved');
+  dialog.nameEntry.set_text('Violet Bloom');
+  assert(
+    dialog.saveButton.sensitive,
+    'A named configuration could not be saved',
+  );
+  if (artifacts)
+    await screenshot(window, `${artifacts}/save-preset-dialog.png`);
+  const expected = presetFingerprint(dialog.snapshot.preset);
+  const preview = dialog.snapshot.preview;
+  dialog.saveButton.emit('clicked');
+  const saved = await dialog.saveTask;
+  assert(saved?.name === 'Violet Bloom', 'Save dialog did not save its name');
+  await settle();
+  const persisted = new Store().state.savedPresets.find(
+    (item) => item.id === saved.id,
+  );
+  assert(
+    presetFingerprint(persisted.preset) === expected,
+    'Saved parameters did not survive a reload',
+  );
+  const [, bytes] = savedPreviewFile(saved.id).load_contents(null);
+  assert(
+    `data:image/png;base64,${GLib.base64_encode(bytes)}` === preview,
+    'Saved thumbnail differs from the dialog preview',
+  );
+  await window.presetGrid.ready;
+  assert(
+    window.presetGrid.cards.get(`saved:${saved.id}`).picture.get_paintable(),
+    'Saved thumbnail was not added to the grid',
+  );
+  assert(
+    window.presetGrid.selectedKey === `saved:${saved.id}`,
+    'Saved preset is not selected',
+  );
+  const count = window.store.state.savedPresets.length;
+  const cancelled = window.showSavePreset();
+  cancelled.close();
+  await cancelled.ready;
+  await settle();
+  assert(
+    window.store.state.savedPresets.length === count,
+    'Cancel saved a configuration',
+  );
+  let rejected = false;
+  try {
+    saveNamedPreset(window.store, ' violet bloom ', saved.preset, preview);
+  } catch {
+    rejected = true;
+  }
+  assert(
+    rejected && window.store.state.savedPresets.length === count,
+    'Duplicate names silently replaced a configuration',
+  );
+  const originalPath = window.store.path;
+  const previewDirectory = savedPreviewFile(saved.id).get_parent();
+  const countPreviews = () => {
+    const entries = previewDirectory.enumerate_children(
+      'standard::name',
+      Gio.FileQueryInfoFlags.NONE,
+      null,
+    );
+    let total = 0;
+    while (entries.next_file(null)) total++;
+    entries.close(null);
+    return total;
+  };
+  const previewCount = countPreviews();
+  try {
+    window.store.path = previewDirectory.get_path();
+    rejected = false;
+    try {
+      saveNamedPreset(window.store, 'Cannot write', saved.preset, preview);
+    } catch {
+      rejected = true;
+    }
+    assert(
+      rejected &&
+        window.store.state.savedPresets.length === count &&
+        countPreviews() === previewCount,
+      'A failed save left a phantom preset or preview',
+    );
+    const beforeDelete = window.store.state;
+    rejected = false;
+    try {
+      deleteNamedPreset(window.store, saved.id);
+    } catch {
+      rejected = true;
+    }
+    assert(
+      rejected &&
+        window.store.state === beforeDelete &&
+        savedPreviewFile(saved.id).query_exists(null) &&
+        new Store().state.savedPresets.some((item) => item.id === saved.id),
+      'A failed delete removed the saved configuration or its preview',
+    );
+  } finally {
+    window.store.path = originalPath;
+  }
+  window.editor.numericControls.get('params.distortion').spin.set_value(0.12);
+  assert(
+    window.presetGrid.selectedKey === null,
+    'Editing kept an inaccurate selection highlight',
+  );
+  assert(
+    presetFingerprint(window.store.state.savedPresets[0].preset) === expected,
+    'Editing mutated the named configuration',
+  );
+  window.presetGrid.cards.get('paper:1').card.emit('clicked');
+  assert(
+    window.preset.paperPreset === 1,
+    'Paper thumbnail did not select its settings',
+  );
+  await window.selectPreset('moss');
+  window.presetGrid.cards.get(`saved:${saved.id}`).card.emit('clicked');
+  assert(
+    presetFingerprint(window.preset) === expected,
+    'Saved tile did not restore the complete configuration',
+  );
+  await window.presetGrid.ready;
+  if (artifacts) {
+    const style = Adw.StyleManager.get_default();
+    style.color_scheme = Adw.ColorScheme.FORCE_LIGHT;
+    await screenshot(window, `${artifacts}/preset-grid-light.png`);
+    style.color_scheme = Adw.ColorScheme.FORCE_DARK;
+    await screenshot(window, `${artifacts}/preset-grid-dark.png`);
+    style.color_scheme = Adw.ColorScheme.DEFAULT;
+  }
+  const other = saveNamedPreset(
+    window.store,
+    'Temporary preset',
+    { ...saved.preset, speed: 2 },
+    preview,
+  );
+  window.presetGrid.setPreset(window.preset, window.store.state.savedPresets);
+  const otherTile = window.presetGrid.cards.get(`saved:${other.id}`);
+  assert(
+    otherTile.deleteButton &&
+      !otherTile.card.is_ancestor(otherTile.deleteButton) &&
+      !otherTile.deleteButton.is_ancestor(otherTile.card),
+    'Delete must be an independent control beside preset selection',
+  );
+  assert(
+    [...window.presetGrid.cards].every(
+      ([key, tile]) => key.startsWith('saved:') || !tile.deleteButton,
+    ),
+    'Built-in presets must not offer deletion',
+  );
+  otherTile.deleteButton.emit('clicked');
+  assert(
+    !window.presetGrid.cards.has(`saved:${other.id}`) &&
+      !new Store().state.savedPresets.some((item) => item.id === other.id) &&
+      !savedPreviewFile(other.id).query_exists(null) &&
+      savedPreviewFile(saved.id).query_exists(null) &&
+      window.presetGrid.selectedKey === `saved:${saved.id}` &&
+      presetFingerprint(window.preset) === expected,
+    'Deleting another preset changed the selection or left saved files behind',
+  );
+  await window.selectPreset('ribbon');
+  assert(
+    !window.presetGrid.cards.has(`saved:${saved.id}`),
+    'Saved preset appeared under a different shader',
+  );
+  // A missing preview can be regenerated without losing the named settings.
+  savedPreviewFile(saved.id).delete(null);
+  window.presetGrid._cache.clear();
+  await window.selectPreset('aurora');
+  await window.presetGrid.ready;
+  assert(
+    window.presetGrid.cards.get(`saved:${saved.id}`).picture.get_paintable(),
+    'A missing saved thumbnail did not recover',
+  );
+  window.selectSavedPreset(saved.id);
+  const current = JSON.stringify(window.preset);
+  window.presetGrid.cards.get(`saved:${saved.id}`).deleteButton.emit('clicked');
+  assert(
+    !window.presetGrid.cards.has(`saved:${saved.id}`) &&
+      window.presetGrid.selectedKey === null &&
+      !new Store().state.savedPresets.some((item) => item.id === saved.id) &&
+      JSON.stringify(window.preset) === current,
+    'Deleting the selected preset with a missing thumbnail changed the editor or failed to persist',
+  );
+  assert(
+    window.wallpaper.settings.get_string('picture-uri') === background,
+    'Saving, browsing, or deleting configurations changed the wallpaper',
+  );
+  await window.selectPreset(initial.id);
+  window.preset = initial;
+  window._refreshSelection();
+  window._changed();
+  console.log(
+    'Verified preset grid, named save dialog, immutable persistence, deletion, cancellation and failed writes.',
+  );
+}
+
 export async function run(window) {
   assert(
     GLib.getenv('GSETTINGS_BACKEND') === 'memory',
@@ -343,6 +671,7 @@ export async function run(window) {
   if (artifacts) GLib.mkdir_with_parents(artifacts, 0o755);
   await checkAnimatedPreview(window, artifacts);
   await checkDebugInfo(window);
+  await checkSavedPresets(window, artifacts);
   if (artifacts) {
     const style = Adw.StyleManager.get_default();
     style.color_scheme = Adw.ColorScheme.FORCE_LIGHT;
@@ -380,11 +709,11 @@ export async function run(window) {
     console.log(`Rendered ${preset.name}: 640 × 360`);
   }
   await window.selectPreset('aurora');
-  window._changeFrame();
+  const frame = window.preset.frame + 8000;
+  window.editor.numericControls.get('frame').spin.set_value(frame);
   assert(
-    window.editor.numericControls.get('frame').spin.get_value() ===
-      window.preset.frame,
-    'Frame input did not follow the next-frame button',
+    window.preset.frame === frame,
+    'Frame input did not update the preview settings',
   );
   const dialog = showSharingDialog(window, {
     title: 'Wallpaper Settings',
@@ -501,6 +830,7 @@ export async function run(window) {
   settings.set_string('picture-uri-dark', 'file:///tmp/original-dark.png');
   settings.set_string('picture-options', 'scaled');
   await checkAnimatedWallpaper(window);
+  await checkStillWallpaperPresets(window);
   const file = await window.wallpaper.apply(still, 'aurora');
   assert(
     settings.get_string('picture-uri') === file.get_uri(),

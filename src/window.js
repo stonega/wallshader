@@ -18,9 +18,17 @@ import { Preview } from './preview.js';
 import { LiveWallpaper } from './live.js';
 import { AspectBox } from './aspect.js';
 import { ShaderEditor } from './editor.js';
+import { PresetGrid } from './preset-grid.js';
 import { fromPaperParams, presetIdForShader } from './catalog.js';
 import { exportSettings, paperCode, parseSettings } from './sharing.js';
 import { showSharingDialog } from './sharing-dialog.js';
+import { SavePresetDialog } from './save-preset-dialog.js';
+import { deleteNamedPreset, saveNamedPreset } from './saved-presets.js';
+import {
+  presetOptions,
+  randomPresetName,
+  selectedPresetKey,
+} from './preset-options.js';
 
 const vertical = (spacing = 0, props = {}) =>
   new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL, spacing, ...props });
@@ -94,6 +102,7 @@ export const WallshaderWindow = GObject.registerClass(
         if (this._saveTimeout) GLib.source_remove(this._saveTimeout);
         this._saveTimeout = null;
         this._save();
+        this.presetGrid.close();
         this.preview.close();
         this.live.close();
         return false;
@@ -164,22 +173,38 @@ export const WallshaderWindow = GObject.registerClass(
       content.append(this.search);
 
       const titleRow = new Gtk.Box({ spacing: 12, margin_bottom: 16 });
-      const titles = vertical(5, { hexpand: true });
-      this.nameLabel = label(this.preset.name, ['title-1']);
-      this.descriptionLabel = label(this.preset.description, ['subtitle'], {
-        wrap: true,
+      this.nameLabel = label(this.preset.name, ['title-1'], {
+        hexpand: true,
       });
-      titles.append(this.nameLabel);
-      titles.append(this.descriptionLabel);
-      titleRow.append(titles);
+      titleRow.append(this.nameLabel);
+      this.exportButton = iconButton(
+        'image-x-generic-symbolic',
+        'Export PNG…',
+        () => this.exportPng(),
+      );
+      this.savePresetButton = iconButton(
+        'wallshader-save-preset-symbolic',
+        'Save Preset…',
+        () => this.showSavePreset(),
+      );
+      this.resetButton = iconButton('edit-undo-symbolic', 'Reset Changes', () =>
+        this.resetPreset(),
+      );
       this.favoriteButton = iconButton(
         'non-starred-symbolic',
         'Add to favorites',
         () => this._toggleFavorite(),
       );
-      this.favoriteButton.set_valign(Gtk.Align.CENTER);
-      this.favoriteButton.add_css_class('flat');
-      titleRow.append(this.favoriteButton);
+      for (const button of [
+        this.savePresetButton,
+        this.exportButton,
+        this.resetButton,
+        this.favoriteButton,
+      ]) {
+        button.set_valign(Gtk.Align.CENTER);
+        button.add_css_class('flat');
+        titleRow.append(button);
+      }
       content.append(titleRow);
 
       this.previewFrame = new AspectBox({
@@ -194,12 +219,9 @@ export const WallshaderWindow = GObject.registerClass(
         title: 'Preview unavailable',
       });
       this.previewStack.add_named(this.errorPage, 'error');
-      this.previewFrame.set_child(this.previewStack);
+      this.previewOverlay = new Gtk.Overlay({ child: this.previewStack });
+      this.previewFrame.set_child(this.previewOverlay);
       content.append(this.previewFrame);
-      const previewBar = new Gtk.Box({
-        spacing: 8,
-        css_classes: ['preview-toolbar'],
-      });
       this.pauseButton = iconButton(
         this._paused
           ? 'media-playback-start-symbolic'
@@ -207,31 +229,34 @@ export const WallshaderWindow = GObject.registerClass(
         this._paused ? 'Play preview' : 'Pause preview',
         () => this._togglePause(),
       );
-      this.pauseButton.add_css_class('flat');
-      previewBar.append(this.pauseButton);
-      this.frameButton = iconButton(
-        'media-skip-forward-symbolic',
-        'Try another frame',
-        () => this._changeFrame(),
-      );
-      this.frameButton.add_css_class('flat');
-      previewBar.append(this.frameButton);
-      this.previewStatus = label('Starting preview…', ['preview-status'], {
-        hexpand: true,
-      });
-      previewBar.append(this.previewStatus);
-      this.shaderLabel = label(SHADERS[this.preset.shader].name, [
-        'preview-status',
+      this.pauseButton.set_css_classes([
+        'flat',
+        'circular',
+        'preview-playback',
       ]);
-      previewBar.append(this.shaderLabel);
-      content.append(previewBar);
+      this.pauseButton.set_halign(Gtk.Align.START);
+      this.pauseButton.set_valign(Gtk.Align.END);
+      this.pauseButton.set_margin_start(12);
+      this.pauseButton.set_margin_bottom(12);
+      this.previewOverlay.add_overlay(this.pauseButton);
 
-      const galleryHeader = new Gtk.Box({ css_classes: ['gallery-heading'] });
-      galleryHeader.append(label('Collection', ['title-3'], { hexpand: true }));
-      this.countLabel = label(`${PRESETS.length} wallpapers`, ['dim-label']);
-      galleryHeader.append(this.countLabel);
-      content.append(galleryHeader);
-      const filters = new Gtk.Box({ spacing: 6, margin_bottom: 10 });
+      this.presetGrid = new PresetGrid({
+        onSelect: (option) => {
+          if (option.savedId) this.selectSavedPreset(option.savedId);
+          else if (option.key === 'default') this.resetPreset();
+          else this.selectPaperPreset(option.index);
+        },
+        onDelete: (id) => this.deleteSavedPreset(id),
+        renderThumbnail: (preset) =>
+          this.preview.request('thumbnail', { preset }),
+      });
+      this.presetGrid.set_margin_top(16);
+      content.append(this.presetGrid);
+
+      const filters = new Gtk.Box({
+        spacing: 6,
+        css_classes: ['gallery-heading'],
+      });
       const categories = [
         'All',
         'Gradients',
@@ -249,6 +274,11 @@ export const WallshaderWindow = GObject.registerClass(
         this._filter();
       });
       filters.append(category);
+      this.countLabel = label(`${PRESETS.length} wallpapers`, ['dim-label'], {
+        hexpand: true,
+        xalign: 1,
+      });
+      filters.append(this.countLabel);
       content.append(filters);
       this.gallery = new Gtk.FlowBox({
         selection_mode: Gtk.SelectionMode.NONE,
@@ -288,7 +318,7 @@ export const WallshaderWindow = GObject.registerClass(
           icon_name: 'starred-symbolic',
           pixel_size: 12,
           visible: false,
-          css_classes: ['dim-label'],
+          css_classes: ['favorite-star'],
         });
         caption.append(star);
         box.append(caption);
@@ -337,22 +367,65 @@ export const WallshaderWindow = GObject.registerClass(
       this.editor = new ShaderEditor({
         parentWindow: this,
         onChange: () => this._changed(),
-        onShader: (id) => this.selectPreset(presetIdForShader(id)),
-        onPreset: (index) => this.selectPaperPreset(index),
-        onReset: () => this.resetPreset(),
         onError: (error) => this.showError(error),
       });
       this.inspector.append(this.editor);
-      this.inspector.append(label('Wallpaper', ['section-label']));
+      this.wallpaperSettings = this._buildWallpaperSettings();
+      const actions = new Gtk.Box({
+        spacing: 8,
+        css_classes: ['export-actions'],
+      });
+      this.applyButton = new Gtk.Button({
+        label: 'Set as Wallpaper',
+        hexpand: true,
+        css_classes: ['suggested-action', 'pill'],
+        tooltip_text: 'Apply this frame to your GNOME desktop',
+      });
+      this.applyButton.connect('clicked', () => this.applyWallpaper());
+      actions.append(this.applyButton);
+      this.wallpaperSettingsButton = iconButton(
+        'emblem-system-symbolic',
+        'Wallpaper Settings',
+        () => this.wallpaperSettings.present(this),
+      );
+      this.wallpaperSettingsButton.add_css_class('circular');
+      this.wallpaperSettingsButton.add_css_class('wallpaper-settings');
+      this.wallpaperSettingsButton.set_valign(Gtk.Align.CENTER);
+      actions.append(this.wallpaperSettingsButton);
+      actions.set_margin_start(18);
+      actions.set_margin_end(18);
+      actions.set_margin_bottom(14);
+      toolbar.add_bottom_bar(actions);
+      scroll.set_child(this.inspector);
+      toolbar.set_content(scroll);
+      return toolbar;
+    }
+
+    _buildWallpaperSettings() {
+      const dialog = new Adw.Dialog({
+        title: 'Wallpaper Settings',
+        content_width: 400,
+        content_height: 440,
+      });
+      const toolbar = new Adw.ToolbarView();
+      toolbar.add_top_bar(new Adw.HeaderBar());
+      const content = vertical(0, {
+        margin_start: 24,
+        margin_end: 24,
+        margin_top: 12,
+        margin_bottom: 24,
+      });
+      content.append(label('Wallpaper mode', ['heading']));
       this.wallpaperMode = new Gtk.DropDown({
         model: Gtk.StringList.new(['Still image', 'Animated shader']),
+        selected: 1,
         tooltip_text: 'Wallpaper mode',
         margin_top: 8,
       });
       this.wallpaperMode.connect('notify::selected', () =>
         this._updateLiveStatus(),
       );
-      this.inspector.append(this.wallpaperMode);
+      content.append(this.wallpaperMode);
       this.liveOptions = vertical(8, { margin_top: 10, visible: false });
       this.liveOptions.append(
         label('Animation frame rate', ['dim-label', 'caption']),
@@ -382,7 +455,8 @@ export const WallshaderWindow = GObject.registerClass(
       liveActions.append(this.livePauseButton);
       liveActions.append(this.liveStopButton);
       this.liveOptions.append(liveActions);
-      this.inspector.append(this.liveOptions);
+      content.append(this.liveOptions);
+      content.append(label('Output resolution', ['section-label']));
       const resolutions = Gtk.StringList.new([
         'This display',
         '1920 × 1080',
@@ -396,45 +470,25 @@ export const WallshaderWindow = GObject.registerClass(
         margin_top: 8,
       });
       this.resolution.connect('notify::selected', () => this._updateRatio());
-      this.inspector.append(this.resolution);
+      content.append(this.resolution);
       this.wallpaperHint = label(
         'Applies a still image to light and dark appearances.',
         ['dim-label', 'caption'],
         { wrap: true, margin_top: 10 },
       );
-      this.inspector.append(this.wallpaperHint);
-      const actions = vertical(8, { css_classes: ['export-actions'] });
-      this.applyButton = new Gtk.Button({
-        label: 'Set as Wallpaper',
-        css_classes: ['suggested-action', 'pill'],
-        tooltip_text: 'Apply this frame to your GNOME desktop',
+      content.append(this.wallpaperHint);
+      const scroll = new Gtk.ScrolledWindow({
+        hscrollbar_policy: Gtk.PolicyType.NEVER,
+        child: content,
       });
-      this.applyButton.connect('clicked', () => this.applyWallpaper());
-      actions.append(this.applyButton);
-      this.exportButton = new Gtk.Button({
-        label: 'Export PNG…',
-        css_classes: ['pill'],
-      });
-      this.exportButton.connect('clicked', () => this.exportPng());
-      actions.append(this.exportButton);
-      this.resetButton = new Gtk.Button({
-        label: 'Reset Changes',
-        css_classes: ['flat'],
-        margin_top: 6,
-      });
-      this.resetButton.connect('clicked', () => this.resetPreset());
-      actions.append(this.resetButton);
-      actions.set_margin_start(18);
-      actions.set_margin_end(18);
-      actions.set_margin_bottom(14);
-      toolbar.add_bottom_bar(actions);
-      scroll.set_child(this.inspector);
       toolbar.set_content(scroll);
-      return toolbar;
+      dialog.set_child(toolbar);
+      return dialog;
     }
 
     _buildControls() {
       this.editor.setPreset(this.preset);
+      this.presetGrid.setPreset(this.preset, this.store.state.savedPresets);
     }
 
     _updateLiveStatus() {
@@ -467,6 +521,8 @@ export const WallshaderWindow = GObject.registerClass(
     }
 
     selectPaperPreset(index) {
+      if (this._busy) return;
+      this.presetGrid.preferredKey = `paper:${index}`;
       const variant = SHADERS[this.preset.shader].presets[index];
       this.preset = fromPaperParams(
         this.preset.id,
@@ -475,6 +531,72 @@ export const WallshaderWindow = GObject.registerClass(
       );
       this._refreshSelection();
       this._changed();
+    }
+
+    selectSavedPreset(id) {
+      if (this._busy) return;
+      const saved = this.store.state.savedPresets.find(
+        (item) => item.id === id,
+      );
+      if (!saved || saved.preset.shader !== this.preset.shader) return;
+      this.preset = normalizePreset(this.preset.id, saved.preset);
+      this.presetGrid.preferredKey = `saved:${id}`;
+      this._refreshSelection();
+      this._changed();
+    }
+
+    deleteSavedPreset(id) {
+      if (this._busy) return;
+      try {
+        const saved = deleteNamedPreset(this.store, id);
+        if (!saved) return;
+        this.presetGrid.setPreset(this.preset, this.store.state.savedPresets);
+        this.toasts.add_toast(
+          new Adw.Toast({ title: `Deleted “${saved.name}”` }),
+        );
+      } catch (error) {
+        this.showError(error);
+      }
+    }
+
+    showSavePreset() {
+      if (this._busy || !this._ready || this._selectionError) return null;
+      if (this.savePresetDialog) {
+        this.savePresetDialog.present(this);
+        return this.savePresetDialog;
+      }
+      const preset = normalizePreset(this.preset.id, this.preset);
+      const dialog = new SavePresetDialog({
+        name: randomPresetName(preset, this.store.state.savedPresets),
+        loadPreview: async () => {
+          const state = await this.preview.request('state');
+          preset.frame = normalizePreset(preset.id, {
+            ...preset,
+            frame: state.frame,
+          }).frame;
+          const preview = await this.preview.request('thumbnail', { preset });
+          return { preset, preview };
+        },
+        onSave: (name, snapshot) => {
+          const saved = saveNamedPreset(
+            this.store,
+            name,
+            snapshot.preset,
+            snapshot.preview,
+          );
+          this.selectSavedPreset(saved.id);
+          this.toasts.add_toast(
+            new Adw.Toast({ title: `Saved “${saved.name}”` }),
+          );
+          return saved;
+        },
+      });
+      this.savePresetDialog = dialog;
+      dialog.connect('closed', () => {
+        this.savePresetDialog = null;
+      });
+      dialog.present(this);
+      return dialog;
     }
 
     importSettings(source) {
@@ -518,7 +640,6 @@ export const WallshaderWindow = GObject.registerClass(
       this._ready = true;
       this._updateRatio();
       this._syncAvailability();
-      this._updateStatus();
       if (this.store.warning) this.showError(new Error(this.store.warning));
       for (const item of PRESETS) {
         if (this._closed) return;
@@ -546,13 +667,11 @@ export const WallshaderWindow = GObject.registerClass(
         if (generation === this._renderGeneration && !this._closed) {
           this._selectionError = false;
           this._syncAvailability();
-          this._updateStatus();
         }
       } catch (error) {
         if (generation !== this._renderGeneration || this._closed) return;
         this._selectionError = true;
         this._syncAvailability();
-        this._updateStatus();
         this.showError(error);
       }
     }
@@ -570,8 +689,6 @@ export const WallshaderWindow = GObject.registerClass(
 
     _refreshSelection() {
       this.nameLabel.set_label(this.preset.name);
-      this.descriptionLabel.set_label(this.preset.description);
-      this.shaderLabel.set_label(SHADERS[this.preset.shader].name);
       this._buildControls();
       this._refreshFavorites();
       for (const [id, { card }] of this._cards) {
@@ -595,6 +712,8 @@ export const WallshaderWindow = GObject.registerClass(
       this.favoriteButton.set_icon_name(
         favorite ? 'starred-symbolic' : 'non-starred-symbolic',
       );
+      if (favorite) this.favoriteButton.add_css_class('favorite-star');
+      else this.favoriteButton.remove_css_class('favorite-star');
       this.favoriteButton.set_tooltip_text(
         favorite ? 'Remove from favorites' : 'Add to favorites',
       );
@@ -625,9 +744,9 @@ export const WallshaderWindow = GObject.registerClass(
     }
 
     _changed() {
+      this.presetGrid.setPreset(this.preset, this.store.state.savedPresets);
       this._remember();
       if (this._ready) this._renderPreset();
-      this._updateStatus();
       this._saveSoon();
     }
 
@@ -661,6 +780,7 @@ export const WallshaderWindow = GObject.registerClass(
     }
 
     resetPreset() {
+      this.presetGrid.preferredKey = 'default';
       this.preset = createPreset(this.preset.id);
       this._refreshSelection();
       this._changed();
@@ -679,12 +799,12 @@ export const WallshaderWindow = GObject.registerClass(
       this.pauseButton.set_tooltip_text(
         this._paused ? 'Play preview' : 'Pause preview',
       );
-      this._updateStatus();
       try {
         await this.preview.pause(this._paused);
         if (this._paused) {
           this.preset.frame = (await this.preview.request('state')).frame;
           this.editor.syncFrame(this.preset.frame);
+          this.presetGrid.syncSelection(this.preset);
           this._saveSoon();
         }
       } catch (error) {
@@ -692,20 +812,6 @@ export const WallshaderWindow = GObject.registerClass(
       }
     }
 
-    _changeFrame() {
-      this.preset.frame += 8000;
-      this.editor.syncFrame(this.preset.frame);
-      this._changed();
-    }
-    _updateStatus() {
-      this.previewStatus.set_label(
-        this._selectionError
-          ? 'Preview could not update'
-          : this._paused || this.preset.speed === 0
-            ? 'Preview paused'
-            : 'Live preview',
-      );
-    }
     _previewError(error) {
       this._ready = false;
       if (this.errorPage) {
@@ -721,12 +827,13 @@ export const WallshaderWindow = GObject.registerClass(
       for (const widget of [
         this.applyButton,
         this.exportButton,
+        this.savePresetButton,
         this.pauseButton,
-        this.frameButton,
       ])
         widget.set_sensitive(available);
       for (const widget of [
         this.editor,
+        this.presetGrid,
         this.resolution,
         this.resetButton,
         this.gallery,
@@ -783,8 +890,16 @@ export const WallshaderWindow = GObject.registerClass(
       try {
         // A failed image selection must never export the previously shown shader.
         await this.preview.select(this.preset);
-        const data = await this.preview.request('capture', this._dimensions());
-        await action(data);
+        const state = await this.preview.request('state');
+        const preset = normalizePreset(this.preset.id, {
+          ...this.preset,
+          frame: state.frame,
+        });
+        const data = await this.preview.request('capture', {
+          ...this._dimensions(),
+          frame: preset.frame,
+        });
+        await action(data, preset);
       } catch (error) {
         this.showError(error);
       } finally {
@@ -794,12 +909,44 @@ export const WallshaderWindow = GObject.registerClass(
       }
     }
 
+    async _saveAppliedPreset(preset) {
+      try {
+        const savedPresets = this.store.state.savedPresets;
+        const options = presetOptions(this.preset, savedPresets);
+        // Playback advancing alone must not create another preset.
+        if (
+          selectedPresetKey(options, this.preset) ||
+          selectedPresetKey(options, preset)
+        )
+          return;
+        const preview = await this.preview.request('thumbnail', { preset });
+        const saved = saveNamedPreset(
+          this.store,
+          randomPresetName(preset, this.store.state.savedPresets),
+          preset,
+          preview,
+        );
+        this.preset = normalizePreset(preset.id, preset);
+        this.presetGrid.preferredKey = `saved:${saved.id}`;
+        this._refreshSelection();
+        this._remember();
+        this._saveSoon();
+      } catch (error) {
+        this.showError(
+          new Error(
+            `Wallpaper applied, but the preset could not be saved: ${error.message}`,
+          ),
+        );
+      }
+    }
+
     applyWallpaper() {
       if (this.wallpaperMode.selected === 1)
         return this.applyAnimatedWallpaper();
-      return this._capture(async (data) => {
+      return this._capture(async (data, preset) => {
         await this.live.stop();
-        await this.wallpaper.apply(data, this.preset.id);
+        await this.wallpaper.apply(data, preset.id);
+        await this._saveAppliedPreset(preset);
         this.toasts.add_toast(
           new Adw.Toast({
             title: `${this.preset.name} set as wallpaper`,
@@ -828,6 +975,7 @@ export const WallshaderWindow = GObject.registerClass(
           frame: preset.frame,
         });
         await this.wallpaper.apply(data, preset.id);
+        await this._saveAppliedPreset(preset);
         await this.live.apply(preset, this.liveFps.selected === 1 ? 60 : 30);
         this.toasts.add_toast(
           new Adw.Toast({

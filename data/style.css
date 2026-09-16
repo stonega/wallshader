@@ -6,12 +6,16 @@
   border-radius: 14px;
   background: #171346;
 }
-.preview-toolbar {
-  padding: 10px 0;
+.preview-playback {
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #ffffff;
 }
-.preview-status {
-  font-size: 12px;
-  opacity: 0.65;
+.preview-playback:hover {
+  background: rgba(0, 0, 0, 0.6);
 }
 .gallery-heading {
   margin-top: 22px;
@@ -32,15 +36,14 @@
 .gallery-card .card-label label {
   font-weight: 600;
 }
-.gallery-card.selected .thumbnail {
-  outline: 3px solid @accent_bg_color;
-  outline-offset: -3px;
-}
 .gallery-card.selected .card-label label {
   color: @accent_color;
 }
 .gallery-card:hover .thumbnail {
   filter: brightness(1.08);
+}
+.favorite-star {
+  color: #f5c211;
 }
 .inspector {
   padding: 18px;
@@ -73,9 +76,15 @@
 .export-actions {
   margin-top: 22px;
 }
+.wallpaper-settings {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+}
 .attribution {
   margin-top: 24px;
   font-size: 12px;
+  color: @window_fg_color;
 }
 .subtitle {
   opacity: 0.6;
@@ -98,4 +107,36 @@ flowboxchild:selected {
   border-radius: 999px;
   padding: 5px 12px;
   min-height: 24px;
+}
+.preset-grid flowboxchild {
+  padding: 0;
+}
+.preset-card {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border-radius: 8px;
+  background: alpha(@window_fg_color, 0.08);
+}
+.preset-card:checked .preset-caption label {
+  color: @accent_color;
+}
+.preset-card:hover {
+  background: alpha(@window_fg_color, 0.14);
+}
+.preset-caption {
+  min-height: 20px;
+  padding: 4px 5px;
+  font-size: 11px;
+  font-weight: normal;
+}
+.preset-delete {
+  min-width: 20px;
+  min-height: 20px;
+  padding: 0;
+  border-radius: 4px;
+}
+.saved-preset-preview {
+  border-radius: 10px;
+  background: alpha(@window_fg_color, 0.08);
 }

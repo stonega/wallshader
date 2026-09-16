@@ -1,0 +1,11 @@
+Save Preset icon
+
+Source: user-supplied SVG, preserved in data/icons/sources/save-preset.svg.
+Bundled icon: data/icons/hicolor/scalable/actions/wallshader-save-preset-symbolic.svg
+
+The original 24 × 24 viewBox, proportions, and round joins/caps are preserved.
+The stroke is increased from 1.5 to 2.5 units for a bolder toolbar icon, as requested.
+The strokes are expanded to filled paths for native
+symbolic recoloring on GTK 4.14 and later. The conversion used Skia's
+getFillPath (skia-python 144.0.post2, resScale 16), with conics converted
+to quadratic curves at subdivision level 3 and six-decimal coordinates.

@@ -16,6 +16,7 @@ renderer = custom_target('paper-renderer',
 
 install_subdir('src', install_dir: appdir, exclude_directories: ['renderer'])
 install_data('data/style.css', install_dir: appdir / 'data')
+install_subdir('data/icons/hicolor', install_dir: appdir / 'data/icons')
 install_subdir('data/third-party', install_dir: appdir / 'data')
 install_subdir('build/extension', install_dir: appdir)
 install_data('COPYING', install_dir: appdir)

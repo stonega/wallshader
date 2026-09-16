@@ -1,5 +1,7 @@
 # Wallshader
 
+[![Listed on Vibe GNOME](https://vibe-gnome.org/badges/listed-on-vibe-gnome-light.svg)](https://vibe-gnome.org/)
+
 A native GNOME wallpaper app, written in **GJS, GTK 4, and libadwaita**, using
 [Paper Shaders](https://github.com/paper-design/shaders).
 

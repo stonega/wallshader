@@ -189,8 +189,8 @@ tags that do not match the package and Meson versions. Commit the release change
 then push the version tag, for example:
 
 ```sh
-git tag v0.1.1
-git push origin v0.1.1
+git tag v0.1.2
+git push origin v0.1.2
 ```
 
 To reproduce the packages locally, install the normal build tools plus
@@ -202,7 +202,7 @@ bun install --frozen-lockfile
 bun run package
 ```
 
-Pass an explicit tag with `bun run package v0.1.1` to perform the release-version
+Pass an explicit tag with `bun run package v0.1.2` to perform the release-version
 check. Outputs are written to `dist/`. The script rebuilds the renderer and
 extension, stages Meson's `/usr` installation in a temporary `DESTDIR`, validates
 the launcher and required assets, and packages that staging tree. It does not
@@ -215,11 +215,11 @@ updates; the DEB refreshes those caches when installed or removed.
 
 For a manual archive installation, install the runtime dependencies listed in the
 README first, then extract the chosen archive and copy its `usr/` contents into
-`/usr/`. For version 0.1.1:
+`/usr/`. For version 0.1.2:
 
 ```sh
-tar --zstd -xf wallshader-v0.1.1.tar.zst
-sudo cp -a wallshader-v0.1.1/usr/. /usr/
+tar --zstd -xf wallshader-v0.1.2.tar.zst
+sudo cp -a wallshader-v0.1.2/usr/. /usr/
 sudo update-desktop-database /usr/share/applications
 sudo gtk-update-icon-cache -f -t /usr/share/icons/hicolor
 ```

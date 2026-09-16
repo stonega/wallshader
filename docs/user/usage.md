@@ -1,8 +1,9 @@
 # Using Wallshader
 
 1. Choose a wallpaper from the collection. Use search or the category tabs above
-   the gallery to narrow it down: **Gradients** (selected initially), **Patterns**,
-   **Image filters**, **Logo effects**, and **Favorites**. Scroll the tabs
+   the gallery to narrow it down: **Effects** (selected initially), **Image Filters**,
+   and **Logo Animations**, matching [Paper's groups](https://shaders.paper.design/),
+   plus your **Favorites**. Effects includes gradients and patterns. Scroll the tabs
    horizontally if they do not all fit. Each template thumbnail shows its first
    **Original** preset.
    Selecting a template scrolls back to the preview at the top.

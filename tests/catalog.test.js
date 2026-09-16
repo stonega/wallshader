@@ -73,16 +73,20 @@ test('filters compose category, favorite status and case-insensitive search', ()
   expect(
     filterPresets('Favorites', 'MoSS', ['moss']).map((item) => item.id),
   ).toEqual(['moss']);
-  expect(filterPresets('Gradients', 'simplex', []).length).toBe(0);
+  expect(filterPresets('Image Filters', 'simplex', [])).toEqual([]);
+  expect(
+    filterPresets('Effects', 'simplex', []).map((item) => item.id),
+  ).toEqual(['tidal', 'contour']);
   expect(filterPresets('All', 'simplex', []).map((item) => item.id)).toEqual([
     'tidal',
     'contour',
   ]);
   expect(
-    filterPresets('Patterns', '  ', []).every(
-      (preset) => SHADERS[preset.shader].category === 'Patterns',
-    ),
-  ).toBe(true);
+    filterPresets('Image Filters', '  water  ', []).map((item) => item.id),
+  ).toEqual(['paper-water']);
+  expect(
+    filterPresets('Logo Animations', 'metal', []).map((item) => item.id),
+  ).toEqual(['paper-liquid-metal']);
 });
 
 test('capture dimensions allow monitor formats but reject excessive allocations', () => {

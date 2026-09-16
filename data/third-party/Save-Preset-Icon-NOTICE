@@ -3,9 +3,10 @@ Save Preset icon
 Source: user-supplied SVG, preserved in data/icons/sources/save-preset.svg.
 Bundled icon: data/icons/hicolor/scalable/actions/wallshader-save-preset-symbolic.svg
 
-The original 24 × 24 viewBox, proportions, and round joins/caps are preserved.
-The stroke is increased from 1.5 to 2.5 units for a bolder toolbar icon, as requested.
-The strokes are expanded to filled paths for native
-symbolic recoloring on GTK 4.14 and later. The conversion used Skia's
-getFillPath (skia-python 144.0.post2, resScale 16), with conics converted
+The original 24 × 24 viewBox and disk design are preserved.
+The supplied filled outline has a 1.5-unit weight. A 1-unit round-join stroke
+around its boundary increases the weight to the existing toolbar icon's 2.5 units.
+That stroke is expanded and united with the original fill for native symbolic
+recoloring on GTK 4.14 and later. The conversion uses Skia's getFillPath
+(skia-python 144.0.post2, resScale 16) and union path operation, with conics converted
 to quadratic curves at subdivision level 3 and six-decimal coordinates.

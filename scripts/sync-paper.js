@@ -160,6 +160,7 @@ for (const file of (await readdir(directory))
     }
     fields.push(field);
   }
+  // Match the three shader groups on https://shaders.paper.design/.
   const category = [
     'fluted-glass',
     'halftone-cmyk',
@@ -169,12 +170,10 @@ for (const file of (await readdir(directory))
     'paper-texture',
     'water',
   ].includes(slug)
-    ? 'Image filters'
+    ? 'Image Filters'
     : ['gem-smoke', 'heatmap', 'liquid-metal'].includes(slug)
-      ? 'Logo effects'
-      : /gradient/.test(slug)
-        ? 'Gradients'
-        : 'Patterns';
+      ? 'Logo Animations'
+      : 'Effects';
   records[aliases[slug] ?? slug] = {
     slug,
     name: label(component).replace('Cmyk', 'CMYK'),

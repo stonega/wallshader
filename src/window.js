@@ -58,7 +58,7 @@ export const WallshaderWindow = GObject.registerClass(
         this.store.state.selected,
         this.store.state.presets[this.store.state.selected],
       );
-      this._category = 'Gradients';
+      this._category = 'Effects';
       this._paused = !Gtk.Settings.get_default().gtk_enable_animations;
       this._busy = false;
       this._ready = false;
@@ -255,10 +255,9 @@ export const WallshaderWindow = GObject.registerClass(
       content.append(this.presetGrid);
 
       const categories = [
-        ['Gradients', 'color-select-symbolic'],
-        ['Patterns', 'view-grid-symbolic'],
-        ['Image filters', 'image-x-generic-symbolic'],
-        ['Logo effects', 'applications-graphics-symbolic'],
+        ['Effects', 'view-grid-symbolic'],
+        ['Image Filters', 'image-x-generic-symbolic'],
+        ['Logo Animations', 'applications-graphics-symbolic'],
         ['Favorites', 'starred-symbolic'],
       ];
       const categoryTabs = new Gtk.Box({

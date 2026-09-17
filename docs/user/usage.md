@@ -51,7 +51,7 @@ Names must be unique within a shader. Saving retains all shader controls,
 colors, source image, speed, and the captured animation frame. Later edits do not
 change that saved copy. Select its tile to restore it, including after restarting
 the app. Saving and selecting presets do not apply a wallpaper. Wallpaper mode,
-desktop frame rate, and output resolution remain separate in Wallpaper Settings.
+desktop frame rate, rendering mode, and output resolution remain separate in Wallpaper Settings.
 
 For an animated desktop, open **Wallpaper Settings**, keep **Wallpaper mode**
 on **Animated shader**, and choose 30 or 60 FPS. Close the dialog, then click
@@ -64,6 +64,17 @@ Applying also sets the animation's first frame as a still background
 for both light and dark appearances, at the selected output resolution. It uses
 the frame where the animation starts, including your chosen frame time. This still
 image remains available even if animation support needs setup or the renderer stops.
+
+**Wallpaper rendering** offers **Compatibility (default)** and **GPU (experimental)**.
+Both modes keep the shaders on WebGL, which normally uses your GPU. Compatibility
+uses CPU page drawing to avoid a known WebKit flickering issue. GPU mode also
+allows GPU page drawing; it may reduce CPU use, but can bring back flickering on
+some drivers. Select a mode, close Settings, and click **Set Animated Wallpaper**.
+Changing modes restarts the desktop renderer automatically. The selection is saved
+across app restarts; the last applied mode resumes at login. The editor preview and
+PNG export retain their existing rendering behavior. If GPU mode flickers, choose
+Compatibility and apply again. Actual GPU use depends on WebKit and the graphics
+driver; **Show Debug Info** displays the WebGL renderer when the driver exposes it.
 
 The shader plays on all displays and continues after you close Wallshader. Use
 **Pause / Resume** and **Stop** in **Wallpaper Settings**. Edit a shader and apply

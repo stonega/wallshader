@@ -42,8 +42,11 @@ function rpc(method, parameters = null) {
     ),
   );
 }
-const apply = (preset, fps = 30) =>
-  rpc('Apply', new GLib.Variant('(s)', [JSON.stringify({ preset, fps })]));
+const apply = (preset, fps = 30, rendering = 'compatibility') =>
+  rpc(
+    'Apply',
+    new GLib.Variant('(s)', [JSON.stringify({ preset, fps, rendering })]),
+  );
 async function until(callback, message) {
   for (let attempt = 0; attempt < 150; attempt++) {
     if (callback()) return;
@@ -645,6 +648,10 @@ export default class ShellTest extends Extension {
     }
     const first = await inspect();
     assert(
+      first.rendering === 'compatibility' && first.skiaCpuRendering === '1',
+      'Default desktop rendering did not use compatibility mode',
+    );
+    assert(
       first.debugInfo.every((enabled) => !enabled),
       'Desktop debug info must default to off',
     );
@@ -749,6 +756,45 @@ export default class ShellTest extends Extension {
     await checkCoverage(extension);
     checkPanel(extension);
     const replacement = createPreset('ribbon');
+    for (const rendering of ['gpu', 'compatibility']) {
+      const previousProcess = extension._process;
+      await apply(preset, 30, rendering);
+      await until(
+        () => extension._process !== previousProcess && extension._ready,
+        `Switching to ${rendering} did not restart the renderer`,
+      );
+      await checkCoverage(extension);
+      const started = await inspect();
+      assert(
+        started.rendering === rendering &&
+          started.skiaCpuRendering === (rendering === 'gpu' ? '0' : '1') &&
+          JSON.parse(extension.GetStatus()).rendering === rendering,
+        `The new renderer did not receive ${rendering} settings`,
+      );
+      const runningProcess = extension._process;
+      await apply(preset, 60, rendering);
+      const updated = await inspect();
+      const playing = await inspect();
+      assert(
+        extension._process === runningProcess &&
+          updated.fps === 60 &&
+          playing.frames.every((frame, index) => frame > updated.frames[index]),
+        'Reapplying the same rendering mode restarted or froze the renderer',
+      );
+      await rpc('SetPaused', new GLib.Variant('(b)', [true]));
+      const pausedMode = await inspect();
+      const heldMode = await inspect();
+      assert(
+        heldMode.paused &&
+          heldMode.frames.every(
+            (frame, index) => frame === pausedMode.frames[index],
+          ),
+        `${rendering} mode ignored manual pause`,
+      );
+    }
+    console.log(
+      'Verified GPU/compatibility restarts, same-mode reload, and pause.',
+    );
     replacement.speed = -0.5;
     await apply(replacement, 60);
     await delay(1200);

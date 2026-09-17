@@ -99,6 +99,7 @@ export default class WallshaderExtension extends Extension {
       error: this._error,
       name: this._config?.preset.name ?? '',
       fps: this._config?.fps ?? 30,
+      rendering: this._config?.rendering ?? 'compatibility',
       monitors: this._windows.size,
       compositing: this._compositing.held,
       panelVisible: Main.layoutManager.panelBox.visible,
@@ -111,9 +112,13 @@ export default class WallshaderExtension extends Extension {
   }
 
   Apply(source) {
-    this._config = { ...parseLiveConfig(source), enabled: true };
-    writeJson(this._path, this._config);
+    const config = { ...parseLiveConfig(source), enabled: true };
+    writeJson(this._path, config);
+    const renderingChanged = config.rendering !== this._config?.rendering;
+    this._config = config;
     this._error = '';
+    // WebKit reads the drawing backend at startup, before creating any views.
+    if (this._process && renderingChanged) this._stop();
     if (this._process && this._ready)
       this._actions?.activate_action('reload', null);
     else if (this._process) this._needsReload = true;
@@ -157,6 +162,11 @@ export default class WallshaderExtension extends Extension {
       flags: Gio.SubprocessFlags.NONE,
     });
     launcher.setenv('GDK_BACKEND', 'wayland', true);
+    launcher.setenv(
+      'WEBKIT_SKIA_ENABLE_CPU_RENDERING',
+      this._config.rendering === 'gpu' ? '0' : '1',
+      true,
+    );
     launcher.unsetenv('DISPLAY');
     // Do not let a desktop startup token transfer focus to the renderer.
     launcher.unsetenv('XDG_ACTIVATION_TOKEN');
@@ -395,6 +405,7 @@ export default class WallshaderExtension extends Extension {
     this._client = null;
     this._ready = false;
     this._reason = '';
+    this._needsReload = false;
     for (const window of [...this._windows.keys()]) this._release(window);
     this._overview.clear();
     this._setCompositing(false);

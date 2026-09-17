@@ -23,6 +23,7 @@ export function normalizeLiveConfig(input = {}) {
     enabled: input.enabled === true,
     paused: input.paused === true,
     fps: input.fps === 60 ? 60 : 30,
+    rendering: input.rendering === 'gpu' ? 'gpu' : 'compatibility',
     preset: normalizePreset(input.preset.id, input.preset),
   };
 }

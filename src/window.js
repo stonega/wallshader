@@ -421,7 +421,7 @@ export const WallshaderWindow = GObject.registerClass(
       const dialog = new Adw.Dialog({
         title: 'Wallpaper Settings',
         content_width: 400,
-        content_height: 440,
+        content_height: 560,
       });
       const toolbar = new Adw.ToolbarView();
       toolbar.add_top_bar(new Adw.HeaderBar());
@@ -451,6 +451,30 @@ export const WallshaderWindow = GObject.registerClass(
         tooltip_text: 'Wallpaper frame rate',
       });
       this.liveOptions.append(this.liveFps);
+      this.liveOptions.append(
+        label('Wallpaper rendering', ['dim-label', 'caption']),
+      );
+      this.liveRendering = new Gtk.DropDown({
+        model: Gtk.StringList.new([
+          'Compatibility (default)',
+          'GPU (experimental)',
+        ]),
+        selected: this.store.state.liveRendering === 'gpu' ? 1 : 0,
+        tooltip_text: 'Wallpaper rendering',
+      });
+      this.liveRendering.connect('notify::selected', () => {
+        this.store.state.liveRendering =
+          this.liveRendering.selected === 1 ? 'gpu' : 'compatibility';
+        this._save();
+      });
+      this.liveOptions.append(this.liveRendering);
+      this.liveOptions.append(
+        label(
+          'GPU mode may reduce CPU use but can cause flickering. Takes effect when you apply the wallpaper.',
+          ['dim-label', 'caption'],
+          { wrap: true },
+        ),
+      );
       this.liveStatus = label(
         'Runs on the desktop after closing this app.',
         ['dim-label', 'caption'],
@@ -859,6 +883,7 @@ export const WallshaderWindow = GObject.registerClass(
         ?.set_enabled(this.wallpaper.canRestore && !this._busy);
       this.wallpaperMode.set_sensitive(!this._busy);
       this.liveFps.set_sensitive(!this._busy);
+      this.liveRendering.set_sensitive(!this._busy);
       this._updateLiveStatus();
     }
 
@@ -991,7 +1016,11 @@ export const WallshaderWindow = GObject.registerClass(
         });
         await this.wallpaper.apply(data, preset.id);
         await this._saveAppliedPreset(preset);
-        await this.live.apply(preset, this.liveFps.selected === 1 ? 60 : 30);
+        await this.live.apply(
+          preset,
+          this.liveFps.selected === 1 ? 60 : 30,
+          this.store.state.liveRendering,
+        );
         this.toasts.add_toast(
           new Adw.Toast({
             title: 'Animated wallpaper requested',

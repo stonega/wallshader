@@ -93,10 +93,15 @@ async function checkAnimatedWallpaper(window) {
   // Exercise the editor and real PNG/GSettings path without contacting Shell.
   window.live = {
     status: { available: true, active: false },
-    async apply(preset, fps) {
+    async apply(preset, fps, rendering) {
+      assert(
+        !window.liveRendering.sensitive,
+        'Rendering control changed during apply',
+      );
       applied.push({
         preset,
         fps,
+        rendering,
         uri: settings.get_string('picture-uri'),
       });
     },
@@ -107,20 +112,22 @@ async function checkAnimatedWallpaper(window) {
   window._paused = true;
   await window.preview.pause(true);
   try {
-    for (const [frame, speed, fps] of [
-      [0, 0, 30],
-      [-8000, -2, 60],
+    for (const [frame, speed, fps, rendering] of [
+      [0, 0, 30, 'compatibility'],
+      [-8000, -2, 60, 'gpu'],
     ]) {
       window.preset = { ...window.preset, frame, speed };
       window.liveFps.selected = fps === 60 ? 1 : 0;
+      window.liveRendering.selected = rendering === 'gpu' ? 1 : 0;
       await window.applyWallpaper();
       assert(errors.length === 0, `Animated apply failed: ${errors}`);
       const result = applied.at(-1);
       assert(
         result?.preset.frame === frame &&
           result.preset.speed === speed &&
-          result.fps === fps,
-        'Animated apply lost the starting frame, speed, or frame rate',
+          result.fps === fps &&
+          result.rendering === rendering,
+        'Animated apply lost the starting frame, speed, frame rate, or rendering mode',
       );
       assert(
         result.uri.startsWith(
@@ -224,6 +231,7 @@ async function checkAnimatedWallpaper(window) {
     window.preview.request = request;
     window.wallpaper.apply = apply;
     window.wallpaperMode.selected = 0;
+    window.liveRendering.selected = 0;
     window._syncAvailability();
   }
   console.log(
@@ -675,6 +683,34 @@ export async function run(window) {
   if (artifacts) {
     const style = Adw.StyleManager.get_default();
     style.color_scheme = Adw.ColorScheme.FORCE_LIGHT;
+    const wallpaperBefore = window.wallpaper.settings.get_string('picture-uri');
+    assert(
+      window.liveRendering.selected === 0,
+      'Rendering must default to compatibility',
+    );
+    window.wallpaperMode.selected = 1;
+    window.wallpaperSettings.present(window);
+    await screenshot(window, `${artifacts}/wallpaper-settings.png`);
+    window.liveRendering.selected = 1;
+    assert(
+      new Store().state.liveRendering === 'gpu',
+      'GPU preference was not saved',
+    );
+    window.wallpaperSettings.close();
+    await settle();
+    window.wallpaperSettings.present(window);
+    assert(
+      window.liveRendering.selected === 1,
+      'Dialog lost the selected rendering mode',
+    );
+    await screenshot(window, `${artifacts}/wallpaper-settings-gpu.png`);
+    window.wallpaperSettings.close();
+    window.liveRendering.selected = 0;
+    assert(
+      window.wallpaper.settings.get_string('picture-uri') === wallpaperBefore,
+      'Changing rendering preferences applied a wallpaper',
+    );
+    await settle();
     await screenshot(window, `${artifacts}/window-light.png`);
     style.color_scheme = Adw.ColorScheme.FORCE_DARK;
     await screenshot(window, `${artifacts}/window-dark.png`);

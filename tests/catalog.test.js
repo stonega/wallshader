@@ -68,6 +68,17 @@ test('debug info is opt-in and survives state normalization', () => {
   );
 });
 
+test('GPU wallpaper rendering is opt-in and survives saved state', () => {
+  for (const liveRendering of [undefined, null, true, 1, 'GPU', 'unknown'])
+    expect(normalizeState({ liveRendering }).liveRendering).toBe(
+      'compatibility',
+    );
+  const state = normalizeState({ liveRendering: 'gpu' });
+  expect(normalizeState(JSON.parse(JSON.stringify(state))).liveRendering).toBe(
+    'gpu',
+  );
+});
+
 test('filters compose category, favorite status and case-insensitive search', () => {
   expect(filterPresets('Favorites', '', [])).toEqual([]);
   expect(

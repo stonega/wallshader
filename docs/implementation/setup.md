@@ -76,6 +76,12 @@ Overview checks cover live clones on both monitors, workspace thumbnails,
 continued animation, manual pause, and cleanup after closing, stopping or disabling.
 Its test-only session mode enables only the live wallpaper extension and its test
 driver. `artifacts/shell-test.log` and desktop captures help diagnose failures.
+The Shell test also switches between GPU and Compatibility, verifies the new
+renderer process and its Skia environment, and checks that same-mode applies
+reuse the process and that manual pause works in both modes. It verifies startup
+and playback, not GPU performance or freedom from driver-specific GPU artifacts.
+Native checks exercise the saved rendering selection and its apply payload;
+`artifacts/wallpaper-settings{,-gpu}.png` show the dialog.
 `GSK_RENDERER=gl bun run test:shell` and `GSK_RENDERER=vulkan bun run test:shell`
 run the same checks with an explicit compositor and verify the selected backend
 in the renderer's diagnostics. Without an override, GTK chooses its default.
@@ -135,6 +141,12 @@ with the original Skia GPU path, prefix a diagnostic command with
 `WEBKIT_SKIA_ENABLE_CPU_RENDERING=0`. The native regression test reproduces the
 triangle gaps with that override on the affected stack. Skia page rasterization
 is separate from the shader's WebGL rendering backend.
+For live wallpaper, choose **Wallpaper rendering → GPU (experimental)** and apply.
+The extension explicitly sets the child's Skia variable from this saved choice,
+overriding an inherited value; editor diagnostic overrides still work as above.
+Switching modes restarts the renderer, since WebKit reads the variable at startup.
+Install the updated extension and log out/in once to load this extension change.
+Afterward, changing the rendering selection only needs another wallpaper apply.
 
 The renderer is pinned to Paper 0.0.80. Before upgrading it, check the upstream
 shader uniform definitions, ShaderMount API, licensing, and all native captures.

@@ -18,6 +18,7 @@ test('live settings preserve every shader and bound rendering options', () => {
       enabled: true,
       paused: true,
       fps: 60,
+      rendering: 'compatibility',
       preset,
     });
   }
@@ -31,6 +32,18 @@ test('live settings preserve every shader and bound rendering options', () => {
   expect(() => parseLiveConfig('{bad')).toThrow();
   expect(() => normalizeLiveConfig({ preset: { id: 'unknown' } })).toThrow();
   expect(() => parseLiveConfig('x'.repeat(128001))).toThrow();
+});
+
+test('live rendering survives persistence and older settings keep compatibility', () => {
+  const preset = createPreset('aurora');
+  for (const rendering of ['gpu', 'compatibility']) {
+    const config = normalizeLiveConfig({ preset, rendering });
+    expect(parseLiveConfig(JSON.stringify(config)).rendering).toBe(rendering);
+  }
+  for (const rendering of [undefined, null, true, 1, 'GPU', 'unknown', {}])
+    expect(normalizeLiveConfig({ preset, rendering }).rendering).toBe(
+      'compatibility',
+    );
 });
 
 test('coverage respects negative monitor origins and partially visible desktops', () => {

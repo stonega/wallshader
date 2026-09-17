@@ -32,7 +32,7 @@ as a named symbolic icon. Its outline is expanded to filled paths for GTK 4.14 c
 inherits widget foreground colors in light, dark, and high-contrast appearances.
 The Wallpaper Settings icon sits in a circular 44 × 44 px button, vertically
 centered to the right of the apply button. It opens an adaptive native dialog for
-wallpaper mode, animation frame rate, desktop playback controls, and output resolution. The dialog retains
+wallpaper mode, animation frame rate, rendering mode, desktop playback controls, and output resolution. The dialog retains
 its selections when closed and reopened during the same app session. Wallpaper mode
 defaults to Animated shader when the app opens.
 
@@ -58,7 +58,11 @@ and 2D canvases on the CPU with this setting; WebGL shaders, WebKit compositing 
 GTK's renderer remain accelerated. The wallpaper page has a static background
 around the WebGL canvas. Image preprocessing that uses 2D canvas may cost more CPU
 time. The same initialization covers editor and desktop windows. An explicit
-environment override is honored for comparison; see the
+environment override is honored for editor comparisons. For desktop windows, the
+extension sets this variable explicitly to `1` for Compatibility (the default) or
+`0` for GPU (experimental), before launching GJS/WebKit. Both modes leave WebGL
+enabled; selecting GPU permits Skia GPU painting and cannot guarantee hardware
+acceleration on an unsupported driver. See the
 [rendering incident notes](../../postmortem/2026-09-15-renderer-flicker.md).
 
 `Preview` sends validated state through WebKit's JavaScript API and receives
@@ -222,6 +226,13 @@ The renderer reuses the editor's original Paper shaders and image processing,
 caps rendering at 1080p per monitor, and advances shader time at 30 or 60 FPS with
 a monotonic clock. Negative
 speed works; speed 0 freezes. The application process can close independently.
+The editor saves the requested `liveRendering` preference in state.json and passes
+it as `rendering` when applying. The live configuration persists the applied mode;
+missing or invalid values normalize to `compatibility` for older settings. A mode
+change stops the owned renderer and waits for its exit before starting a process
+with the new environment. Same-mode applies reuse the renderer through reload.
+Renderer diagnostics expose the requested mode and the Skia environment value;
+these report configuration, not proof of physical GPU use.
 GApplication actions carry pause, reload, readiness and diagnostics. The extension
 waits for the renderer's D-Bus owner before subscribing to its action group.
 

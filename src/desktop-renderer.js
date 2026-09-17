@@ -85,6 +85,8 @@ action('inspect', null, () => {
           JSON.stringify({
             paused,
             fps: config.fps,
+            rendering: config.rendering,
+            skiaCpuRendering: GLib.getenv('WEBKIT_SKIA_ENABLE_CPU_RENDERING'),
             frames: states.map((state) => state.frame),
             preset: config.preset.id,
             monitors: previews.length,

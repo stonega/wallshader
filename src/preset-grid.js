@@ -35,17 +35,12 @@ export const PresetGrid = GObject.registerClass(
     }
 
     setPreset(preset, savedPresets) {
-      // Control edits only change selection; image changes also rebuild previews.
-      if (
-        this._presetId === preset.id &&
-        this._image === preset.image &&
-        this._savedPresets === savedPresets
-      ) {
+      // Edits only change selection; each preset keeps its own image and preview.
+      if (this._presetId === preset.id && this._savedPresets === savedPresets) {
         this.syncSelection(preset);
         return;
       }
       this._presetId = preset.id;
-      this._image = preset.image;
       this._savedPresets = savedPresets;
       const generation = ++this._generation;
       while (this.flow.get_first_child())

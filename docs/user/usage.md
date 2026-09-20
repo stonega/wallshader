@@ -11,7 +11,8 @@
 2. Choose a preset thumbnail in the grid below the preview.
    Every shader from Paper 0.0.80 is available through the collection, with its
    original settings and presets. The grid includes the wallpaper's **Original**,
-   Paper presets, and your saved configurations for that shader. The selected
+   Paper presets, and your saved configurations for that shader. When **Paper Default**
+   has the same settings as **Original**, only **Original** is shown. The selected
    tile uses accent-colored label text; edits that differ from every tile clear
    the selection.
 3. Choose a color swatch for the native picker with opacity, or type a hex, RGB,
@@ -96,7 +97,10 @@ are copied into the app's data directory and resized to at most 2048 × 2048 whi
 preserving their aspect ratio. The input limit is 32 MB. Templates that need an
 image start with Paper's [flower photograph](https://github.com/paper-design/shaders/blob/main/docs/public/images/image-filters/0018.webp),
 included with the app for offline use. **Use Sample** selects this photograph for
-any image shader. Your chosen local images and removed images remain saved.
+any image shader. Image changes affect only the configuration you are editing;
+other preset thumbnails and their images stay unchanged. Save a preset to keep
+that image choice with its settings. Your chosen local images and removed images
+remain saved in the current configuration.
 For Heatmap, Liquid Metal, and Gem Smoke, use a logo or shape with a transparent
 background. Procedural
 shaders with optional image inputs also work with the source removed.

@@ -1,5 +1,10 @@
 import { expect, test } from 'bun:test';
-import { createPreset, normalizeState } from '../src/catalog.js';
+import {
+  PRESETS,
+  SHADERS,
+  createPreset,
+  normalizeState,
+} from '../src/catalog.js';
 import {
   presetFingerprint,
   presetOptions,
@@ -101,20 +106,27 @@ test('selection follows exact settings and distinguishes the chosen identical pr
   expect(selectedPresetKey(options, variant.preset)).toBe('paper:1');
 });
 
-test('Paper previews retain the current image while saved configurations restore their own', () => {
-  const preset = createPreset('paper-image-dithering');
-  preset.image = 'file:///tmp/current.png';
-  const saved = {
-    id: 'saved-image',
-    name: 'Old image',
-    preset: { ...preset, image: 'file:///tmp/saved.png' },
-  };
-  const options = presetOptions(preset, [saved]);
-  expect(
-    options
-      .filter((option) => option.key.startsWith('paper:'))
-      .every((option) => option.preset.image === preset.image),
-  ).toBe(true);
-  expect(options.at(-1).preset.image).toBe('file:///tmp/saved.png');
-  expect(options[0].preset.image).toBe('sample');
+test('image edits stay in the current configuration without changing sibling presets', () => {
+  for (const template of PRESETS.filter(
+    (item) => SHADERS[item.shader].hasImage,
+  )) {
+    const preset = createPreset(template.id);
+    const saved = {
+      id: 'saved-image',
+      name: 'Old image',
+      preset: { ...preset, image: 'file:///tmp/saved.png' },
+    };
+    const originalOptions = presetOptions(preset, [saved]);
+    for (const source of originalOptions) {
+      for (const image of ['file:///tmp/current.png', '', 'sample']) {
+        const edited = { ...source.preset, image };
+        const options = presetOptions(edited, [saved]);
+        expect(options).toEqual(originalOptions);
+        expect(edited.image).toBe(image);
+        expect(options.at(-1).preset.image).toBe('file:///tmp/saved.png');
+        if (image === 'file:///tmp/current.png')
+          expect(selectedPresetKey(options, edited, source.key)).toBeNull();
+      }
+    }
+  }
 });

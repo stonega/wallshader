@@ -31,18 +31,22 @@ export function randomPresetName(
 }
 
 export function presetOptions(preset, savedPresets = []) {
+  const original = createPreset(preset.id);
+  const originalFingerprint = presetFingerprint(original);
   return [
-    { key: 'default', name: 'Original', preset: createPreset(preset.id) },
-    ...SHADERS[preset.shader].presets.map((variant, index) => ({
-      key: `paper:${index}`,
-      name: variant.name,
-      index,
-      preset: fromPaperParams(
-        preset.id,
-        { ...variant.params, image: preset.image },
+    { key: 'default', name: 'Original', preset: original },
+    ...SHADERS[preset.shader].presets
+      .map((variant, index) => ({
+        key: `paper:${index}`,
+        name: variant.name === 'Default' ? 'Paper Default' : variant.name,
         index,
+        preset: fromPaperParams(preset.id, variant.params, index),
+      }))
+      .filter(
+        (option) =>
+          option.name !== 'Paper Default' ||
+          presetFingerprint(option.preset) !== originalFingerprint,
       ),
-    })),
     ...savedPresets
       .filter((saved) => saved.preset.shader === preset.shader)
       .map((saved) => ({

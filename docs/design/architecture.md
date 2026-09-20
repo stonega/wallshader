@@ -122,11 +122,17 @@ including image presence flags, mipmaps, and the library's shared noise texture.
 `preset-grid.js` presents the wallpaper default, upstream Paper presets, and named
 configurations for the current shader in a native thumbnail grid below the preview,
 with three to six columns depending on available width.
+Paper's Default is labeled **Paper Default**. When it exactly matches Original,
+only the leftmost Original tile is shown. Other Paper presets retain their upstream
+indices and saved presets remain separate.
 Thumbnails use independent captures through the existing renderer queue; a bounded
 texture cache avoids repeated renders. Generation checks discard obsolete work
 when the selected wallpaper changes. Selection compares complete shader parameters,
 so edits cannot leave a stale selection highlight. Saved configurations remain usable
 across collection entries sharing a shader, without modifying the saved copy.
+Image edits affect only the current configuration. Built-in and saved preset
+options retain their own image sources, so editing an image does not rebuild
+the grid's thumbnails or carry that image into another preset.
 Saved tiles have a delete icon button on the right of their caption, separate
 from the selection button. Deletion persists before removing the cached PNG;
 a failed settings write leaves the saved entry and preview intact. Deleting a

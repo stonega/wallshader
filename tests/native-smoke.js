@@ -567,11 +567,24 @@ async function checkSavedPresets(window, artifacts) {
     window.preset.paperPreset === 1,
     'Paper thumbnail did not select its settings',
   );
+  await window.selectPreset('ribbon');
+  await window.selectPreset('aurora');
+  assert(
+    window.presetGrid.selectedKey === 'paper:1',
+    'Reopening a shader did not retain its active Paper preset',
+  );
   await window.selectPreset('moss');
   window.presetGrid.cards.get(`saved:${saved.id}`).card.emit('clicked');
   assert(
     presetFingerprint(window.preset) === expected,
     'Saved tile did not restore the complete configuration',
+  );
+  await window.selectPreset('ribbon');
+  await window.selectPreset('moss');
+  assert(
+    window.presetGrid.selectedKey === `saved:${saved.id}` &&
+      presetFingerprint(window.preset) === expected,
+    'Reopening a shader did not retain its active saved preset',
   );
   await window.presetGrid.ready;
   if (artifacts) {
@@ -680,6 +693,31 @@ export async function run(window) {
   await checkAnimatedPreview(window, artifacts);
   await checkDebugInfo(window);
   await checkSavedPresets(window, artifacts);
+  for (const id of ['paper-paper-texture', 'paper-water']) {
+    await window.selectPreset(id);
+    window.preset.image = '';
+    window._changed();
+    assert(
+      window.presetGrid.selectedKey === null,
+      'Image edit kept a preset active',
+    );
+    await window.selectPreset(id);
+    assert(
+      window.preset.image === '',
+      'Clicking the current shader reset its edits',
+    );
+    await window.selectPreset('aurora');
+    await window.selectPreset(id);
+    assert(
+      window.preset.image === 'sample' &&
+        window.presetGrid.selectedKey === 'default' &&
+        window.presetGrid.cards.get('default').card.active &&
+        presetFingerprint(window.preset) ===
+          presetFingerprint(createPreset(id)),
+      'Reopening unmatched settings did not select Original with the sample image',
+    );
+  }
+  await window.selectPreset('aurora');
   if (artifacts) {
     const style = Adw.StyleManager.get_default();
     style.color_scheme = Adw.ColorScheme.FORCE_LIGHT;
@@ -744,6 +782,26 @@ export async function run(window) {
     }
     console.log(`Rendered ${preset.name}: 640 × 360`);
   }
+  for (const preset of SHADERS['paper-texture'].presets) {
+    for (const image of ['', 'sample']) {
+      await window.preview.select(
+        fromPaperParams('paper-paper-texture', { ...preset.params, image }),
+      );
+      const uri = await window.preview.request('capture', {
+        width: 640,
+        height: 360,
+      });
+      checkImage(uri, 640, 360);
+      if (artifacts)
+        await savePng(
+          Gio.File.new_for_path(
+            `${artifacts}/paper-texture-${preset.name.toLowerCase()}-${image || 'texture'}.png`,
+          ),
+          uri,
+        );
+    }
+  }
+  console.log('Rendered all Paper Texture presets with and without an image.');
   await window.selectPreset('aurora');
   const frame = window.preset.frame + 8000;
   window.editor.numericControls.get('frame').spin.set_value(frame);

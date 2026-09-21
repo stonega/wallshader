@@ -12,8 +12,8 @@ if (!upstream)
 const version = JSON.parse(
   await readFile(resolve(upstream, 'packages/shaders/package.json'), 'utf8'),
 ).version;
-if (version !== '0.0.80')
-  throw new Error(`Expected Paper 0.0.80, found ${version}`);
+if (version !== '0.0.81')
+  throw new Error(`Expected Paper 0.0.81, found ${version}`);
 const directory = resolve(upstream, 'packages/shaders-react/src/shaders');
 const aliases = { 'mesh-gradient': 'mesh', 'simplex-noise': 'simplex' };
 const common = new Set([
@@ -116,6 +116,9 @@ for (const file of (await readdir(directory))
     }
     rules[uniform] = { key, type, ...(options ? { options } : {}) };
   }
+  // Paper Texture spreads a separately declared noise texture into its uniforms.
+  if (/\bu_noiseTexture:\s*getShaderNoiseTexture\(\)/.test(source))
+    rules.u_noiseTexture = { key: 'noiseTexture', type: 'noise' };
   const defaults = { ...data.defaultPreset.params };
   const fields = [];
   for (const [uniform, rule] of Object.entries(rules)) {
@@ -150,7 +153,7 @@ for (const file of (await readdir(directory))
       field.max = Math.max(range ? Number(range[2]) : 1, ...values);
       field.step =
         /integer/i.test(description) ||
-        /^(count|bandCount|foldCount|octaveCount|stepsPerColor|colorSteps|swirlIterations|noiseIterations|spots)$/.test(
+        /^(count|bandCount|foldCount|crumpleCount|octaveCount|stepsPerColor|colorSteps|swirlIterations|noiseIterations|spots)$/.test(
           key,
         )
           ? 1

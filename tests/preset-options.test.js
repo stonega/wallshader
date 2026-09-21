@@ -6,6 +6,7 @@ import {
   normalizeState,
 } from '../src/catalog.js';
 import {
+  openingPreset,
   presetFingerprint,
   presetOptions,
   randomPresetName,
@@ -128,5 +129,33 @@ test('image edits stay in the current configuration without changing sibling pre
           expect(selectedPresetKey(options, edited, source.key)).toBeNull();
       }
     }
+  }
+});
+
+test('opening a shader retains matching presets and falls back to Original for unmatched edits', () => {
+  for (const id of ['paper-paper-texture', 'paper-water']) {
+    const original = createPreset(id);
+    expect(original.image).toBe('sample');
+    expect(openingPreset(id)).toEqual({ preset: original, key: 'default' });
+    for (const option of presetOptions(original)) {
+      expect(option.preset.image).toBe('sample');
+      expect(openingPreset(id, option.preset)).toEqual({
+        preset: option.preset,
+        key: option.key,
+      });
+    }
+    const edited = { ...original, image: '', scale: 1.37 };
+    const snapshot = structuredClone(edited);
+    const saved = [{ id: 'custom', name: 'Custom', preset: edited }];
+    expect(openingPreset(id, edited)).toEqual({
+      preset: original,
+      key: 'default',
+    });
+    expect(openingPreset(id, edited, saved)).toEqual({
+      preset: edited,
+      key: 'saved:custom',
+    });
+    expect(edited).toEqual(snapshot);
+    expect(saved[0].preset).toEqual(snapshot);
   }
 });

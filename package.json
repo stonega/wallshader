@@ -16,7 +16,7 @@
     "test:shell": "./scripts/test-shell.sh"
   },
   "dependencies": {
-    "@paper-design/shaders": "0.0.80"
+    "@paper-design/shaders": "0.0.81"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.6"

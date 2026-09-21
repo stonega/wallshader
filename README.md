@@ -165,7 +165,7 @@ and [usage](docs/user/usage.md).
 ## Credits and license
 
 Wallshader is GPL-3.0-or-later; see [COPYING](COPYING). The unmodified
-`@paper-design/shaders` dependency is pinned to **0.0.80**, licensed Apache-2.0.
+`@paper-design/shaders` dependency is pinned to **0.0.81**, licensed Apache-2.0.
 Its [LICENSE](data/third-party/Paper-Shaders-LICENSE) and
 [NOTICE](data/third-party/Paper-Shaders-NOTICE) are preserved in the installation.
-The upstream source was checked at `7002061d8389781a45e479584deeca0cf538474e`.
+The upstream source was checked at `43cd68db79fa0b1759f72ffc941b3238e2a3954c`.

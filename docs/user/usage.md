@@ -9,12 +9,14 @@
    Selecting a template scrolls back to the preview at the top.
    Star a wallpaper to keep it in Favorites.
 2. Choose a preset thumbnail in the grid below the preview.
-   Every shader from Paper 0.0.80 is available through the collection, with its
+   Every shader from Paper 0.0.81 is available through the collection, with its
    original settings and presets. The grid includes the wallpaper's **Original**,
    Paper presets, and your saved configurations for that shader. When **Paper Default**
    has the same settings as **Original**, only **Original** is shown. The selected
    tile uses accent-colored label text; edits that differ from every tile clear
-   the selection.
+   the selection. When opening another shader or starting the app, settings that
+   match a built-in or saved preset are restored; otherwise **Original** is selected.
+   Save custom edits as a named preset to keep them when reopening a shader.
 3. Choose a color swatch for the native picker with opacity, or type a hex, RGB,
    or HSL value and press Enter. Change the color count and use the arrows to
    reorder colors. **Shader settings** contains the effect's sliders, exact
@@ -95,7 +97,7 @@ running state. Rendering is capped at 1080p per display to limit GPU use.
 Image shaders show **Choose Image…**, **Use Sample**, and a remove button. Images
 are copied into the app's data directory and resized to at most 2048 × 2048 while
 preserving their aspect ratio. The input limit is 32 MB. Templates that need an
-image start with Paper's [flower photograph](https://github.com/paper-design/shaders/blob/main/docs/public/images/image-filters/0018.webp),
+image, plus Paper Texture and Water, start with Paper's [flower photograph](https://github.com/paper-design/shaders/blob/main/docs/public/images/image-filters/0018.webp),
 included with the app for offline use. **Use Sample** selects this photograph for
 any image shader. Image changes affect only the configuration you are editing;
 other preset thumbnails and their images stay unchanged. Save a preset to keep
@@ -113,6 +115,14 @@ choose the image locally after import. **Copy Settings…** preserves all proper
 **Copy Paper Code…** produces a component snippet for a web project. Replace
 `image={"sample"}` or local file URIs with an image URL available to that project.
 An importable example is included in `examples/paper-ink.json`.
+
+Paper 0.0.81 rebuilds **Paper Texture** with paper, shadow, and background colors,
+image blending, distortion and clipping, and separate folds, wrinkles, and crumples.
+Its presets are Default, Spread, Creased, and Flat. Older saved settings and imports
+are converted using Paper's approximate migration: old folds become crumples and
+old crumples become wrinkles. The rebuilt patterns and seeds look different;
+review the preview before applying. Hex colors are mixed for the new paper layer,
+including opacity; RGB/HSL colors retain the old background as the paper color.
 
 Use the **Reset Changes** icon immediately left of the favorite star to restore
 the selected wallpaper's original palette and composition. Open the menu and

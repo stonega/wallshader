@@ -1,10 +1,12 @@
 import { test, expect } from 'bun:test';
+import * as Paper from '@paper-design/shaders';
 import {
   SHADERS,
   PRESETS,
   COMMON_FIELDS,
   createPreset,
   normalizePreset,
+  normalizeState,
   fromPaperParams,
   paperParams,
   presetIdForShader,
@@ -14,8 +16,14 @@ import { exportSettings, parseSettings, paperCode } from '../src/sharing.js';
 
 test('every upstream shader and preset retains all exposed parameters', () => {
   expect(Object.keys(SHADERS)).toHaveLength(30);
+  const exports = new Map(Object.entries(Paper));
   for (const [id, shader] of Object.entries(SHADERS)) {
     expect(presetIdForShader(id)).toBeDefined();
+    if (/uniform sampler2D u_noiseTexture\b/.test(exports.get(shader.fragment)))
+      expect(shader.rules.u_noiseTexture).toEqual({
+        key: 'noiseTexture',
+        type: 'noise',
+      });
     const controlled = new Set([
       ...shader.fields.map((field) => field.key),
       ...COMMON_FIELDS.map((field) => field.key),
@@ -138,4 +146,86 @@ test('Paper site snippets accept shorthand booleans and its CMYK component spell
     'halftone-cmyk',
   );
   expect(() => parseSettings('<MeshGradient speed />')).toThrow();
+});
+
+test('Paper Texture 0.0.81 settings retain clipping, negative distortion and new controls', () => {
+  const { params } = parseSettings(
+    '<PaperTexture clip distortion={-0.5} colorPaper={"#abcdef80"} colorShadow={"#123456"} crumpleCount={15} wrinkleSize={0} foldOffsetX={0.75} />',
+  );
+  const preset = fromPaperParams('paper-paper-texture', params);
+  for (const [key, value] of Object.entries(params))
+    expect(preset.params[key]).toBe(value);
+  expect(preset.params).not.toHaveProperty('colorFront');
+  expect(normalizePreset(preset.id, preset)).toEqual(preset);
+  expect(
+    normalizePreset(preset.id, { params: { crumpleCount: 3.8 } }).params
+      .crumpleCount,
+  ).toBe(4);
+});
+
+test('legacy Paper Texture saved settings and imports migrate once using upstream mappings', () => {
+  const id = 'paper-paper-texture';
+  const params = {
+    colorFront: '#0008',
+    colorBack: '#fff8',
+    contrast: 0.25,
+    fade: 0.4,
+    folds: 0.8,
+    foldCount: 9,
+    crumples: 0.7,
+    crumpleSize: 0.5,
+    roughness: 0.4,
+    fiber: 0.3,
+    fiberSize: 0.2,
+    drops: 0.2,
+    seed: 42,
+  };
+  const original = {
+    id,
+    shader: 'paper-texture',
+    params,
+    image: 'sample',
+    scale: 1.7,
+  };
+  const copy = structuredClone(original);
+  const state = normalizeState({
+    presets: { [id]: original },
+    savedPresets: [{ id: 'old-paper', name: 'Old paper', preset: original }],
+  });
+  const migrated = state.presets[id];
+  expect(state.savedPresets[0].preset).toEqual(migrated);
+  expect(
+    fromPaperParams(id, { ...params, image: 'sample', scale: 1.7 }),
+  ).toEqual(migrated);
+  expect(migrated.params.colorShadow).toBe('#0008');
+  expect(migrated.params.colorPaper).toBe('#e6e6e688');
+  expect(migrated.params.blending).toBe(0.5);
+  expect(migrated.params.folds).toBe(0);
+  expect(migrated.params.crumples).toBeCloseTo(0.72);
+  expect(migrated.params.crumpleCount).toBe(9);
+  expect(migrated.params.wrinkles).toBeCloseTo(0.6);
+  expect(migrated.params.seed).toBe(42);
+  expect(migrated.image).toBe('sample');
+  expect(migrated.scale).toBe(1.7);
+  expect(normalizeState(state)).toEqual(state);
+  expect(original).toEqual(copy);
+});
+
+test('legacy Paper Texture migration validates malformed values and retains CSS colors', () => {
+  const preset = fromPaperParams('paper-paper-texture', {
+    contrast: Number.NaN,
+    fade: -10,
+    crumpleSize: 0,
+    fiberSize: 'bad',
+    foldCount: Number.POSITIVE_INFINITY,
+    colorFront: 'rgba(10, 20, 30, 0.5)',
+    colorBack: 'hsl(200, 40%, 60%)',
+  });
+  expect(preset.params.colorShadow).toBe('rgba(10, 20, 30, 0.5)');
+  expect(preset.params.colorPaper).toBe('hsl(200, 40%, 60%)');
+  for (const field of SHADERS['paper-texture'].fields) {
+    if (field.type !== 'number') continue;
+    expect(preset.params[field.key]).toBeGreaterThanOrEqual(field.min);
+    expect(preset.params[field.key]).toBeLessThanOrEqual(field.max);
+  }
 });

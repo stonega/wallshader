@@ -20,6 +20,7 @@ for (const file of [
   'storage.js',
   'catalog.js',
   'paper-catalog.js',
+  'paper-migration.js',
   'live-config.js',
 ])
   await copyFile(`${root}/src/${file}`, `${output}/app/src/${file}`);

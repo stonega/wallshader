@@ -72,3 +72,10 @@ export function selectedPresetKey(options, preset, preferredKey) {
     )?.key ?? null
   );
 }
+
+export function openingPreset(id, input, savedPresets = []) {
+  const preset = normalizePreset(id, input);
+  const options = presetOptions(preset, savedPresets);
+  const key = selectedPresetKey(options, preset);
+  return key ? { preset, key } : { preset: options[0].preset, key: 'default' };
+}

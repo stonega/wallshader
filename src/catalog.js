@@ -1,4 +1,5 @@
 import { PAPER_SHADERS } from './paper-catalog.js';
+import { migratePaperTexture } from './paper-migration.js';
 
 export const SHADERS = PAPER_SHADERS;
 
@@ -186,9 +187,7 @@ export function createPreset(id) {
     params,
     image:
       definition.hasImage &&
-      !['water', 'paper-texture', 'liquid-metal', 'gem-smoke'].includes(
-        source.shader,
-      )
+      !['liquid-metal', 'gem-smoke'].includes(source.shader)
         ? 'sample'
         : '',
     paperPreset: null,
@@ -199,6 +198,10 @@ export function normalizePreset(id, input = {}) {
   const base = createPreset(id);
   const definition = SHADERS[base.shader];
   if (!input || typeof input !== 'object') return base;
+  const params =
+    base.shader === 'paper-texture'
+      ? migratePaperTexture(input.params)
+      : input.params;
   for (const field of commonFields(base.shader)) {
     base[field.key] = clamp(
       input[field.key],
@@ -217,7 +220,7 @@ export function normalizePreset(id, input = {}) {
   )
     base.colors = [...input.colors];
   for (const field of definition.fields) {
-    const value = input.params?.[field.key];
+    const value = params?.[field.key];
     if (field.type === 'color' && isColor(value))
       base.params[field.key] = value;
     if (field.type === 'enum' && field.options.includes(value))
@@ -262,7 +265,7 @@ export function fromPaperParams(id, values, paperPreset = null) {
   return normalizePreset(id, {
     ...base,
     ...values,
-    params: { ...base.params, ...values },
+    params: values,
     paperPreset,
   });
 }

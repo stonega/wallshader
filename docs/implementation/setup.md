@@ -148,12 +148,16 @@ Switching modes restarts the renderer, since WebKit reads the variable at startu
 Install the updated extension and log out/in once to load this extension change.
 Afterward, changing the rendering selection only needs another wallpaper apply.
 
-The renderer is pinned to Paper 0.0.80. Before upgrading it, check the upstream
+The renderer is pinned to Paper 0.0.81. Before upgrading it, check the upstream
 shader uniform definitions, ShaderMount API, licensing, and all native captures.
 The build preserves the dependency's LICENSE and NOTICE in `data/third-party/`.
+The 0.0.81 update includes Paper Texture's new controls and presets. Its legacy
+settings conversion follows the upstream migration guide, with alpha-aware hex
+mixing and unchanged RGB/HSL background colors for the new paper layer. Native
+checks render every Paper Texture preset both procedurally and with the sample image.
 
 To regenerate editor metadata, clone the upstream repo, check out
-`7002061d8389781a45e479584deeca0cf538474e`, then run:
+`43cd68db79fa0b1759f72ffc941b3238e2a3954c`, then run:
 
 ```sh
 bun scripts/sync-paper.js /path/to/paper-shaders-checkout

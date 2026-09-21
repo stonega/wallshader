@@ -107,11 +107,18 @@ the overview, where Shell clones the wallpaper surface.
 ## Paper editor
 
 `paper-catalog.js` contains generated metadata for 30 shaders, 124 upstream presets,
-and 272 shader-specific fields. `scripts/sync-paper.js` reads a matching upstream
+and 282 shader-specific fields. `scripts/sync-paper.js` reads a matching upstream
 checkout's static preset declarations, uniform mappings, enum exports, and range
 annotations. The generated file is committed with the app; React is not needed to
 build or run it. `catalog.js` adds common positioning and animation controls,
 validates values, and preserves the original nine wallpaper defaults.
+
+`paper-migration.js` converts legacy Paper Texture parameters before validation
+for persisted state, saved presets, imported settings, and desktop configurations.
+Removed 0.0.80 properties identify the old format; normalization removes them so
+the conversion runs once. It follows upstream's approximate 0.0.81 migration,
+clamps to the new control ranges, and preserves image and composition settings.
+The rewritten shader cannot reproduce the old pixels exactly.
 
 `editor.js` builds native controls from these definitions. Numeric controls share
 a GTK adjustment between their slider and spin button. Variable palettes support
@@ -130,6 +137,9 @@ texture cache avoids repeated renders. Generation checks discard obsolete work
 when the selected wallpaper changes. Selection compares complete shader parameters,
 so edits cannot leave a stale selection highlight. Saved configurations remain usable
 across collection entries sharing a shader, without modifying the saved copy.
+On startup and when opening another collection entry, remembered settings retain
+a matching built-in or saved preset. If none matches, the editor loads and selects
+Original. Editing or clicking the current collection entry does not trigger this fallback.
 Image edits affect only the current configuration. Built-in and saved preset
 options retain their own image sources, so editing an image does not rebuild
 the grid's thumbnails or carry that image into another preset.
@@ -163,7 +173,8 @@ use Paper's original image preprocessing. The shared sample is Paper's
 `docs/public/images/image-filters/0018.webp`, bundled unchanged as
 `src/renderer/sample.webp`. The build embeds it as a data URL so canvas export
 stays readable without network or file-origin exceptions. Templates that need an
-image default to this sample; optional procedural inputs stay empty. The same
+image, Paper Texture, and Water default to this sample;
+other optional procedural inputs stay empty. The same
 sample is available through **Use Sample** for every image input, including logo
 effects. Saved local images and explicitly removed images retain their selection.
 

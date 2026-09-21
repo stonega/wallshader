@@ -25,6 +25,7 @@ import { showSharingDialog } from './sharing-dialog.js';
 import { SavePresetDialog } from './save-preset-dialog.js';
 import { deleteNamedPreset, saveNamedPreset } from './saved-presets.js';
 import {
+  openingPreset,
   presetOptions,
   randomPresetName,
   selectedPresetKey,
@@ -54,10 +55,12 @@ export const WallshaderWindow = GObject.registerClass(
       this.store = new Store();
       this.wallpaper = new Wallpaper();
       this.live = new LiveWallpaper(() => this._updateLiveStatus());
-      this.preset = normalizePreset(
+      const selection = openingPreset(
         this.store.state.selected,
         this.store.state.presets[this.store.state.selected],
+        this.store.state.savedPresets,
       );
+      this.preset = selection.preset;
       this._category = 'Effects';
       this._paused = !Gtk.Settings.get_default().gtk_enable_animations;
       this._busy = false;
@@ -92,6 +95,7 @@ export const WallshaderWindow = GObject.registerClass(
       });
       breakpoint.add_setter(this.split, 'collapsed', true);
       this.add_breakpoint(breakpoint);
+      this.presetGrid.preferredKey = selection.key;
       this._refreshSelection();
       this._filter();
       this.set_focus(this.searchButton);
@@ -719,7 +723,15 @@ export const WallshaderWindow = GObject.registerClass(
     selectPreset(id) {
       if (this._busy) return;
       this._remember();
-      this.preset = normalizePreset(id, this.store.state.presets[id]);
+      if (id !== this.preset.id) {
+        const selection = openingPreset(
+          id,
+          this.store.state.presets[id],
+          this.store.state.savedPresets,
+        );
+        this.preset = selection.preset;
+        this.presetGrid.preferredKey = selection.key;
+      }
       this.store.state.selected = this.preset.id;
       this._refreshSelection();
       const adjustment = this.contentScroll.get_vadjustment();

@@ -148,6 +148,9 @@ Switching modes restarts the renderer, since WebKit reads the variable at startu
 Install the updated extension and log out/in once to load this extension change.
 Afterward, changing the rendering selection only needs another wallpaper apply.
 
+For new upstream releases, follow [Updating shaders from Paper](update-paper-shaders.md)
+to check publication, review the changelog, and apply and verify the update.
+
 The renderer is pinned to Paper 0.0.81. Before upgrading it, check the upstream
 shader uniform definitions, ShaderMount API, licensing, and all native captures.
 The build preserves the dependency's LICENSE and NOTICE in `data/third-party/`.
@@ -183,6 +186,11 @@ The application has no runtime dependency on Bun or the source checkout after
 installation.
 
 ## Packages and releases
+
+Arch Linux uses the source recipe in `packaging/aur`. See the
+[AUR guide](aur.md) for initial submission, isolated build verification, and
+updates. Once initially published, update AUR for every release alongside GitHub
+and Fedora COPR; the GitHub workflow does not submit the AUR recipe.
 
 The [Build and Release workflow](../../.github/workflows/build-and-release.yml)
 checks the code, runs the logic tests, and builds three architecture-independent

@@ -24,6 +24,8 @@ React, Electron or a web application framework. Bun is a build/test tool, not th
 application runtime. Pin Paper Shaders and preserve its LICENSE and NOTICE.
 Regenerate Paper metadata with `scripts/sync-paper.js` against the reviewed,
 matching upstream checkout. Keep shader parameters and upstream presets lossless.
+For Paper updates, follow `docs/implementation/update-paper-shaders.md`: check the
+published version and upstream changelog, then apply and verify all relevant changes.
 Desktop windows must be identified with `Meta.WaylandClient.owns_window`, never
 by title alone. Do not replace Shell methods or execute shader code inside Shell.
 
@@ -62,6 +64,11 @@ pause, or stop against the user's running Shell during verification.
 
 ## Releases
 
+- Maintain the Arch source package in `packaging/aur`; follow
+  `docs/implementation/aur.md` for testing and publication. After initial AUR
+  publication, update its `PKGBUILD` and generated `.SRCINFO` for every release,
+  push the tested recipe to AUR, and verify the public version before reporting
+  publication complete.
 - Publish every release, including patch releases, to both GitHub Releases and
   the existing Fedora COPR project `stonegate/wallshader`. A GitHub tag alone
   does not complete a release.

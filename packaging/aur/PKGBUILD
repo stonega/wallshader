@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: 0BSD
+# Maintainer: stone <xijieyin@gmail.com>
+# makepkg supplies these variables and aborts failed commands in the functions.
+# shellcheck disable=SC2034,SC2154,SC2164
+
+pkgname=wallshader
+pkgver=0.1.6
+pkgrel=1
+pkgdesc='Native GNOME wallpapers made with Paper Shaders'
+arch=('any')
+url='https://github.com/stonega/wallshader'
+license=('GPL-3.0-or-later' 'Apache-2.0')
+depends=(
+  'sh'
+  'gjs>=1.80'
+  'gtk4>=4.14'
+  'libadwaita>=1.5'
+  'gdk-pixbuf2'
+  'webkitgtk-6.0>=2.44'
+  'gsettings-desktop-schemas'
+  'hicolor-icon-theme'
+  'librsvg'
+)
+makedepends=('bun>=1.3.14' 'meson' 'desktop-file-utils')
+optdepends=('gnome-shell: GNOME 50 on Wayland is required for animated wallpapers')
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('e92fd00fd52571380cc979f114e563832734470b677ee7231341cf54b50ed587')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+  bun install --frozen-lockfile --ignore-scripts --cache-dir "$srcdir/bun-cache"
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+  bun run build
+  arch-meson . build-native
+  meson compile -C build-native
+}
+
+check() {
+  cd "$pkgname-$pkgver"
+  bun test
+  desktop-file-validate data/io.github.wallshader.Wallshader.desktop
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+  meson install -C build-native --destdir "$pkgdir" --no-rebuild
+}

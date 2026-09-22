@@ -1,0 +1,25 @@
+pkgbase = wallshader
+	pkgdesc = Native GNOME wallpapers made with Paper Shaders
+	pkgver = 0.1.6
+	pkgrel = 1
+	url = https://github.com/stonega/wallshader
+	arch = any
+	license = GPL-3.0-or-later
+	license = Apache-2.0
+	makedepends = bun>=1.3.14
+	makedepends = meson
+	makedepends = desktop-file-utils
+	depends = sh
+	depends = gjs>=1.80
+	depends = gtk4>=4.14
+	depends = libadwaita>=1.5
+	depends = gdk-pixbuf2
+	depends = webkitgtk-6.0>=2.44
+	depends = gsettings-desktop-schemas
+	depends = hicolor-icon-theme
+	depends = librsvg
+	optdepends = gnome-shell: GNOME 50 on Wayland is required for animated wallpapers
+	source = wallshader-0.1.6.tar.gz::https://github.com/stonega/wallshader/archive/refs/tags/v0.1.6.tar.gz
+	sha256sums = e92fd00fd52571380cc979f114e563832734470b677ee7231341cf54b50ed587
+
+pkgname = wallshader

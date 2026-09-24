@@ -1,6 +1,8 @@
 import * as Paper from '@paper-design/shaders';
 import { createFrameClock } from './frame-clock.js';
 import { createFrameStats } from './frame-stats.js';
+import { kittyShader } from './kitty-shader.js';
+import { kittyTextures } from './kitty-texture.js';
 import sampleImage from './sample.webp';
 import {
   PRESETS,
@@ -275,6 +277,16 @@ window.wallshader = {
           216,
           item.frame,
           args.preset.imageData,
+        );
+      } else if (method === 'kitty-shader') {
+        const item = normalizePreset(args.preset.id, args.preset);
+        const values = await uniforms(item, args.preset.imageData);
+        result = kittyShader(
+          item,
+          Paper[SHADERS[item.shader].fragment],
+          values,
+          args.fps,
+          kittyTextures(values, SHADERS[item.shader]),
         );
       } else if (method === 'state')
         result = { ...preset, frame: mount.getCurrentFrame() };

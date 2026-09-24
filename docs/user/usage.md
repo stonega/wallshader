@@ -31,7 +31,7 @@
    Speed changes only the live preview. The preview pauses when you leave the app
    and respects GNOME's reduced animation setting at startup.
 6. Click the **Wallpaper Settings** gear icon to the right of the wallpaper apply
-   button to choose the wallpaper mode and output resolution. **Animated shader**
+   button to choose **Destination → Desktop or Kitty**, the wallpaper mode and output resolution. The destination is remembered across app restarts. **Animated shader**
    is selected by default when the app opens. “This display” uses
    the monitor containing the app window, including its scale. Explicit sizes include 1080p,
    1440p, 4K and ultrawide. The preview follows the selected aspect ratio.
@@ -55,6 +55,59 @@ colors, source image, speed, and the captured animation frame. Later edits do no
 change that saved copy. Select its tile to restore it, including after restarting
 the app. Saving and selecting presets do not apply a wallpaper. Wallpaper mode,
 desktop frame rate, rendering mode, and output resolution remain separate in Wallpaper Settings.
+
+For a Kitty terminal background, choose **Destination → Kitty**, close Settings,
+and click **Set Kitty Background**. **Still image** works with every preset,
+including image filters and logos. The captured PNG is scaled to fill the terminal
+while preserving its aspect ratio and tinted by 65% with Kitty's background color
+to help keep text readable.
+
+**Animated shader** requires [Kitty 0.49 or newer](https://sw.kovidgoyal.net/kitty/custom-shaders/)
+and its Slang compiler (included in Kitty's official binary; distro packages may
+require `shader-slang`). All 30 shader types support this mode, including procedural
+effects, image filters and processed logos. Image inputs and Paper's noise texture
+are packaged with the shader, so they remain available after Wallshader closes.
+Animated image copies are reduced to a maximum of **128 pixels on the longest
+edge and 256 colors** to keep Kitty's shader compilation manageable. Original
+images, desktop rendering and still exports retain their existing quality. The
+noise texture is preserved exactly. The first load of a textured shader can take
+several seconds while Kitty compiles and caches it. If GNOME displays “Kitty Is
+Not Responding” just after applying a shader, choose **Wait** to let compilation
+finish; **Force Quit** closes the terminal and its running sessions. Vector-packed
+texture data reduces this delay, but compilation time still depends on the driver.
+Very small terminal windows
+can further reduce texture detail. Effects that are static in Paper remain static.
+Changing shaders or modes does not apply a background.
+The shader runs
+inside Kitty after Wallshader closes. Colors, shader parameters, positioning,
+frame offset and speed are retained; Kitty's own clock controls the animation
+phase, so it does not start at the exact frame shown in Wallshader. Speed 0 holds
+the selected frame; negative speed reverses playback. Kitty controls window size
+and repaint timing; 30/60 FPS are approximate requests subject to its repaint
+limit. Output resolution affects the saved still and PNG export.
+
+Kitty runs custom shaders after rendering terminal content. Wallshader blends the
+effect into pixels close to Kitty's background colors, using a 65% tint; text and
+images with similar colors may also be affected. Animation temporarily replaces
+your configured custom shader chain. Applying a still or restoring the Kitty
+background brings that chain back.
+
+Wallshader adds one marked block to `~/.config/kitty/kitty.conf` (or
+`$XDG_CONFIG_HOME/kitty/kitty.conf`; `KITTY_CONFIG_DIRECTORY` takes precedence).
+The path is shown in Settings. Kitty normally reloads configuration automatically.
+If automatic reload is disabled, use **Ctrl+Shift+F5** in Kitty, or open a new
+instance. A config first created while Kitty is running also needs a manual reload
+or a new instance. Configurations passed through Kitty's `--config` flag must
+include this file, or point Wallshader at their directory using
+`KITTY_CONFIG_DIRECTORY`. Kitty's automatic light/dark theme files can override
+still background options; move those conflicting options out of the theme files
+if needed.
+
+Use **Restore Kitty Background** in Wallpaper Settings to remove Wallshader's
+block while preserving your other settings and later edits. Symlinked config
+files stay symlinked. Applying to Kitty, restoring it, and switching destinations
+leave the desktop wallpaper and its playback unchanged. Desktop restoration
+remains available through the app menu.
 
 For an animated desktop, open **Wallpaper Settings**, keep **Wallpaper mode**
 on **Animated shader**, and choose 30 or 60 FPS. Close the dialog, then click
@@ -151,5 +204,8 @@ saved previews are kept at `~/.local/share/wallshader/presets/`. Wallpapers are 
 `~/.local/share/wallshader/wallpapers/`, and source images at
 `~/.local/share/wallshader/images/` (or your XDG equivalents). Exported PNGs
 are independent of the app. Removing the app does not remove these files.
+Kitty PNGs, shader pipelines, and their Paper license/notice files are kept under
+`~/.local/share/wallshader/kitty/`. Restore Kitty's background before deleting
+these files.
 Animation settings are in `~/.config/wallshader/live-wallpaper.json`; its extension
 is in `~/.local/share/gnome-shell/extensions/wallshader@wallshader.github.io/`.

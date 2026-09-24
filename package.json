@@ -13,7 +13,9 @@
     "format": "biome check --write .",
     "test": "bun test",
     "test:native": "./scripts/test-native.sh",
-    "test:shell": "./scripts/test-shell.sh"
+    "test:kitty": "bun scripts/test-kitty.js",
+    "test:shell": "./scripts/test-shell.sh",
+    "test:kitty:render": "./scripts/test-kitty-render.sh"
   },
   "dependencies": {
     "@paper-design/shaders": "0.0.81"

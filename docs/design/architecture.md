@@ -32,7 +32,7 @@ as a named symbolic icon. Its outline is expanded to filled paths for GTK 4.14 c
 inherits widget foreground colors in light, dark, and high-contrast appearances.
 The Wallpaper Settings icon sits in a circular 44 × 44 px button, vertically
 centered to the right of the apply button. It opens an adaptive native dialog for
-wallpaper mode, animation frame rate, rendering mode, desktop playback controls, and output resolution. The dialog retains
+destination (Desktop or Kitty), wallpaper mode, animation frame rate, rendering mode, desktop playback controls, and output resolution. The destination persists across app restarts. Desktop controls are hidden for Kitty; Kitty has its own restore control. The dialog retains
 its selections when closed and reopened during the same app session. Wallpaper mode
 defaults to Animated shader when the app opens.
 
@@ -201,6 +201,56 @@ applies it through `wallpaper.js` before requesting animation. The capture and l
 configuration use the same frame time, even while the editor preview advances.
 Both background URI keys receive this still image, and the original wallpaper
 backup is preserved. If animation setup or startup fails, the still image remains.
+
+## Kitty backgrounds
+
+`kitty.js` writes a captured PNG and, for supported animated shaders, a Slang
+source and pipeline under the XDG data directory. Only explicit apply changes
+`kitty.conf`. `kitty-config.js` manages a single marked block, preserving all
+unrelated text and rejecting damaged or duplicated markers. Reapply puts that
+block last; restore removes it without reverting subsequent user edits. Writes
+follow symlinks and use GIO etags to reject concurrent edits; a missing config is
+created exclusively. Failed apply removes only the new attempt's assets. Kitty
+normally reloads its own config; the app does not signal processes or enable
+remote control. Its config path honors `KITTY_CONFIG_DIRECTORY`, then the XDG
+config directory. Kitty operations never call the desktop wallpaper controllers.
+
+Still backgrounds use all existing Paper captures, `cscaled` image layout and a
+65% background tint. `renderer/kitty-shader.js` adapts all 30 pinned Paper shaders
+to Kitty's Slang fragment interface. `kitty-compat.js` implements the GLSL
+operations used by these sources, including column-based matrix multiplication,
+array constructors, derivatives and floor-based modulo. Object, responsive,
+pattern and image coordinates follow Paper's vertex shader at pixel ratio 1.
+The converter uses the same uniform values and image preprocessing as the preview.
+It is scoped to the pinned catalog rather than arbitrary GLSL.
+
+Kitty has no external texture bindings. `kitty-texture.js` exports bounded image
+copies (128 pixels on the longest edge, 256 RGBA colors), packs palette indices
+sixteen per `uint4`, and supplies texture decoding passes in named buffers `a` and `b`.
+Vector tables avoid expensive scalar-array lowering during cold graphics-driver
+compilation, which blocks Kitty's event loop on configuration reload.
+Paper's 128-pixel paletted noise is lossless. Image preprocessing happens before
+resizing; mipmap levels are included where Paper requests them. The final pass
+implements clamp-to-edge, bilinear and trilinear sampling from those buffers.
+The sampler preserves original texture dimensions for Paper's pixel-sized kernels.
+Small viewports below the texture atlas size can reduce detail. Bounding the
+embedded data prevents pathological graphics-driver compilation costs; original
+images and presets are never rewritten. Assets require no running Wallshader
+process or remote control and include Paper's LICENSE and NOTICE.
+
+Premultiplied sRGB output is converted to Kitty's linear RGB, then blended at 35%
+into pixels near the configured background colors, preserving terminal alpha.
+This is a color-based mask, not a semantic text mask. All catalog entries keep
+both wallpaper modes available; selecting a shader never changes the chosen mode
+or applies a background. Static Paper shaders request no periodic redraw.
+
+Kitty's timestamp drives animation with the saved frame as an offset. Its phase
+is independent of the editor and of other Kitty processes. Speed 0 requests no
+periodic redraw; 30/60 FPS use 33/17 ms intervals subject to Kitty's repaint delay.
+Animation replaces the configured custom shader chain until a still apply or
+restore removes that override. Kitty 0.49+ is checked before animated apply; its
+Slang compiler remains an optional Kitty runtime dependency. No shader code runs
+inside GNOME Shell as part of this integration.
 
 ## Animated desktop
 

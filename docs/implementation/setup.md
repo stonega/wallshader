@@ -82,6 +82,33 @@ reuse the process and that manual pause works in both modes. It verifies startup
 and playback, not GPU performance or freedom from driver-specific GPU artifacts.
 Native checks exercise the saved rendering selection and its apply payload;
 `artifacts/wallpaper-settings{,-gpu}.png` show the dialog.
+The native suite also isolates `KITTY_CONFIG_DIRECTORY`, exercises the Desktop /
+Kitty selector, still and animated Kitty apply, restoration, symlink preservation,
+all 30 shader types, processed imported images, preservation of the selected mode,
+version errors, damaged configs, and desktop independence.
+`artifacts/wallpaper-settings-kitty.png` shows the Kitty settings.
+Use `bun run test:kitty` with Kitty 0.49+ and its Slang compiler to compile every
+supported original/Paper preset and representative positioning/alpha/reverse-speed
+variants through Kitty's actual pipeline compiler to GLSL. It uses temporary
+config/cache/data directories, opens no terminal and contacts no existing Kitty
+instance. This optional integration test uses Kitty's internal compiler API;
+production code uses only its documented config and shader formats.
+Run `bun run test:kitty:render` for visual verification with Kitty 0.49+, GJS,
+GNOME Shell's headless backend, and Python 3 with Pillow. This uses a private D-Bus,
+Wayland compositor, configuration, cache and data directories. It compares all 30
+shader types plus processed image variants with Paper frames and checks real
+animation and text preservation for procedural, noise and image shaders.
+It also reloads Smoke Ring in a running isolated Kitty with a fresh compiler cache
+and driver disk caches disabled for that process, checks animation and text after
+reload, and enforces a five-second responsiveness budget. Run this performance
+check without other heavy tests in parallel. `artifacts/kitty-render/reload.log`
+and `reload-timings.json` retain diagnostics.
+`artifacts/kitty-render/comparison.png` shows Paper on the left and Kitty on the
+right of each pair; `results.json` records errors and timings. Expect small
+float-precision differences and the documented image downsampling/quantization.
+Image checks bound both raw pixel differences and differences after a small blur,
+since halftone coverage amplifies small changes in the image texture.
+Never reload the user's Kitty or modify its live configuration during tests.
 `GSK_RENDERER=gl bun run test:shell` and `GSK_RENDERER=vulkan bun run test:shell`
 run the same checks with an explicit compositor and verify the selected backend
 in the renderer's diagnostics. Without an override, GTK chooses its default.

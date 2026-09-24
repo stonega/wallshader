@@ -14,6 +14,7 @@ import {
 } from './catalog.js';
 import { Store } from './storage.js';
 import { Wallpaper, pngBytes, savePng } from './wallpaper.js';
+import { KittyBackground } from './kitty.js';
 import { Preview } from './preview.js';
 import { LiveWallpaper, LoginRequiredError } from './live.js';
 import { AspectBox } from './aspect.js';
@@ -54,6 +55,7 @@ export const WallshaderWindow = GObject.registerClass(
       });
       this.store = new Store();
       this.wallpaper = new Wallpaper();
+      this.kitty = new KittyBackground();
       this.live = new LiveWallpaper(() => this._updateLiveStatus());
       const selection = openingPreset(
         this.store.state.selected,
@@ -435,16 +437,30 @@ export const WallshaderWindow = GObject.registerClass(
         margin_top: 12,
         margin_bottom: 24,
       });
-      content.append(label('Wallpaper mode', ['heading']));
+      content.append(label('Destination', ['heading']));
+      this.wallpaperTarget = new Gtk.DropDown({
+        model: Gtk.StringList.new(['Desktop', 'Kitty']),
+        selected: this.store.state.wallpaperTarget === 'kitty' ? 1 : 0,
+        tooltip_text: 'Wallpaper destination',
+        margin_top: 8,
+      });
+      this.wallpaperTarget.connect('notify::selected', () => {
+        this.store.state.wallpaperTarget =
+          this.wallpaperTarget.selected === 1 ? 'kitty' : 'desktop';
+        this._save();
+        this._syncAvailability();
+      });
+      content.append(this.wallpaperTarget);
+      content.append(label('Wallpaper mode', ['section-label']));
       this.wallpaperMode = new Gtk.DropDown({
         model: Gtk.StringList.new(['Still image', 'Animated shader']),
         selected: 1,
         tooltip_text: 'Wallpaper mode',
         margin_top: 8,
       });
-      this.wallpaperMode.connect('notify::selected', () =>
-        this._updateLiveStatus(),
-      );
+      this.wallpaperMode.connect('notify::selected', () => {
+        this._syncAvailability();
+      });
       content.append(this.wallpaperMode);
       this.liveOptions = vertical(8, { margin_top: 10, visible: false });
       this.liveOptions.append(
@@ -455,7 +471,8 @@ export const WallshaderWindow = GObject.registerClass(
         tooltip_text: 'Wallpaper frame rate',
       });
       this.liveOptions.append(this.liveFps);
-      this.liveOptions.append(
+      this.desktopOptions = vertical(8);
+      this.desktopOptions.append(
         label('Wallpaper rendering', ['dim-label', 'caption']),
       );
       this.liveRendering = new Gtk.DropDown({
@@ -471,8 +488,8 @@ export const WallshaderWindow = GObject.registerClass(
           this.liveRendering.selected === 1 ? 'gpu' : 'compatibility';
         this._save();
       });
-      this.liveOptions.append(this.liveRendering);
-      this.liveOptions.append(
+      this.desktopOptions.append(this.liveRendering);
+      this.desktopOptions.append(
         label(
           'GPU mode may reduce CPU use but can cause flickering. Takes effect when you apply the wallpaper.',
           ['dim-label', 'caption'],
@@ -484,7 +501,7 @@ export const WallshaderWindow = GObject.registerClass(
         ['dim-label', 'caption'],
         { wrap: true },
       );
-      this.liveOptions.append(this.liveStatus);
+      this.desktopOptions.append(this.liveStatus);
       const liveActions = new Gtk.Box({ spacing: 8 });
       this.livePauseButton = new Gtk.Button({ label: 'Pause', hexpand: true });
       this.livePauseButton.connect('clicked', () =>
@@ -498,8 +515,25 @@ export const WallshaderWindow = GObject.registerClass(
       );
       liveActions.append(this.livePauseButton);
       liveActions.append(this.liveStopButton);
-      this.liveOptions.append(liveActions);
+      this.desktopOptions.append(liveActions);
+      this.liveOptions.append(this.desktopOptions);
       content.append(this.liveOptions);
+      this.kittyOptions = vertical(8, { margin_top: 10, visible: false });
+      this.kittyOptions.append(
+        label(
+          `Saves to ${this.kitty.config.get_path()}. Kitty reloads automatically; if disabled, reload its settings or open a new instance.`,
+          ['dim-label', 'caption'],
+          { wrap: true },
+        ),
+      );
+      this.kittyRestoreButton = new Gtk.Button({
+        label: 'Restore Kitty Background',
+      });
+      this.kittyRestoreButton.connect('clicked', () =>
+        this.restoreKittyBackground(),
+      );
+      this.kittyOptions.append(this.kittyRestoreButton);
+      content.append(this.kittyOptions);
       content.append(label('Output resolution', ['section-label']));
       const resolutions = Gtk.StringList.new([
         'This display',
@@ -538,12 +572,22 @@ export const WallshaderWindow = GObject.registerClass(
     _updateLiveStatus() {
       if (!this.wallpaperMode || this._closed) return;
       const animated = this.wallpaperMode.selected === 1;
+      const kitty = this.wallpaperTarget.selected === 1;
       const status = this.live.status;
-      this.liveOptions.set_visible(animated || status.active);
+      this.liveOptions.set_visible(animated || (!kitty && status.active));
+      this.desktopOptions.set_visible(!kitty);
+      this.kittyOptions.set_visible(kitty);
+      this.kittyRestoreButton.set_sensitive(
+        this.kitty.canRestore && !this._busy,
+      );
       this.wallpaperHint.set_label(
-        animated
-          ? 'Animates on every display and sets its first frame as the still background. GNOME 50 on Wayland is required.'
-          : 'Applies a still image to light and dark appearances.',
+        kitty
+          ? animated
+            ? 'Animates behind terminal text with a dark tint. Requires Kitty 0.49 or newer with its shader compiler. Kitty controls animation timing and window size. Images are optimized to 128 pixels and 256 colors. First use can take a moment to compile.'
+            : 'Uses the current frame as a tinted Kitty background. Your desktop is unchanged.'
+          : animated
+            ? 'Animates on every display and sets its first frame as the still background. GNOME 50 on Wayland is required.'
+            : 'Applies a still image to light and dark appearances.',
       );
       this.liveStatus.set_label(
         status.error ||
@@ -560,8 +604,19 @@ export const WallshaderWindow = GObject.registerClass(
       this.livePauseButton.set_label(status.manualPaused ? 'Resume' : 'Pause');
       if (!this._busy && this.applyButton)
         this.applyButton.set_label(
-          animated ? 'Set Animated Wallpaper' : 'Set as Wallpaper',
+          kitty
+            ? animated
+              ? 'Set Kitty Background'
+              : 'Set Kitty Background (Still)'
+            : animated
+              ? 'Set Animated Wallpaper'
+              : 'Set as Wallpaper',
         );
+      this.applyButton?.set_tooltip_text(
+        kitty
+          ? 'Apply this background to Kitty'
+          : 'Apply this wallpaper to your GNOME desktop',
+      );
     }
 
     selectPaperPreset(index) {
@@ -894,6 +949,7 @@ export const WallshaderWindow = GObject.registerClass(
         .lookup_action('restore')
         ?.set_enabled(this.wallpaper.canRestore && !this._busy);
       this.wallpaperMode.set_sensitive(!this._busy);
+      this.wallpaperTarget.set_sensitive(!this._busy);
       this.liveFps.set_sensitive(!this._busy);
       this.liveRendering.set_sensitive(!this._busy);
       this._updateLiveStatus();
@@ -993,6 +1049,8 @@ export const WallshaderWindow = GObject.registerClass(
     }
 
     applyWallpaper() {
+      if (this.wallpaperTarget.selected === 1)
+        return this.applyKittyBackground();
       if (this.wallpaperMode.selected === 1)
         return this.applyAnimatedWallpaper();
       return this._capture(async (data, preset) => {
@@ -1007,6 +1065,43 @@ export const WallshaderWindow = GObject.registerClass(
           }),
         );
       });
+    }
+
+    applyKittyBackground() {
+      const animated = this.wallpaperMode.selected === 1;
+      return this._capture(async (data, preset) => {
+        let shader = null;
+        if (animated) {
+          await this.kitty.checkAnimationSupport();
+          shader = await this.preview.request('kitty-shader', {
+            preset,
+            fps: this.liveFps.selected === 1 ? 60 : 30,
+          });
+        }
+        await this.kitty.apply(data, shader);
+        await this._saveAppliedPreset(preset);
+        this.toasts.add_toast(
+          new Adw.Toast({
+            title: 'Kitty background saved. Reload Kitty settings if needed.',
+          }),
+        );
+      });
+    }
+
+    restoreKittyBackground() {
+      if (this._busy) return;
+      try {
+        this.kitty.restore();
+        this._syncAvailability();
+        this.toasts.add_toast(
+          new Adw.Toast({
+            title:
+              'Kitty background restored. Reload Kitty settings if needed.',
+          }),
+        );
+      } catch (error) {
+        this.showError(error);
+      }
     }
 
     async applyAnimatedWallpaper() {

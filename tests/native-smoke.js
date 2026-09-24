@@ -23,6 +23,7 @@ import {
   saveNamedPreset,
 } from '../src/saved-presets.js';
 import { presetFingerprint } from '../src/preset-options.js';
+import { checkKittyBackground } from './kitty-native.js';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -742,6 +743,9 @@ export async function run(window) {
       'Dialog lost the selected rendering mode',
     );
     await screenshot(window, `${artifacts}/wallpaper-settings-gpu.png`);
+    window.wallpaperTarget.selected = 1;
+    await screenshot(window, `${artifacts}/wallpaper-settings-kitty.png`);
+    window.wallpaperTarget.selected = 0;
     window.wallpaperSettings.close();
     window.liveRendering.selected = 0;
     assert(
@@ -925,6 +929,7 @@ export async function run(window) {
   settings.set_string('picture-options', 'scaled');
   await checkAnimatedWallpaper(window);
   await checkStillWallpaperPresets(window);
+  await checkKittyBackground(window);
   const file = await window.wallpaper.apply(still, 'aurora');
   assert(
     settings.get_string('picture-uri') === file.get_uri(),

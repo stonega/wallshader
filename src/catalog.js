@@ -286,6 +286,7 @@ export function normalizeState(input = {}) {
   return {
     version: 2,
     debugInfo: input.debugInfo === true,
+    wallpaperTarget: input.wallpaperTarget === 'kitty' ? 'kitty' : 'desktop',
     liveRendering: input.liveRendering === 'gpu' ? 'gpu' : 'compatibility',
     selected: ids.has(input.selected) ? input.selected : PRESETS[0].id,
     favorites: [

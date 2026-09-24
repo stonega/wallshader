@@ -48,6 +48,7 @@ documentation.
 | Renamed, removed, or reinterpreted parameters | Update normalization and migrations in `src/catalog.js` and `src/paper-migration.js`; preserve saved presets, imported settings/code, and desktop configurations. |
 | Uniforms, enums, colors, images, mipmaps, or noise textures | Review `scripts/sync-paper.js` and `src/renderer/renderer.js` against upstream mappings and image processors. Preserve all upstream preset values. |
 | ShaderMount, animation, sizing, or capture behavior | Review preview and desktop rendering, frame pacing, pause/resume, reverse playback, resizing, and PNG capture. |
+| Any fragment, texture preprocessing, shader helpers or vertex sizing | Review `src/renderer/kitty-{shader,compat,texture}.js` against the pinned source, update its version/port as needed, run `bun run test:kitty`, and inspect the output in an isolated Kitty terminal. Check all catalog entries, image preprocessing, texture filtering and sizing; inspect comparisons against the Paper renderer before extending the supported catalog. |
 | License, NOTICE, or bundled sample changes | Review `data/third-party/`, preserve required notices, and update attribution for any changed bundled asset. |
 
 Version 0.0.81 illustrates why this review matters: Paper Texture was rewritten

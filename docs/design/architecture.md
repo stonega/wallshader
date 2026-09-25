@@ -30,9 +30,13 @@ collection, with no intervening status toolbar or visible grid heading.
 Save Preset uses the supplied disk artwork with the existing 2.5-unit stroke weight
 as a named symbolic icon. Its outline is expanded to filled paths for GTK 4.14 compatibility, so it
 inherits widget foreground colors in light, dark, and high-contrast appearances.
-The Wallpaper Settings icon sits in a circular 44 × 44 px button, vertically
-centered to the right of the apply button. It opens an adaptive native dialog for
-destination (Desktop or Kitty), wallpaper mode, animation frame rate, rendering mode, desktop playback controls, and output resolution. The destination persists across app restarts. Desktop controls are hidden for Kitty; Kitty has its own restore control. The dialog retains
+The wallpaper apply control is a native split button: its main area applies to the
+selected destination, and its right arrow opens a Desktop/Kitty menu. The
+destination persists across app restarts. The Wallpaper Settings icon sits in a
+circular 44 × 44 px button, vertically centered to the right of the apply button.
+It opens an adaptive native dialog for wallpaper mode, animation frame rate,
+rendering mode, desktop playback controls, and output resolution. Desktop controls
+are hidden for Kitty; Kitty has its own restore control. The dialog retains
 its selections when closed and reopened during the same app session. Wallpaper mode
 defaults to Animated shader when the app opens.
 

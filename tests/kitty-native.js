@@ -21,6 +21,10 @@ function write(file, source) {
   );
 }
 
+function selectTarget(window, target) {
+  window.wallpaperTargetAction.activate(new GLib.Variant('s', target));
+}
+
 export async function checkKittyBackground(window) {
   assert(
     GLib.getenv('KITTY_CONFIG_DIRECTORY')?.includes('wallshader-test.'),
@@ -55,7 +59,7 @@ export async function checkKittyBackground(window) {
     // A new Kitty installation has no config yet; exercise exclusive creation.
     config.delete(null);
     await window.selectPreset('aurora');
-    window.wallpaperTarget.selected = 1;
+    selectTarget(window, 'kitty');
     assert(
       new Store().state.wallpaperTarget === 'kitty',
       'Kitty target did not persist',
@@ -183,8 +187,8 @@ export async function checkKittyBackground(window) {
       read(config).includes('custom_shaders crt'),
       'Still mode lost the original custom shader',
     );
-    window.wallpaperTarget.selected = 0;
-    window.wallpaperTarget.selected = 1;
+    selectTarget(window, 'desktop');
+    selectTarget(window, 'kitty');
     assert(
       window.wallpaperMode.selected === 0,
       'Switching targets lost still mode',
@@ -254,7 +258,7 @@ export async function checkKittyBackground(window) {
     window.live = originalLive;
     window.showError = originalError;
     window.kitty.checkAnimationSupport = originalCheck;
-    window.wallpaperTarget.selected = 0;
+    selectTarget(window, 'desktop');
     window.wallpaperMode.selected = 1;
     window._syncAvailability();
   }

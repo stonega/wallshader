@@ -82,6 +82,10 @@
 .export-actions {
   margin-top: 22px;
 }
+splitbutton.wallpaper-apply > menubutton > button {
+  padding-left: 14px;
+  padding-right: 14px;
+}
 .wallpaper-settings {
   min-width: 44px;
   min-height: 44px;

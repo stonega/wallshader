@@ -82,6 +82,23 @@ export const WallshaderWindow = GObject.registerClass(
         this.setDebugInfo(value.deepUnpack()),
       );
       this.add_action(this.debugAction);
+      this.wallpaperTargetAction = new Gio.SimpleAction({
+        name: 'wallpaper-target',
+        parameter_type: new GLib.VariantType('s'),
+        state: new GLib.Variant('s', this.store.state.wallpaperTarget),
+      });
+      this.wallpaperTargetAction.connect('activate', (action, value) =>
+        action.change_state(value),
+      );
+      this.wallpaperTargetAction.connect('change-state', (action, value) => {
+        const target = value.deepUnpack();
+        if (target !== 'desktop' && target !== 'kitty') return;
+        action.set_state(value);
+        this.store.state.wallpaperTarget = target;
+        this._save();
+        this._syncAvailability();
+      });
+      this.add_action(this.wallpaperTargetAction);
 
       this.split = new Adw.OverlaySplitView({
         sidebar_position: Gtk.PackType.END,
@@ -397,11 +414,16 @@ export const WallshaderWindow = GObject.registerClass(
         spacing: 8,
         css_classes: ['export-actions'],
       });
-      this.applyButton = new Gtk.Button({
+      const destinations = new Gio.Menu();
+      destinations.append('Desktop', 'win.wallpaper-target::desktop');
+      destinations.append('Kitty', 'win.wallpaper-target::kitty');
+      this.applyButton = new Adw.SplitButton({
         label: 'Set as Wallpaper',
         hexpand: true,
-        css_classes: ['suggested-action', 'pill'],
+        css_classes: ['suggested-action', 'pill', 'wallpaper-apply'],
         tooltip_text: 'Apply this frame to your GNOME desktop',
+        dropdown_tooltip: 'Choose wallpaper destination',
+        menu_model: destinations,
       });
       this.applyButton.connect('clicked', () => this.applyWallpaper());
       actions.append(this.applyButton);
@@ -437,20 +459,6 @@ export const WallshaderWindow = GObject.registerClass(
         margin_top: 12,
         margin_bottom: 24,
       });
-      content.append(label('Destination', ['heading']));
-      this.wallpaperTarget = new Gtk.DropDown({
-        model: Gtk.StringList.new(['Desktop', 'Kitty']),
-        selected: this.store.state.wallpaperTarget === 'kitty' ? 1 : 0,
-        tooltip_text: 'Wallpaper destination',
-        margin_top: 8,
-      });
-      this.wallpaperTarget.connect('notify::selected', () => {
-        this.store.state.wallpaperTarget =
-          this.wallpaperTarget.selected === 1 ? 'kitty' : 'desktop';
-        this._save();
-        this._syncAvailability();
-      });
-      content.append(this.wallpaperTarget);
       content.append(label('Wallpaper mode', ['section-label']));
       this.wallpaperMode = new Gtk.DropDown({
         model: Gtk.StringList.new(['Still image', 'Animated shader']),
@@ -572,7 +580,7 @@ export const WallshaderWindow = GObject.registerClass(
     _updateLiveStatus() {
       if (!this.wallpaperMode || this._closed) return;
       const animated = this.wallpaperMode.selected === 1;
-      const kitty = this.wallpaperTarget.selected === 1;
+      const kitty = this.store.state.wallpaperTarget === 'kitty';
       const status = this.live.status;
       this.liveOptions.set_visible(animated || (!kitty && status.active));
       this.desktopOptions.set_visible(!kitty);
@@ -949,7 +957,7 @@ export const WallshaderWindow = GObject.registerClass(
         .lookup_action('restore')
         ?.set_enabled(this.wallpaper.canRestore && !this._busy);
       this.wallpaperMode.set_sensitive(!this._busy);
-      this.wallpaperTarget.set_sensitive(!this._busy);
+      this.wallpaperTargetAction.set_enabled(!this._busy);
       this.liveFps.set_sensitive(!this._busy);
       this.liveRendering.set_sensitive(!this._busy);
       this._updateLiveStatus();
@@ -1049,7 +1057,7 @@ export const WallshaderWindow = GObject.registerClass(
     }
 
     applyWallpaper() {
-      if (this.wallpaperTarget.selected === 1)
+      if (this.store.state.wallpaperTarget === 'kitty')
         return this.applyKittyBackground();
       if (this.wallpaperMode.selected === 1)
         return this.applyAnimatedWallpaper();

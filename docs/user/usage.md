@@ -30,8 +30,10 @@
    Negative speed plays in reverse; 0 holds a frame.
    Speed changes only the live preview. The preview pauses when you leave the app
    and respects GNOME's reduced animation setting at startup.
-6. Click the **Wallpaper Settings** gear icon to the right of the wallpaper apply
-   button to choose **Destination → Desktop or Kitty**, the wallpaper mode and output resolution. The destination is remembered across app restarts. **Animated shader**
+6. Use the arrow on the right side of the wallpaper apply button to choose
+   **Desktop** or **Kitty**. The destination is remembered across app restarts.
+   Click the **Wallpaper Settings** gear icon beside it to choose the wallpaper mode
+   and output resolution. **Animated shader**
    is selected by default when the app opens. “This display” uses
    the monitor containing the app window, including its scale. Explicit sizes include 1080p,
    1440p, 4K and ultrawide. The preview follows the selected aspect ratio.
@@ -56,8 +58,8 @@ change that saved copy. Select its tile to restore it, including after restartin
 the app. Saving and selecting presets do not apply a wallpaper. Wallpaper mode,
 desktop frame rate, rendering mode, and output resolution remain separate in Wallpaper Settings.
 
-For a Kitty terminal background, choose **Destination → Kitty**, close Settings,
-and click **Set Kitty Background**. **Still image** works with every preset,
+For a Kitty terminal background, choose **Kitty** from the apply button's arrow
+menu, then click **Set Kitty Background**. **Still image** works with every preset,
 including image filters and logos. The captured PNG is scaled to fill the terminal
 while preserving its aspect ratio and tinted by 65% with Kitty's background color
 to help keep text readable.

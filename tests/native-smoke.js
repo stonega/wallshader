@@ -29,6 +29,42 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+function checkWallpaperTarget(window) {
+  const menu = window.applyButton.get_menu_model();
+  assert(
+    window.applyButton instanceof Adw.SplitButton && menu.get_n_items() === 2,
+    'Wallpaper action does not have a destination menu',
+  );
+  for (const [index, target] of ['desktop', 'kitty'].entries()) {
+    assert(
+      menu.get_item_attribute_value(index, 'action', null).deepUnpack() ===
+        'win.wallpaper-target' &&
+        menu.get_item_attribute_value(index, 'target', null).deepUnpack() ===
+          target,
+      `${target} menu item does not select its destination`,
+    );
+  }
+  const wallpaperBefore = window.wallpaper.settings.get_string('picture-uri');
+  window.wallpaperTargetAction.activate(new GLib.Variant('s', 'kitty'));
+  assert(
+    window.applyButton.label === 'Set Kitty Background' &&
+      new Store().state.wallpaperTarget === 'kitty' &&
+      !window.desktopOptions.visible &&
+      window.kittyOptions.visible,
+    'Kitty destination was not applied to the UI or saved',
+  );
+  window.wallpaperTargetAction.activate(new GLib.Variant('s', 'desktop'));
+  assert(
+    window.applyButton.label === 'Set Animated Wallpaper' &&
+      new Store().state.wallpaperTarget === 'desktop' &&
+      window.desktopOptions.visible &&
+      !window.kittyOptions.visible &&
+      window.wallpaper.settings.get_string('picture-uri') === wallpaperBefore,
+    'Desktop destination was not restored without applying a wallpaper',
+  );
+  console.log('Verified split button destination menu and saved selection.');
+}
+
 function settle() {
   return new Promise((resolve) =>
     GLib.timeout_add(GLib.PRIORITY_DEFAULT, 900, () => {
@@ -674,6 +710,7 @@ export async function run(window) {
   );
   await window.ready;
   assert(window._ready, 'Preview did not initialize');
+  checkWallpaperTarget(window);
   for (const { name, id } of PRESETS)
     assert(
       window._cards.get(id).picture.get_paintable(),
@@ -743,9 +780,9 @@ export async function run(window) {
       'Dialog lost the selected rendering mode',
     );
     await screenshot(window, `${artifacts}/wallpaper-settings-gpu.png`);
-    window.wallpaperTarget.selected = 1;
+    window.wallpaperTargetAction.activate(new GLib.Variant('s', 'kitty'));
     await screenshot(window, `${artifacts}/wallpaper-settings-kitty.png`);
-    window.wallpaperTarget.selected = 0;
+    window.wallpaperTargetAction.activate(new GLib.Variant('s', 'desktop'));
     window.wallpaperSettings.close();
     window.liveRendering.selected = 0;
     assert(

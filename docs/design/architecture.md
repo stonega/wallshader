@@ -12,15 +12,15 @@ pane; a trailing inspector holds composition and wallpaper apply controls. Below
 the inspector becomes an overlay. Labels are left aligned, the preview follows
 the output aspect ratio, and the gallery uses two or three columns. Gallery rows
 stay at their natural height so surplus vertical space does not stretch the cards.
-Gallery thumbnails show each template's first **Original** preset, independent of
-saved edits or the selected preset.
-The gallery shows native, mutually exclusive category tabs with an icon and label,
-using a rounded neutral background for the active tab. The shader groups match
-[Paper's catalog](https://shaders.paper.design/): Effects, Image Filters, and Logo
-Animations. Effects combines gradients and patterns and is selected on startup;
-Favorites remains a separate personal filter. There is no All tab, wallpaper count,
-or Collection heading. The tab row scrolls horizontally
-when needed, and switching tabs retains the current search. Selected gallery and
+Gallery thumbnails in All and its category filters show each template's first
+**Original** preset. The All split button returns to the complete gallery when
+clicked; its right arrow offers Effects, Image Filters, and Logo Animations,
+matching [Paper's catalog](https://shaders.paper.design/).
+Favorites and Recent are separate views with cards for exact preset configurations;
+each card places its preset name at the right of the title row. Kitty entries in
+Recent show its logo beside the shader title. The tab row scrolls horizontally
+when needed, and switching views
+retains the current search. Selected gallery and
 preset tiles use accent-colored label text as their selection indicator.
 The preview header shows the wallpaper name followed by Save Preset, Export PNG (an image icon), Reset Changes,
 and favorite icon buttons, without a subtitle. Play/pause sits inside the preview's
@@ -44,7 +44,8 @@ The palette uses Adwaita's window background, foreground and accent with neutral
 text; the initial artwork uses midnight `#171346`, violet `#6456C8`, sky
 `#A1CEE8`, and lilac `#E4AFE5`. System colors remain authoritative in light and
 dark appearances. This keeps visual emphasis on actual shader output.
-Favorited stars in the preview header and gallery use yellow `#F5C211`.
+Favorited stars in the preview header and original gallery cards use yellow
+`#F5C211`. Favorites keep preset snapshots, so later edits do not change them.
 
 ## Rendering
 
@@ -190,10 +191,15 @@ use elsewhere.
 ## State and desktop integration
 
 `catalog.js` is runtime-independent and validates all persisted numeric and color
-values. State version 2 retains compatibility with the original saved presets.
+values. State version 3 reads existing version 2 saved presets and favorites.
 `storage.js` atomically replaces the settings JSON under the XDG config
 directory. Edits are debounced. `wallpaper.js` writes a unique PNG under the XDG
 data directory, then sets both GNOME background URI keys and the zoom layout.
+Legacy shader-only favorites migrate to snapshots of their remembered settings.
+Version 3 also reverses older favorite lists once so the latest favorite appears
+first; new favorites are inserted at the front.
+Recent keeps the last 20 unique applied presets across desktop and Kitty; applying
+one again moves it to the front and updates its destination.
 The original light/dark URIs and layout are saved before the first apply and
 restored by the app menu or Undo. Applying again preserves the original backup.
 
@@ -231,11 +237,15 @@ It is scoped to the pinned catalog rather than arbitrary GLSL.
 Kitty has no external texture bindings. `kitty-texture.js` exports bounded image
 copies (128 pixels on the longest edge, 256 RGBA colors), packs palette indices
 sixteen per `uint4`, and supplies texture decoding passes in named buffers `a` and `b`.
+Noise-only shaders and the three Logo Animations embed their paletted atlas in
+the final pass, avoiding a separate full-window texture pass during Kitty
+configuration reload.
 Vector tables avoid expensive scalar-array lowering during cold graphics-driver
 compilation, which blocks Kitty's event loop on configuration reload.
 Paper's 128-pixel paletted noise is lossless. Image preprocessing happens before
 resizing; mipmap levels are included where Paper requests them. The final pass
-implements clamp-to-edge, bilinear and trilinear sampling from those buffers.
+implements clamp-to-edge, bilinear and trilinear sampling from image buffers or
+embedded texture data.
 The sampler preserves original texture dimensions for Paper's pixel-sized kernels.
 Small viewports below the texture atlas size can reduce detail. Bounding the
 embedded data prevents pathological graphics-driver compilation costs; original
@@ -243,7 +253,11 @@ images and presets are never rewritten. Assets require no running Wallshader
 process or remote control and include Paper's LICENSE and NOTICE.
 
 Premultiplied sRGB output is converted to Kitty's linear RGB, then blended at 35%
-into pixels near the configured background colors, preserving terminal alpha.
+into pixels near the configured background colors. Fully transparent Kitty
+background pixels receive the shader and become opaque, so a zero dynamic
+background opacity does not hide the wallpaper. Transparent input RGB is replaced
+with Kitty's background color before blending because that RGB is undefined.
+Terminal glyphs retain their original alpha.
 This is a color-based mask, not a semantic text mask. All catalog entries keep
 both wallpaper modes available; selecting a shader never changes the chosen mode
 or applies a background. Static Paper shaders request no periodic redraw.

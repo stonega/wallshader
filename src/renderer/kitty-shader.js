@@ -2,6 +2,8 @@ import { KITTY_ANIMATED_SHADERS } from '../kitty-config.js';
 import { kittyCompat, convertPaper } from './kitty-compat.js';
 import { textureSource, textureAssets } from './kitty-texture.js';
 
+const INLINE_IMAGE_SHADERS = new Set(['gem-smoke', 'heatmap', 'liquid-metal']);
+
 function number(value) {
   if (!Number.isFinite(value))
     throw new Error('Invalid Kitty shader parameter.');
@@ -25,6 +27,13 @@ export function kittyShader(preset, glsl, uniforms, fps = 30, textures = []) {
     u_imageAspectRatio:
       textures.find((t) => t.name === 'u_image')?.aspectRatio ?? 1,
   };
+  // These single-texture shaders can read their paletted pixels directly.
+  // A separate atlas pass can become visible during a Kitty reload.
+  const inlineTexture =
+    textures.length === 1 &&
+    (textures[0].name === 'u_noiseTexture' ||
+      INLINE_IMAGE_SHADERS.has(preset.shader));
+  const assets = inlineTexture ? [] : textureAssets(textures);
   let body = convertPaper(glsl)
     .replace(
       /^uniform (float[234]?|bool|int) (\w+)(?:\[(\d+)\])?;$/gm,
@@ -63,7 +72,7 @@ export function kittyShader(preset, glsl, uniforms, fps = 30, textures = []) {
     );
   body = `
 ${kittyCompat}
-${textureSource(textures)}
+${textureSource(textures, inlineTexture)}
 struct PaperShader {
   ${textures.length ? 'PaperTextures paperTextures;' : ''}
   float u_time;
@@ -135,18 +144,21 @@ float4 paperFrame(float2 pos, float2 resolution, float timestamp, KittyTextures 
 }
 public float4 fragment_main(float4 color, KittyTextures t, KittyCustomShaderData d) {
   float4 result = paperFrame(t.pos, max(float2(d.viewport_size_pixels),float2(1)), d.timestamp, t);
-  float3 globalDelta = abs(color.rgb - d.background.rgb);
-  float3 activeDelta = abs(color.rgb - d.active_window_background.rgb);
+  float3 terminal = color.a > 0.0 ? color.rgb : d.background.rgb;
+  float3 globalDelta = abs(terminal - d.background.rgb);
+  float3 activeDelta = abs(terminal - d.active_window_background.rgb);
   float distance = min(max(globalDelta.r, max(globalDelta.g, globalDelta.b)), max(activeDelta.r, max(activeDelta.g, activeDelta.b)));
-  float background = 1 - smoothstep(0.02, 0.12, distance);
+  // Kitty can supply transparent background pixels when its dynamic opacity
+  // is changed at runtime. The shader is the background in that case.
+  float background = max(1 - smoothstep(0.02, 0.12, distance), 1 - saturate(color.a));
   float alpha = saturate(result.a);
   float3 rgb = paperLinear(result.rgb / max(0.00001, alpha));
-  return float4(lerp(color.rgb, rgb, background * alpha * 0.35), color.a);
+  return float4(lerp(terminal, rgb, background * alpha * 0.35), max(color.a, background));
 }
 `;
   return {
     source,
-    textures: textureAssets(textures),
-    pipeline: `${textures.length ? `textures ${textures.map((_t, i) => (i === 0 ? 'a' : 'b')).join(' ')}\n` : ''}${textures.map((_t, i) => `startgroup\n    output_texture ${i === 0 ? 'a' : 'b'}\n    shaders wallshader-texture-${i}\nendgroup\n`).join('')}startgroup\n    animation_stop never\n    animation_step ${preset.speed === 0 || !/\bu_time\b/.test(glsl) ? 0 : fps === 60 ? 17 : 33}\n    shaders wallshader\nendgroup\n`,
+    textures: assets,
+    pipeline: `${assets.length ? `textures ${assets.map((_t, i) => (i === 0 ? 'a' : 'b')).join(' ')}\n` : ''}${assets.map((_t, i) => `startgroup\n    shaders wallshader-texture-${i}\n    output_texture ${i === 0 ? 'a' : 'b'}\nendgroup\n`).join('')}startgroup\n    animation_stop never\n    animation_step ${preset.speed === 0 || !/\bu_time\b/.test(glsl) ? 0 : fps === 60 ? 17 : 33}\n    shaders wallshader\nendgroup\n`,
   };
 }

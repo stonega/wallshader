@@ -10,6 +10,9 @@ import {
   createPreset,
   normalizePreset,
   filterPresets,
+  presetFingerprint,
+  addFavorite,
+  recordRecent,
   validateDimensions,
 } from './catalog.js';
 import { Store } from './storage.js';
@@ -63,13 +66,16 @@ export const WallshaderWindow = GObject.registerClass(
         this.store.state.savedPresets,
       );
       this.preset = selection.preset;
-      this._category = 'Effects';
+      this._category = 'All';
       this._paused = !Gtk.Settings.get_default().gtk_enable_animations;
       this._busy = false;
       this._ready = false;
       this._saveTimeout = null;
       this._closed = false;
       this._cards = new Map();
+      this._collectionCards = [];
+      this._galleryTextures = new Map();
+      this._galleryGeneration = 0;
       this._renderGeneration = 0;
       this.toasts = new Adw.ToastOverlay();
       this.set_content(this.toasts);
@@ -278,38 +284,73 @@ export const WallshaderWindow = GObject.registerClass(
       content.append(this.presetGrid);
 
       const categories = [
+        ['All', 'view-grid-symbolic'],
         ['Effects', 'view-grid-symbolic'],
         ['Image Filters', 'image-x-generic-symbolic'],
         ['Logo Animations', 'applications-graphics-symbolic'],
-        ['Favorites', 'starred-symbolic'],
       ];
       const categoryTabs = new Gtk.Box({
         spacing: 4,
         css_classes: ['category-tabs'],
       });
-      let firstTab;
-      for (const [category, icon] of categories) {
-        const tabContent = new Gtk.Box({
-          spacing: 6,
-          halign: Gtk.Align.CENTER,
-        });
-        tabContent.append(new Gtk.Image({ icon_name: icon, pixel_size: 16 }));
-        tabContent.append(label(category));
-        const tab = new Gtk.ToggleButton({
-          child: tabContent,
+      const selector = vertical(2);
+      for (const [category] of categories) {
+        const option = new Gtk.Button({
+          label: category,
           tooltip_text: category,
-          css_classes: ['flat', 'category-tab'],
+          css_classes: ['flat'],
         });
-        if (firstTab) tab.set_group(firstTab);
-        else firstTab = tab;
-        tab.set_active(category === this._category);
-        tab.connect('toggled', () => {
-          if (!tab.active) return;
+        option.connect('clicked', () => {
           this._category = category;
+          this.categoryPopover.popdown();
+          this._syncCategoryTabs();
           this._filter();
         });
-        categoryTabs.append(tab);
+        selector.append(option);
       }
+      this.categoryPopover = new Gtk.Popover({ child: selector });
+      const allContent = new Gtk.Box({ spacing: 6 });
+      this.categoryIcon = new Gtk.Image({
+        icon_name: categories[0][1],
+        pixel_size: 16,
+      });
+      this.categoryLabel = label('All');
+      allContent.append(this.categoryIcon);
+      allContent.append(this.categoryLabel);
+      this.categoryButton = new Adw.SplitButton({
+        child: allContent,
+        popover: this.categoryPopover,
+        tooltip_text: 'Show all wallpapers',
+        dropdown_tooltip: 'Choose a wallpaper category',
+        css_classes: ['flat', 'category-tab'],
+      });
+      this.categoryButton.connect('clicked', () => {
+        this._category = 'All';
+        this._syncCategoryTabs();
+        this._filter();
+      });
+      categoryTabs.append(this.categoryButton);
+      this.collectionButtons = new Map();
+      for (const [category, icon] of [
+        ['Favorites', 'starred-symbolic'],
+        ['Recent', 'document-open-recent-symbolic'],
+      ]) {
+        const tabContent = new Gtk.Box({ spacing: 6 });
+        tabContent.append(new Gtk.Image({ icon_name: icon, pixel_size: 16 }));
+        tabContent.append(label(category));
+        const button = new Gtk.Button({
+          child: tabContent,
+          css_classes: ['flat', 'category-tab'],
+        });
+        button.connect('clicked', () => {
+          this._category = category;
+          this._syncCategoryTabs();
+          this._filter();
+        });
+        this.collectionButtons.set(category, button);
+        categoryTabs.append(button);
+      }
+      this._syncCategoryTabs();
       content.append(
         new Gtk.ScrolledWindow({
           hscrollbar_policy: Gtk.PolicyType.AUTOMATIC,
@@ -372,12 +413,23 @@ export const WallshaderWindow = GObject.registerClass(
         });
       }
       content.append(this.gallery);
-      this.empty = new Adw.StatusPage({
-        title: 'No wallpapers found',
-        description: 'Try a different search or collection.',
-        icon_name: 'system-search-symbolic',
+      this.empty = vertical(4, {
+        halign: Gtk.Align.CENTER,
+        margin_top: 16,
+        margin_bottom: 16,
         visible: false,
       });
+      this.emptyTitle = label('No wallpapers found', ['heading'], {
+        halign: Gtk.Align.CENTER,
+        xalign: 0.5,
+      });
+      this.emptyDescription = label(
+        'Try a different search or collection.',
+        ['dim-label'],
+        { halign: Gtk.Align.CENTER, xalign: 0.5, wrap: true },
+      );
+      this.empty.append(this.emptyTitle);
+      this.empty.append(this.emptyDescription);
       content.append(this.empty);
       const credit = new Gtk.LinkButton({
         uri: 'https://github.com/paper-design/shaders',
@@ -747,6 +799,7 @@ export const WallshaderWindow = GObject.registerClass(
       this._ready = true;
       this._updateRatio();
       this._syncAvailability();
+      this._filter();
       if (this.store.warning) this.showError(new Error(this.store.warning));
       for (const item of PRESETS) {
         if (this._closed) return;
@@ -754,11 +807,14 @@ export const WallshaderWindow = GObject.registerClass(
           const uri = await this.preview.request('thumbnail', {
             preset: createPreset(item.id),
           });
-          this._cards
-            .get(item.id)
-            .picture.set_paintable(
-              Gdk.Texture.new_from_bytes(new GLib.Bytes(pngBytes(uri))),
-            );
+          const texture = Gdk.Texture.new_from_bytes(
+            new GLib.Bytes(pngBytes(uri)),
+          );
+          this._cards.get(item.id).picture.set_paintable(texture);
+          this._galleryTextures.set(
+            presetFingerprint(createPreset(item.id)),
+            texture,
+          );
         } catch (error) {
           if (this._closed) return;
           this._cards.get(item.id).picture.set_tooltip_text(error.message);
@@ -804,28 +860,83 @@ export const WallshaderWindow = GObject.registerClass(
       return rendered;
     }
 
+    selectCollectionPreset(preset) {
+      if (this._busy) return;
+      this._remember();
+      this.preset = normalizePreset(preset.id, preset);
+      this.presetGrid.preferredKey = selectedPresetKey(
+        presetOptions(this.preset, this.store.state.savedPresets),
+        this.preset,
+      );
+      this.store.state.selected = preset.id;
+      this._refreshSelection();
+      this.contentScroll.get_vadjustment().set_value(0);
+      const rendered = this._ready ? this._renderPreset() : Promise.resolve();
+      this._saveSoon();
+      return rendered;
+    }
+
+    _syncCategoryTabs() {
+      if (['Favorites', 'Recent'].includes(this._category))
+        this.categoryButton.remove_css_class('selected');
+      else this.categoryButton.add_css_class('selected');
+      for (const [category, button] of this.collectionButtons) {
+        if (category === this._category) button.add_css_class('selected');
+        else button.remove_css_class('selected');
+      }
+    }
+
     _refreshSelection() {
       this.nameLabel.set_label(this.preset.name);
       this._buildControls();
       this._refreshFavorites();
+      const selectedKey = presetFingerprint(this.preset);
       for (const [id, { card }] of this._cards) {
         if (id === this.preset.id) card.add_css_class('selected');
         else card.remove_css_class('selected');
       }
+      for (const { card, preset } of this._collectionCards) {
+        if (presetFingerprint(preset) === selectedKey)
+          card.add_css_class('selected');
+        else card.remove_css_class('selected');
+      }
+    }
+
+    _presetName(preset) {
+      const options = presetOptions(preset, this.store.state.savedPresets);
+      const key = selectedPresetKey(
+        options,
+        preset,
+        this.presetGrid.preferredKey,
+      );
+      return options.find((option) => option.key === key)?.name ?? 'Custom';
     }
 
     _toggleFavorite() {
       const favorites = this.store.state.favorites;
-      const index = favorites.indexOf(this.preset.id);
+      const key = presetFingerprint(this.preset);
+      const index = favorites.findIndex(
+        (item) => presetFingerprint(item.preset) === key,
+      );
       if (index >= 0) favorites.splice(index, 1);
-      else favorites.push(this.preset.id);
+      else
+        this.store.state.favorites = addFavorite(
+          favorites,
+          this.preset,
+          this._presetName(this.preset),
+        );
       this._refreshFavorites();
       this._filter();
       this._saveSoon();
     }
 
     _refreshFavorites() {
-      const favorite = this.store.state.favorites.includes(this.preset.id);
+      const favorites = this.store.state.favorites;
+      const key = presetFingerprint(this.preset);
+      const favoriteKeys = new Set(
+        favorites.map((item) => presetFingerprint(item.preset)),
+      );
+      const favorite = favoriteKeys.has(key);
       this.favoriteButton.set_icon_name(
         favorite ? 'starred-symbolic' : 'non-starred-symbolic',
       );
@@ -835,30 +946,142 @@ export const WallshaderWindow = GObject.registerClass(
         favorite ? 'Remove from favorites' : 'Add to favorites',
       );
       for (const [id, { star }] of this._cards)
-        star.set_visible(this.store.state.favorites.includes(id));
+        star.set_visible(favoriteKeys.has(presetFingerprint(createPreset(id))));
     }
 
     _filter() {
+      const collection = ['Favorites', 'Recent'].includes(this._category);
+      const search = this.search.get_text().trim().toLowerCase();
+      const entries = collection
+        ? this.store.state[this._category.toLowerCase()].filter((item) =>
+            `${item.preset.name} ${SHADERS[item.preset.shader].name} ${item.name}`
+              .toLowerCase()
+              .includes(search),
+          )
+        : [];
       const matches = new Set(
-        filterPresets(
-          this._category,
-          this.search.get_text(),
-          this.store.state.favorites,
-        ).map((item) => item.id),
+        collection
+          ? []
+          : filterPresets(this._category, search).map((item) => item.id),
       );
       for (const [id, { child }] of this._cards)
         child.set_visible(matches.has(id));
-      this.empty.set_visible(matches.size === 0);
-      this.gallery.set_visible(matches.size > 0);
-      this.empty.set_description(
-        this._category === 'Favorites' && !this.search.get_text()
-          ? 'Star a wallpaper to keep it here.'
-          : 'Try a different search or collection.',
+      this._galleryGeneration++;
+      for (const { child } of this._collectionCards) this.gallery.remove(child);
+      this._collectionCards = [];
+      for (const entry of entries) this._addCollectionCard(entry);
+      if (entries.length && this._ready)
+        this._loadCollectionThumbnails(this._galleryGeneration);
+      const count = collection ? entries.length : matches.size;
+      this.empty.set_visible(count === 0);
+      this.gallery.set_visible(count > 0);
+      this.emptyTitle.set_label(
+        !search && this._category === 'Favorites'
+          ? 'No favorites yet'
+          : !search && this._category === 'Recent'
+            ? 'No recent presets yet'
+            : 'No wallpapers found',
       );
+      this.emptyDescription.set_label(
+        this._category === 'Favorites' && !this.search.get_text()
+          ? 'Star a preset to keep it here.'
+          : this._category === 'Recent' && !this.search.get_text()
+            ? 'Applied desktop and Kitty presets appear here.'
+            : 'Try a different search or collection.',
+      );
+    }
+
+    _addCollectionCard(entry) {
+      const preset = entry.preset;
+      const card = new Gtk.Button({
+        css_classes: ['flat', 'gallery-card'],
+        tooltip_text: `${preset.name} — ${entry.name}`,
+      });
+      const box = vertical();
+      const picture = new Gtk.Picture({
+        can_shrink: true,
+        content_fit: Gtk.ContentFit.COVER,
+        hexpand: true,
+      });
+      box.append(
+        new AspectBox({
+          ratio: 16 / 9,
+          thumbnail: true,
+          child: picture,
+          css_classes: ['thumbnail'],
+          overflow: Gtk.Overflow.HIDDEN,
+        }),
+      );
+      const caption = new Gtk.Box({
+        spacing: 6,
+        css_classes: ['card-label'],
+      });
+      const title = new Gtk.Box({ spacing: 4, hexpand: true });
+      if (entry.target === 'kitty')
+        title.append(
+          new Gtk.Image({
+            icon_name: 'wallshader-kitty',
+            pixel_size: 16,
+            tooltip_text: 'Applied to Kitty',
+          }),
+        );
+      title.append(
+        label(preset.name, [], {
+          hexpand: true,
+          ellipsize: 3,
+          max_width_chars: 18,
+        }),
+      );
+      caption.append(title);
+      caption.append(
+        label(entry.name, ['preset-name'], {
+          halign: Gtk.Align.END,
+          xalign: 1,
+          ellipsize: 3,
+          max_width_chars: 14,
+        }),
+      );
+      box.append(caption);
+      card.set_child(box);
+      card.connect('clicked', () => this.selectCollectionPreset(preset));
+      this.gallery.insert(card, -1);
+      this._collectionCards.push({
+        card,
+        picture,
+        preset,
+        child: card.get_parent(),
+      });
+    }
+
+    async _loadCollectionThumbnails(generation) {
+      for (const item of this._collectionCards) {
+        if (generation !== this._galleryGeneration || this._closed) return;
+        const key = presetFingerprint(item.preset);
+        try {
+          let texture = this._galleryTextures.get(key);
+          if (!texture) {
+            const uri = await this.preview.request('thumbnail', {
+              preset: item.preset,
+            });
+            texture = Gdk.Texture.new_from_bytes(new GLib.Bytes(pngBytes(uri)));
+            this._galleryTextures.set(key, texture);
+            if (this._galleryTextures.size > 128)
+              this._galleryTextures.delete(
+                this._galleryTextures.keys().next().value,
+              );
+          }
+          if (generation !== this._galleryGeneration || this._closed) return;
+          item.picture.set_paintable(texture);
+        } catch (error) {
+          if (generation !== this._galleryGeneration || this._closed) return;
+          item.picture.set_tooltip_text(error.message);
+        }
+      }
     }
 
     _changed() {
       this.presetGrid.setPreset(this.preset, this.store.state.savedPresets);
+      this._refreshFavorites();
       this._remember();
       if (this._ready) this._renderPreset();
       this._saveSoon();
@@ -1056,6 +1279,17 @@ export const WallshaderWindow = GObject.registerClass(
       }
     }
 
+    _recordRecent(target) {
+      this.store.state.recent = recordRecent(
+        this.store.state.recent,
+        this.preset,
+        this._presetName(this.preset),
+        target,
+      );
+      if (this._category === 'Recent') this._filter();
+      this._saveSoon();
+    }
+
     applyWallpaper() {
       if (this.store.state.wallpaperTarget === 'kitty')
         return this.applyKittyBackground();
@@ -1065,6 +1299,7 @@ export const WallshaderWindow = GObject.registerClass(
         await this.live.stop();
         await this.wallpaper.apply(data, preset.id);
         await this._saveAppliedPreset(preset);
+        this._recordRecent('desktop');
         this.toasts.add_toast(
           new Adw.Toast({
             title: `${this.preset.name} set as wallpaper`,
@@ -1088,6 +1323,7 @@ export const WallshaderWindow = GObject.registerClass(
         }
         await this.kitty.apply(data, shader);
         await this._saveAppliedPreset(preset);
+        this._recordRecent('kitty');
         this.toasts.add_toast(
           new Adw.Toast({
             title: 'Kitty background saved. Reload Kitty settings if needed.',
@@ -1131,6 +1367,7 @@ export const WallshaderWindow = GObject.registerClass(
         });
         await this.wallpaper.apply(data, preset.id);
         await this._saveAppliedPreset(preset);
+        this._recordRecent('desktop');
         await this.live.apply(
           preset,
           this.liveFps.selected === 1 ? 60 : 30,

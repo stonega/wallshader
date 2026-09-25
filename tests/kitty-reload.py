@@ -5,7 +5,7 @@ from pathlib import Path
 import subprocess
 import time
 
-from PIL import Image, ImageChops
+from PIL import Image, ImageChops, ImageStat
 
 root = Path(os.environ['WALLSHADER_KITTY_TEST_DIR'])
 assert Path(os.environ['XDG_RUNTIME_DIR']).parent == root.parent
@@ -19,7 +19,7 @@ log_path = artifacts / 'reload.log'
 results = []
 
 
-def configure(name):
+def configure(name, opacity=1):
     # Explicit reloads give a round-trip timing of the main-loop stall. Disable
     # the watcher so it cannot perform a second reload ahead of our request.
     config.write_text(f'''custom_shaders {root / name / 'wallshader.pipeline'}
@@ -30,6 +30,8 @@ initial_window_width 640
 initial_window_height 400
 hide_window_decorations yes
 background #101020
+background_opacity {opacity}
+dynamic_background_opacity yes
 foreground #ffffff
 ''')
 
@@ -89,6 +91,16 @@ with log_path.open('w') as log:
                 assert ImageChops.difference(first.crop(region), second.crop(region)).getbbox(), 'Smoke Ring stopped animating after reload'
                 bright = sum(min(rgb) >= 240 for rgb in first.crop((0, 0, 640, 60)).getdata())
                 assert bright >= 20, 'Reload damaged terminal text'
+        for name in ['grain-gradient', 'gem-smoke-image', 'heatmap', 'liquid-metal-image']:
+            configure(name, opacity=0)
+            remote('load-config', str(config))
+            path = artifacts / f'reload-transparent-{name}.png'
+            remote('screenshot', str(path.resolve()))
+            picture = Image.open(path).convert('RGBA').crop((80, 100, 560, 380))
+            opacity = ImageStat.Stat(picture.getchannel('A')).mean[0]
+            brightness = max(ImageStat.Stat(picture.convert('RGB')).mean)
+            assert opacity > 250, f'{name} left the Kitty background transparent: {opacity:.1f}'
+            assert brightness > 5, f'{name} did not render over the transparent background: {brightness:.1f}'
         assert process.poll() is None, 'Kitty exited during shader reload'
         errors = log_path.read_text()
         # Private D-Bus has no user systemd service; its scope warning is expected.

@@ -27,6 +27,17 @@
   border-radius: 9px;
   font-weight: 700;
 }
+.category-tab.selected {
+  background: alpha(@window_fg_color, 0.1);
+}
+splitbutton.category-tab > separator {
+  background: none;
+}
+splitbutton.category-tab > button:hover,
+splitbutton.category-tab > menubutton > button:hover {
+  background: transparent;
+  box-shadow: none;
+}
 .gallery-card {
   padding: 0;
   border-radius: 10px;
@@ -41,6 +52,11 @@
 }
 .gallery-card .card-label label {
   font-weight: 600;
+}
+.gallery-card .card-label .preset-name {
+  font-size: 11px;
+  font-weight: normal;
+  opacity: 0.65;
 }
 .gallery-card.selected .card-label label {
   color: @accent_color;

@@ -280,22 +280,78 @@ export function paperParams(preset) {
   };
 }
 
+export function presetFingerprint(preset) {
+  const normalized = normalizePreset(preset.id, preset);
+  return JSON.stringify([normalized.shader, paperParams(normalized)]);
+}
+
+function normalizeCollection(input, presets, recent = false) {
+  const seen = new Set();
+  const items = (Array.isArray(input) ? input : []).flatMap((item) => {
+    const legacyId = typeof item === 'string' ? item : null;
+    const source = legacyId
+      ? normalizePreset(legacyId, presets?.[legacyId])
+      : item?.preset;
+    const id = legacyId ?? source?.id;
+    if (
+      !PRESETS.some(
+        (preset) => preset.id === id && preset.shader === source?.shader,
+      )
+    )
+      return [];
+    const preset = normalizePreset(id, source);
+    const key = presetFingerprint(preset);
+    if (seen.has(key)) return [];
+    seen.add(key);
+    return [
+      {
+        name:
+          typeof item?.name === 'string' && item.name.trim()
+            ? item.name.trim().slice(0, 80)
+            : legacyId && key !== presetFingerprint(createPreset(id))
+              ? 'Custom'
+              : 'Original',
+        preset,
+        ...(recent
+          ? { target: item?.target === 'kitty' ? 'kitty' : 'desktop' }
+          : {}),
+      },
+    ];
+  });
+  return recent ? items.slice(0, 20) : items;
+}
+
+export function addFavorite(favorites, preset, name) {
+  const key = presetFingerprint(preset);
+  return [
+    {
+      name,
+      preset: normalizePreset(preset.id, preset),
+    },
+    ...favorites.filter((item) => presetFingerprint(item.preset) !== key),
+  ];
+}
+
+export function recordRecent(recent, preset, name, target) {
+  const key = presetFingerprint(preset);
+  return [
+    { name, preset: normalizePreset(preset.id, preset), target },
+    ...recent.filter((item) => presetFingerprint(item.preset) !== key),
+  ].slice(0, 20);
+}
+
 export function normalizeState(input = {}) {
   if (!input || typeof input !== 'object') input = {};
   const ids = new Set(PRESETS.map((preset) => preset.id));
+  const favorites = normalizeCollection(input.favorites, input.presets);
   return {
-    version: 2,
+    version: 3,
     debugInfo: input.debugInfo === true,
     wallpaperTarget: input.wallpaperTarget === 'kitty' ? 'kitty' : 'desktop',
     liveRendering: input.liveRendering === 'gpu' ? 'gpu' : 'compatibility',
     selected: ids.has(input.selected) ? input.selected : PRESETS[0].id,
-    favorites: [
-      ...new Set(
-        Array.isArray(input.favorites)
-          ? input.favorites.filter((id) => ids.has(id))
-          : [],
-      ),
-    ],
+    favorites: input.version >= 3 ? favorites : favorites.reverse(),
+    recent: normalizeCollection(input.recent, input.presets, true),
     presets: Object.fromEntries(
       PRESETS.filter((preset) => input.presets?.[preset.id]).map((preset) => [
         preset.id,
@@ -334,14 +390,11 @@ export function normalizeSavedPresets(input) {
   });
 }
 
-export function filterPresets(category, query, favorites) {
+export function filterPresets(category, query) {
   const search = query.trim().toLowerCase();
   return PRESETS.filter(
     (preset) =>
-      (category === 'All' ||
-        (category === 'Favorites'
-          ? favorites.includes(preset.id)
-          : SHADERS[preset.shader].category === category)) &&
+      (category === 'All' || SHADERS[preset.shader].category === category) &&
       `${preset.name} ${SHADERS[preset.shader].name}`
         .toLowerCase()
         .includes(search),

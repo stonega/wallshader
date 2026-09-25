@@ -1,13 +1,16 @@
 # Using Wallshader
 
-1. Choose a wallpaper from the collection. Use search or the category tabs above
-   the gallery to narrow it down: **Effects** (selected initially), **Image Filters**,
-   and **Logo Animations**, matching [Paper's groups](https://shaders.paper.design/),
-   plus your **Favorites**. Effects includes gradients and patterns. Scroll the tabs
-   horizontally if they do not all fit. Each template thumbnail shows its first
-   **Original** preset.
-   Selecting a template scrolls back to the preview at the top.
-   Star a wallpaper to keep it in Favorites.
+1. Choose a wallpaper from **All**. Click its right arrow to select **Effects**,
+   **Image Filters**, or **Logo Animations**, matching
+   [Paper's groups](https://shaders.paper.design/). Click the main **All** button
+   to show every shader again. Search also narrows the gallery.
+   Each template thumbnail shows its first **Original** preset. Selecting a card
+   scrolls back to the preview. Star the current preset to keep that exact
+   configuration in **Favorites**. Its card shows the preset name and opens it
+   directly; the latest favorite appears first. **Recent** shows the last 20
+   unique presets applied to the desktop
+   or Kitty; Kitty entries carry its logo. Applying a preset again moves it to
+   the front instead of adding a duplicate.
 2. Choose a preset thumbnail in the grid below the preview.
    Every shader from Paper 0.0.81 is available through the collection, with its
    original settings and presets. The grid includes the wallpaper's **Original**,
@@ -21,7 +24,7 @@
    or HSL value and press Enter. Change the color count and use the arrows to
    reorder colors. **Shader settings** contains the effect's sliders, exact
    numeric inputs, shape options, switches, and independent colors. Changes and
-   favorites are saved automatically.
+   favorites and recent applies are saved automatically.
 4. Expand **Position & size** for scale, rotation, offsets, origin, fit, and world
    dimensions. A world dimension of 0 follows the canvas.
 5. Use the circular play/pause button in the preview's bottom-left corner to hold
@@ -72,10 +75,12 @@ are packaged with the shader, so they remain available after Wallshader closes.
 Animated image copies are reduced to a maximum of **128 pixels on the longest
 edge and 256 colors** to keep Kitty's shader compilation manageable. Original
 images, desktop rendering and still exports retain their existing quality. The
-noise texture is preserved exactly. The first load of a textured shader can take
-several seconds while Kitty compiles and caches it. If GNOME displays “Kitty Is
-Not Responding” just after applying a shader, choose **Wait** to let compilation
-finish; **Force Quit** closes the terminal and its running sessions. Vector-packed
+noise texture is preserved exactly. Noise-only shaders and Logo Animations embed
+their texture in the final Kitty shader. The first
+load of a textured shader can take several seconds while Kitty compiles and
+caches it. If GNOME displays “Kitty Is Not Responding” just after applying a
+shader, choose **Wait** to let compilation finish; **Force Quit** closes the
+terminal and its running sessions. Vector-packed
 texture data reduces this delay, but compilation time still depends on the driver.
 Very small terminal windows
 can further reduce texture detail. Effects that are static in Paper remain static.
@@ -92,7 +97,8 @@ Kitty runs custom shaders after rendering terminal content. Wallshader blends th
 effect into pixels close to Kitty's background colors, using a 65% tint; text and
 images with similar colors may also be affected. Animation temporarily replaces
 your configured custom shader chain. Applying a still or restoring the Kitty
-background brings that chain back.
+background brings that chain back. Animated wallpaper fills fully transparent
+Kitty background pixels, including when dynamic background opacity is zero.
 
 Wallshader adds one marked block to `~/.config/kitty/kitty.conf` (or
 `$XDG_CONFIG_HOME/kitty/kitty.conf`; `KITTY_CONFIG_DIRECTORY` takes precedence).

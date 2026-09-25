@@ -74,6 +74,72 @@ function settle() {
   );
 }
 
+async function checkCollections(window) {
+  assert(
+    window.categoryButton instanceof Adw.SplitButton &&
+      window.categoryButton.get_popover() === window.categoryPopover &&
+      window.categoryLabel.get_label() === 'All',
+    'All does not have a separate category arrow',
+  );
+  const allOption = window.categoryPopover.get_child().get_first_child();
+  allOption.get_next_sibling().emit('clicked');
+  assert(
+    window._category === 'Effects',
+    'Category selector did not choose Effects',
+  );
+  window.categoryButton.emit('clicked');
+  assert(window._category === 'All', 'Main All button did not restore All');
+  window.collectionButtons.get('Recent').emit('clicked');
+  await settle();
+  assert(
+    window.empty.visible &&
+      window.empty.get_height() >=
+        window.emptyTitle.get_height() + window.emptyDescription.get_height(),
+    'Empty collection message was clipped',
+  );
+  await window.selectPreset('aurora');
+  window._toggleFavorite();
+  window.preset.scale = 1.75;
+  window._changed();
+  window._toggleFavorite();
+  window.collectionButtons.get('Favorites').emit('clicked');
+  assert(
+    window._collectionCards.length === 2,
+    'Favorites did not keep two preset configurations',
+  );
+  assert(
+    window._collectionCards[0].preset.scale === 1.75 &&
+      window._collectionCards[1].preset.scale === 1,
+    'Latest favorite was not first',
+  );
+  window._collectionCards[1].card.emit('clicked');
+  assert(
+    window.preset.scale === 1,
+    'Favorite card did not open its exact preset',
+  );
+  window._recordRecent('kitty');
+  window.collectionButtons.get('Recent').emit('clicked');
+  assert(window._collectionCards.length === 1, 'Recent card was not shown');
+  assert(
+    window.store.state.recent[0].target === 'kitty',
+    'Recent lost its destination',
+  );
+  assert(
+    Gtk.IconTheme.get_for_display(window.get_display()).has_icon(
+      'wallshader-kitty',
+    ),
+    'Kitty logo was unavailable',
+  );
+  window._collectionCards[0].card.emit('clicked');
+  assert(
+    window.preset.scale === 1,
+    'Recent card did not open its exact preset',
+  );
+  console.log(
+    'Verified category selector, exact favorite cards, recent cards, and Kitty logo.',
+  );
+}
+
 async function screenshot(window, path) {
   const paintable = new Gtk.WidgetPaintable({ widget: window });
   // Resizing a Wayland window may unmap it briefly; wait for a painted allocation.
@@ -710,6 +776,10 @@ export async function run(window) {
   );
   await window.ready;
   assert(window._ready, 'Preview did not initialize');
+  if (GLib.getenv('WALLSHADER_COLLECTION_ONLY') === '1') {
+    await checkCollections(window);
+    return;
+  }
   checkWallpaperTarget(window);
   for (const { name, id } of PRESETS)
     assert(
@@ -888,7 +958,7 @@ export async function run(window) {
   window.selectPreset('aurora');
   window._toggleFavorite();
   assert(
-    window.store.state.favorites.includes('aurora'),
+    window.store.state.favorites.some((item) => item.preset.id === 'aurora'),
     'Favorite was not added',
   );
   window.preset.scale = 1.75;
@@ -900,7 +970,7 @@ export async function run(window) {
     'Edited scale did not persist',
   );
   assert(
-    persisted.state.favorites.includes('aurora'),
+    persisted.state.favorites.some((item) => item.preset.id === 'aurora'),
     'Favorite did not persist',
   );
   window.resetPreset();

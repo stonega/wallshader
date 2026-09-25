@@ -30,6 +30,27 @@ test('zero speed has no periodic repaint and unsupported shaders fail explicitly
   ).toThrow('Unknown Paper shader');
 });
 
+test('noise-only shaders keep the atlas inside the final Kitty pass', () => {
+  const shader = exportKittyFixture(createPreset('paper-grain-gradient'));
+  expect(shader.source).toContain('static const uint palette0[');
+  expect(shader.source).toContain('uint c = palette0[');
+  expect(shader.textures).toEqual([]);
+  expect(shader.pipeline).not.toContain('output_texture');
+  expect(shader.pipeline.match(/startgroup/g)).toHaveLength(1);
+});
+
+test('logo animations embed their image atlas in the final Kitty pass', () => {
+  for (const id of ['gem-smoke', 'heatmap', 'liquid-metal']) {
+    const shader = exportKittyFixture(createPreset(`paper-${id}`));
+    expect(shader.source).toContain('static const uint palette0[');
+    expect(shader.textures).toEqual([]);
+    expect(shader.pipeline).not.toContain('output_texture');
+  }
+  const filter = exportKittyFixture(createPreset('paper-image-dithering'));
+  expect(filter.textures).toHaveLength(1);
+  expect(filter.pipeline).toContain('output_texture a');
+});
+
 test('texture packing preserves RGBA bytes and existing noise palettes', () => {
   const pixels = packPixels(new Uint8Array([1, 2, 3, 255, 32, 48, 64, 128]));
   expect([...pixels]).toEqual([0xff030201, 0x80403020]);

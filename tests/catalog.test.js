@@ -6,6 +6,9 @@ import {
   normalizePreset,
   normalizeState,
   filterPresets,
+  addFavorite,
+  recordRecent,
+  presetFingerprint,
   validateDimensions,
 } from '../src/catalog.js';
 
@@ -36,7 +39,9 @@ test('corrupt or old settings recover without invalid shader input', () => {
     },
   });
   expect(state.selected).toBe('aurora');
-  expect(state.favorites).toEqual(['moss']);
+  expect(state.favorites).toEqual([
+    { name: 'Original', preset: createPreset('moss') },
+  ]);
   expect(state.presets.aurora.scale).toBe(0.01);
   expect(state.presets.aurora.speed).toBe(0.25);
   expect(state.presets.aurora.colors).toEqual(PRESETS[0].colors);
@@ -79,25 +84,63 @@ test('GPU wallpaper rendering is opt-in and survives saved state', () => {
   );
 });
 
-test('filters compose category, favorite status and case-insensitive search', () => {
-  expect(filterPresets('Favorites', '', [])).toEqual([]);
+test('filters compose category and case-insensitive search', () => {
   expect(
-    filterPresets('Favorites', 'MoSS', ['moss']).map((item) => item.id),
-  ).toEqual(['moss']);
-  expect(filterPresets('Image Filters', 'simplex', [])).toEqual([]);
-  expect(
-    filterPresets('Effects', 'simplex', []).map((item) => item.id),
-  ).toEqual(['tidal', 'contour']);
-  expect(filterPresets('All', 'simplex', []).map((item) => item.id)).toEqual([
+    filterPresets('Image Filters', 'simplex').map((item) => item.id),
+  ).toEqual([]);
+  expect(filterPresets('Effects', 'simplex').map((item) => item.id)).toEqual([
+    'tidal',
+    'contour',
+  ]);
+  expect(filterPresets('All', 'simplex').map((item) => item.id)).toEqual([
     'tidal',
     'contour',
   ]);
   expect(
-    filterPresets('Image Filters', '  water  ', []).map((item) => item.id),
+    filterPresets('Image Filters', '  water  ').map((item) => item.id),
   ).toEqual(['paper-water']);
   expect(
-    filterPresets('Logo Animations', 'metal', []).map((item) => item.id),
+    filterPresets('Logo Animations', 'metal').map((item) => item.id),
   ).toEqual(['paper-liquid-metal']);
+});
+
+test('favorites keep exact presets and recent applies deduplicate across destinations', () => {
+  const original = createPreset('aurora');
+  const edited = { ...original, scale: 1.75 };
+  const favorites = addFavorite(
+    addFavorite([], original, 'Original'),
+    edited,
+    'Custom',
+  );
+  expect(favorites).toHaveLength(2);
+  expect(favorites[0].preset.scale).toBe(1.75);
+  expect(favorites[1].name).toBe('Original');
+  expect(presetFingerprint(favorites[0].preset)).not.toBe(
+    presetFingerprint(favorites[1].preset),
+  );
+  const recent = recordRecent(
+    recordRecent([], edited, 'Custom', 'desktop'),
+    edited,
+    'Custom',
+    'kitty',
+  );
+  expect(recent).toHaveLength(1);
+  expect(recent[0].target).toBe('kitty');
+  expect(normalizeState({ version: 3, favorites, recent }).recent).toEqual(
+    recent,
+  );
+  expect(normalizeState({ version: 3, favorites, recent }).favorites).toEqual(
+    favorites,
+  );
+  expect(
+    normalizeState({ version: 2, favorites: [...favorites].reverse() })
+      .favorites,
+  ).toEqual(favorites);
+  expect(
+    normalizeState({ version: 2, favorites: ['aurora', 'moss'] }).favorites.map(
+      (item) => item.preset.id,
+    ),
+  ).toEqual(['moss', 'aurora']);
 });
 
 test('capture dimensions allow monitor formats but reject excessive allocations', () => {

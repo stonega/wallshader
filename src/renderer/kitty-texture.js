@@ -62,51 +62,60 @@ export function quantizePixels(pixels) {
   return pixels.map((c) => mapping.get(c));
 }
 
+function encodedTexture(texture, id) {
+  const values = quantizePixels(
+    texture.levels.flatMap((level) => Array.from(level.pixels)),
+  );
+  const palette = [...new Set(values)];
+  const indices = new Map(palette.map((color, i) => [color, i]));
+  const packed = Array.from(
+    { length: Math.ceil(values.length / 4) },
+    (_, i) => {
+      let word = 0;
+      for (let j = 0; j < 4; j++)
+        word |= (indices.get(values[i * 4 + j]) ?? 0) << (j * 8);
+      return `${word >>> 0}u`;
+    },
+  );
+  // Keep sixteen palette indices per uint4. Large scalar arrays make cold
+  // driver compilation stall Kitty's event loop during configuration reload.
+  const vectors = Array.from(
+    { length: Math.ceil(packed.length / 4) },
+    (_, i) =>
+      `uint4(${Array.from({ length: 4 }, (_, j) => packed[i * 4 + j] ?? '0u').join(',')})`,
+  );
+  return {
+    data: `static const uint palette${id}[${palette.length}] = {${palette.map((v) => `${v}u`).join(',')}};
+static const uint4 pixels${id}[${vectors.length}] = {${vectors.join(',')}};`,
+    lookup: (index) =>
+      `palette${id}[(pixels${id}[${index} / 16][(${index} / 4) % 4] >> ((${index} % 4)*8)) & 255u]`,
+    length: values.length,
+  };
+}
+
 export function textureAssets(textures) {
   return textures.map((texture, id) => {
-    const levels = texture.levels;
-    const values = quantizePixels(
-      levels.flatMap((level) => Array.from(level.pixels)),
-    );
-    const palette = [...new Set(values)];
-    const indices = new Map(palette.map((color, i) => [color, i]));
-    const packed = Array.from(
-      { length: Math.ceil(values.length / 4) },
-      (_, i) => {
-        let word = 0;
-        for (let j = 0; j < 4; j++)
-          word |= (indices.get(values[i * 4 + j]) ?? 0) << (j * 8);
-        return `${word >>> 0}u`;
-      },
-    );
-    // Keep sixteen palette indices per uint4. Large scalar arrays make cold
-    // driver compilation stall Kitty's event loop during configuration reload.
-    const vectors = Array.from(
-      { length: Math.ceil(packed.length / 4) },
-      (_, i) =>
-        `uint4(${Array.from({ length: 4 }, (_, j) => packed[i * 4 + j] ?? '0u').join(',')})`,
-    );
-    const data = `static const uint palette${id}[${palette.length}] = {${palette.map((v) => `${v}u`).join(',')}};
-static const uint4 pixels${id}[${vectors.length}] = {${vectors.join(',')}};`;
-    const lookup = `palette${id}[(pixels${id}[index / 16][(index / 4) % 4] >> ((index % 4)*8)) & 255u]`;
-
-    const width = levels[0].width;
-    const height = Math.ceil(values.length / width);
+    const { data, lookup, length } = encodedTexture(texture, id);
+    const width = texture.levels[0].width;
+    const height = Math.ceil(length / width);
     return `#language slang 2026
 import kitty_custom_shader_types;
 ${data}
 public float4 fragment_main(float4 color, KittyTextures t, KittyCustomShaderData d) {
   int2 p = clamp(int2(t.pos * float2(${width},${height})),int2(0),int2(${width - 1},${height - 1}));
-  int index = min(p.y * ${width} + p.x, ${values.length - 1});
-  uint c = ${lookup};
+  int index = min(p.y * ${width} + p.x, ${length - 1});
+  uint c = ${lookup('index')};
   return float4(c & 255u,(c >> 8) & 255u,(c >> 16) & 255u,c >> 24) / 255.0;
 }
 `;
   });
 }
 
-export function textureSource(textures) {
+export function textureSource(textures, inline = false) {
   if (!textures.length) return '';
+  if (inline && textures.length !== 1)
+    throw new Error('Only one texture can be embedded in a Kitty shader.');
+  const inlineData = inline ? encodedTexture(textures[0], 0) : null;
   const sources = textures.map((texture, id) => {
     let offset = 0;
     const levels = texture.levels;
@@ -119,13 +128,17 @@ export function textureSource(textures) {
       .join('\n');
     const width = levels[0].width;
     const height = Math.ceil(offset / width);
+    const texel = inlineData
+      ? `uint c = ${inlineData.lookup('i')};
+  return float4(c & 255u,(c >> 8) & 255u,(c >> 16) & 255u,c >> 24) / 255.0;`
+      : `float2 uv = (float2(i % ${width}, i / ${width}) + 0.5) / float2(${width},${height});
+  uv = (floor(uv * t.resolution) + 0.5) / t.resolution;
+  return t.kitty.${id === 0 ? 'a' : 'b'}.Sample(uv);`;
     return `
 float4 pixel${id}(PaperTextures t, int2 p, int2 size, int base) {
   p = clamp(p,int2(0),size-1);
   int i = base + p.y * size.x + p.x;
-  float2 uv = (float2(i % ${width}, i / ${width}) + 0.5) / float2(${width},${height});
-  uv = (floor(uv * t.resolution) + 0.5) / t.resolution;
-  return t.kitty.${id === 0 ? 'a' : 'b'}.Sample(uv);
+  ${texel}
 }
 float4 level${id}(PaperTextures t, float2 uv, int level) {
   int2 size = int2(1); int base = 0;
@@ -140,7 +153,7 @@ float4 sample${id}(PaperTextures t, float2 uv, float lod) {
   return lerp(level${id}(t,uv,l),level${id}(t,uv,min(l+1,${levels.length - 1})),frac(lod));
 }`;
   });
-  return `struct PaperTextures { KittyTextures kitty; float2 resolution; };
+  return `${inlineData ? `${inlineData.data}\n` : ''}struct PaperTextures { KittyTextures kitty; float2 resolution; };
 ${sources.join('\n')}
 int2 textureSize(PaperTextures t, int tex, int lod) {
   ${textures.map((t, i) => `if (tex == ${i}) return max(int2(1), int2(${t.originalWidth ?? t.levels[0].width},${t.originalHeight ?? t.levels[0].height}) >> lod);`).join('\n')}

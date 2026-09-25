@@ -202,14 +202,12 @@ export async function checkKittyBackground(window) {
       };
       const exported = await window.preview.request('kitty-shader', { preset });
       assert(
-        exported.textures.length === 1 &&
-          exported.pipeline.includes('output_texture a'),
+        exported.textures.length === 0 &&
+          !exported.pipeline.includes('output_texture'),
         `Missing processed ${shader} image`,
       );
-      assert(
-        exported.textures[0].includes('uint4 pixels0['),
-        `Missing ${shader} texels`,
-      );
+      const vectors = exported.source.match(/uint4 pixels0\[(\d+)\]/);
+      assert(vectors && Number(vectors[1]) > 1, `Missing ${shader} texels`);
     }
     write(config, `${read(config)}# User edit after apply\n`);
     window.restoreKittyBackground();

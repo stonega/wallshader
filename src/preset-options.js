@@ -3,13 +3,10 @@ import {
   createPreset,
   fromPaperParams,
   normalizePreset,
-  paperParams,
+  presetFingerprint,
 } from './catalog.js';
 
-export function presetFingerprint(preset) {
-  const normalized = normalizePreset(preset.id, preset);
-  return JSON.stringify([normalized.shader, paperParams(normalized)]);
-}
+export { presetFingerprint } from './catalog.js';
 
 export function randomPresetName(
   preset,

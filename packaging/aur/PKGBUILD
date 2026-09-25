@@ -4,7 +4,7 @@
 # shellcheck disable=SC2034,SC2154,SC2164
 
 pkgname=wallshader
-pkgver=0.1.8
+pkgver=0.1.9
 pkgrel=1
 pkgdesc='Native GNOME wallpapers made with Paper Shaders'
 arch=('any')
@@ -24,7 +24,7 @@ depends=(
 makedepends=('bun>=1.3.14' 'meson' 'desktop-file-utils')
 optdepends=('gnome-shell: GNOME 50 on Wayland is required for animated wallpapers')
 source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
-sha256sums=('64e612c4226c37331f01703181b6092fb05130815580c7547d83e4319aa41e8b')
+sha256sums=('af8be9428a8931f6730672992aa48b397024ad952a87f7143e113a3d3038b0b8')
 
 prepare() {
   cd "$pkgname-$pkgver"

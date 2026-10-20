@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-20 10:56+0800\n"
+"POT-Creation-Date: 2026-10-20 11:30+0200\n"
 "PO-Revision-Date: 2026-10-20 00:00+0000\n"
 "Last-Translator: Nacho <vnacho@proton.me>\n"
 "Language-Team: Spanish\n"
@@ -25,7 +25,8 @@ msgstr "Dale un poco más de color a tu escritorio"
 
 #: data/io.github.wallshader.Wallshader.desktop:9
 msgid "Wallpaper;Background;Shader;Paper;Gradient;"
-msgstr "Fondo de pantalla;Fondo;Wallpaper;Background;Shader;Paper;Degradado;Gradient;"
+msgstr ""
+"Fondo de pantalla;Fondo;Wallpaper;Background;Shader;Paper;Degradado;Gradient;"
 
 #. Translators: Paper shader names, controls, descriptions, and enum labels.
 #: po/paper-catalog.js:5
@@ -2832,13 +2833,13 @@ msgstr ""
 "Las rutas de los fondos de Kitty deben ser absolutas y no pueden contener "
 "saltos de línea ni signos de dólar."
 
-#: src/live.js:57
+#: src/live.js:61
 msgid "The extension bundle contains an unsupported file. Rebuild Wallshader."
 msgstr ""
 "El paquete de la extensión contiene un archivo no compatible. Vuelve a "
 "compilar Wallshader."
 
-#: src/live.js:70
+#: src/live.js:74
 msgid ""
 "Animation support is installed. Log out and back in once so GNOME can "
 "discover it. Then open Wallshader and choose “Set Animated Wallpaper” again."
@@ -2847,19 +2848,20 @@ msgstr ""
 "a iniciarla para que GNOME pueda detectarla. Después abre Wallshader y elige "
 "«Establecer fondo animado» de nuevo."
 
-#: src/live.js:122
-msgid "Animated wallpapers currently support GNOME 50 on Wayland."
+#: src/live.js:127
+msgid "Animated wallpapers currently support GNOME 50 and 51 on Wayland."
 msgstr ""
-"Los fondos animados son compatibles actualmente con GNOME 50 en Wayland."
+"Los fondos animados son compatibles actualmente con GNOME 50 y 51 en "
+"Wayland."
 
-#: src/live.js:142
+#: src/live.js:148
 msgid ""
 "Build Wallshader with “bun run build” to include animated wallpaper support."
 msgstr ""
 "Compila Wallshader con «bun run build» para incluir la compatibilidad con "
 "fondos animados."
 
-#: src/live.js:180
+#: src/live.js:186
 msgid "Enable Wallshader Live Wallpaper in GNOME Extensions, then try again."
 msgstr ""
 "Activa Wallshader Live Wallpaper en Extensiones de GNOME e inténtalo de "
@@ -3323,10 +3325,10 @@ msgstr ""
 #: src/window.js:675
 msgid ""
 "Animates on every display and sets its first frame as the still background. "
-"GNOME 50 on Wayland is required."
+"GNOME 50 or 51 on Wayland is required."
 msgstr ""
 "Se anima en todas las pantallas y establece el primer fotograma como fondo "
-"estático. Requiere GNOME 50 en Wayland."
+"estático. Requiere GNOME 50 o 51 en Wayland."
 
 #: src/window.js:683
 msgid "Starting desktop animation…"
@@ -3430,7 +3432,8 @@ msgstr "Renderizando…"
 
 #: src/window.js:1324
 msgid "Wallpaper applied, but the preset could not be saved: {error}"
-msgstr "El fondo de pantalla se aplicó, pero no se pudo guardar el preajuste: {error}"
+msgstr ""
+"El fondo de pantalla se aplicó, pero no se pudo guardar el preajuste: {error}"
 
 #: src/window.js:1358
 msgid "{name} set as wallpaper"

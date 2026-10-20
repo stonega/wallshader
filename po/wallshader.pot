@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-20 10:56+0800\n"
+"POT-Creation-Date: 2026-10-20 11:30+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2642,26 +2642,26 @@ msgid ""
 "dollar signs."
 msgstr ""
 
-#: src/live.js:57
+#: src/live.js:61
 msgid "The extension bundle contains an unsupported file. Rebuild Wallshader."
 msgstr ""
 
-#: src/live.js:70
+#: src/live.js:74
 msgid ""
 "Animation support is installed. Log out and back in once so GNOME can "
 "discover it. Then open Wallshader and choose “Set Animated Wallpaper” again."
 msgstr ""
 
-#: src/live.js:122
-msgid "Animated wallpapers currently support GNOME 50 on Wayland."
+#: src/live.js:127
+msgid "Animated wallpapers currently support GNOME 50 and 51 on Wayland."
 msgstr ""
 
-#: src/live.js:142
+#: src/live.js:148
 msgid ""
 "Build Wallshader with “bun run build” to include animated wallpaper support."
 msgstr ""
 
-#: src/live.js:180
+#: src/live.js:186
 msgid "Enable Wallshader Live Wallpaper in GNOME Extensions, then try again."
 msgstr ""
 
@@ -3089,7 +3089,7 @@ msgstr ""
 #: src/window.js:675
 msgid ""
 "Animates on every display and sets its first frame as the still background. "
-"GNOME 50 on Wayland is required."
+"GNOME 50 or 51 on Wayland is required."
 msgstr ""
 
 #: src/window.js:683

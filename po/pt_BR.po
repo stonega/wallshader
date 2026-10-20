@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-20 10:56+0800\n"
+"POT-Creation-Date: 2026-10-20 11:30+0200\n"
 "PO-Revision-Date: 2026-10-20 00:00+0000\n"
 "Last-Translator: Wallshader translation draft\n"
 "Language-Team: pt_BR\n"
@@ -2648,12 +2648,12 @@ msgstr ""
 "Os caminhos de fundo do Kitty devem ser absolutos e não podem conter quebras "
 "de linha ou cifrões."
 
-#: src/live.js:57
+#: src/live.js:61
 msgid "The extension bundle contains an unsupported file. Rebuild Wallshader."
 msgstr ""
 "O pacote da extensão contém um arquivo não suportado. Recompile o Wallshader."
 
-#: src/live.js:70
+#: src/live.js:74
 msgid ""
 "Animation support is installed. Log out and back in once so GNOME can "
 "discover it. Then open Wallshader and choose “Set Animated Wallpaper” again."
@@ -2662,19 +2662,20 @@ msgstr ""
 "que o GNOME o reconheça. Depois abra o Wallshader e escolha “Definir papel "
 "de parede animado” novamente."
 
-#: src/live.js:122
-msgid "Animated wallpapers currently support GNOME 50 on Wayland."
+#: src/live.js:127
+#, fuzzy
+msgid "Animated wallpapers currently support GNOME 50 and 51 on Wayland."
 msgstr ""
 "Papéis de parede animados são compatíveis atualmente com GNOME 50 no Wayland."
 
-#: src/live.js:142
+#: src/live.js:148
 msgid ""
 "Build Wallshader with “bun run build” to include animated wallpaper support."
 msgstr ""
 "Compile o Wallshader com “bun run build” para incluir suporte a papéis de "
 "parede animados."
 
-#: src/live.js:180
+#: src/live.js:186
 msgid "Enable Wallshader Live Wallpaper in GNOME Extensions, then try again."
 msgstr ""
 "Ative o Wallshader Live Wallpaper nas Extensões do GNOME e tente novamente."
@@ -3134,9 +3135,10 @@ msgstr ""
 "é alterada."
 
 #: src/window.js:675
+#, fuzzy
 msgid ""
 "Animates on every display and sets its first frame as the still background. "
-"GNOME 50 on Wayland is required."
+"GNOME 50 or 51 on Wayland is required."
 msgstr ""
 "Anima em todos os monitores e define o primeiro quadro como fundo estático. "
 "Requer GNOME 50 no Wayland."

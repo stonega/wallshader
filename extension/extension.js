@@ -276,7 +276,7 @@ export default class WallshaderExtension extends Extension {
     );
     const monitor = Main.layoutManager.monitors[index];
     if (!monitor) return;
-    // GNOME 50's desktop window type provides stacking, workspace and overview
+    // GNOME 50+ desktop window type provides stacking, workspace and overview
     // behavior without replacing Shell methods or changing unrelated windows.
     window.set_type(Meta.WindowType.DESKTOP);
     window.unmaximize();

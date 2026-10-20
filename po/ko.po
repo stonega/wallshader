@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-20 10:56+0800\n"
+"POT-Creation-Date: 2026-10-20 11:30+0200\n"
 "PO-Revision-Date: 2026-10-20 00:00+0000\n"
 "Last-Translator: Wallshader translation draft\n"
 "Language-Team: ko\n"
@@ -2647,12 +2647,12 @@ msgstr ""
 "Kitty 배경 경로는 절대 경로여야 하며 줄바꿈이나 달러 기호를 포함할 수 없습니"
 "다."
 
-#: src/live.js:57
+#: src/live.js:61
 msgid "The extension bundle contains an unsupported file. Rebuild Wallshader."
 msgstr ""
 "확장 번들에 지원되지 않는 파일이 있습니다. Wallshader를 다시 빌드하세요."
 
-#: src/live.js:70
+#: src/live.js:74
 msgid ""
 "Animation support is installed. Log out and back in once so GNOME can "
 "discover it. Then open Wallshader and choose “Set Animated Wallpaper” again."
@@ -2661,17 +2661,18 @@ msgstr ""
 "시 로그인하세요. 그런 다음 Wallshader를 열고 “움직이는 배경화면 설정”을 다시 "
 "선택하세요."
 
-#: src/live.js:122
-msgid "Animated wallpapers currently support GNOME 50 on Wayland."
+#: src/live.js:127
+#, fuzzy
+msgid "Animated wallpapers currently support GNOME 50 and 51 on Wayland."
 msgstr "움직이는 배경화면은 현재 Wayland의 GNOME 50을 지원합니다."
 
-#: src/live.js:142
+#: src/live.js:148
 msgid ""
 "Build Wallshader with “bun run build” to include animated wallpaper support."
 msgstr ""
 "“bun run build”로 Wallshader를 빌드하여 움직이는 배경화면 지원을 포함하세요."
 
-#: src/live.js:180
+#: src/live.js:186
 msgid "Enable Wallshader Live Wallpaper in GNOME Extensions, then try again."
 msgstr ""
 "GNOME 확장에서 Wallshader Live Wallpaper를 활성화한 후 다시 시도하세요."
@@ -3119,9 +3120,10 @@ msgstr ""
 "습니다."
 
 #: src/window.js:675
+#, fuzzy
 msgid ""
 "Animates on every display and sets its first frame as the still background. "
-"GNOME 50 on Wayland is required."
+"GNOME 50 or 51 on Wayland is required."
 msgstr ""
 "모든 디스플레이에서 애니메이션을 재생하고 첫 프레임을 정지 배경으로 설정합니"
 "다. Wayland의 GNOME 50이 필요합니다."

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-20 10:56+0800\n"
+"POT-Creation-Date: 2026-10-20 11:30+0200\n"
 "PO-Revision-Date: 2026-10-20 00:00+0000\n"
 "Last-Translator: Wallshader translation draft\n"
 "Language-Team: zh_CN\n"
@@ -2639,11 +2639,11 @@ msgid ""
 "dollar signs."
 msgstr "Kitty 背景路径必须为绝对路径，且不能包含换行符或美元符号。"
 
-#: src/live.js:57
+#: src/live.js:61
 msgid "The extension bundle contains an unsupported file. Rebuild Wallshader."
 msgstr "扩展包包含不受支持的文件。请重新构建 Wallshader。"
 
-#: src/live.js:70
+#: src/live.js:74
 msgid ""
 "Animation support is installed. Log out and back in once so GNOME can "
 "discover it. Then open Wallshader and choose “Set Animated Wallpaper” again."
@@ -2651,16 +2651,17 @@ msgstr ""
 "已安装动画支持。请注销并重新登录，以便 GNOME 发现扩展。然后打开 Wallshader，"
 "再次选择“设置动态壁纸”。"
 
-#: src/live.js:122
-msgid "Animated wallpapers currently support GNOME 50 on Wayland."
+#: src/live.js:127
+#, fuzzy
+msgid "Animated wallpapers currently support GNOME 50 and 51 on Wayland."
 msgstr "动态壁纸目前支持 Wayland 上的 GNOME 50。"
 
-#: src/live.js:142
+#: src/live.js:148
 msgid ""
 "Build Wallshader with “bun run build” to include animated wallpaper support."
 msgstr "使用“bun run build”构建 Wallshader 以包含动态壁纸支持。"
 
-#: src/live.js:180
+#: src/live.js:186
 msgid "Enable Wallshader Live Wallpaper in GNOME Extensions, then try again."
 msgstr "请在 GNOME 扩展中启用 Wallshader Live Wallpaper，然后重试。"
 
@@ -3091,9 +3092,10 @@ msgid ""
 msgstr "将当前帧用作带色调的 Kitty 背景。不更改桌面。"
 
 #: src/window.js:675
+#, fuzzy
 msgid ""
 "Animates on every display and sets its first frame as the still background. "
-"GNOME 50 on Wayland is required."
+"GNOME 50 or 51 on Wayland is required."
 msgstr ""
 "在每个显示器上播放动画，并将首帧设为静态背景。需要 Wayland 上的 GNOME 50。"
 

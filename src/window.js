@@ -672,7 +672,7 @@ export const WallshaderWindow = GObject.registerClass(
               )
           : animated
             ? _(
-                'Animates on every display and sets its first frame as the still background. GNOME 50 on Wayland is required.',
+                'Animates on every display and sets its first frame as the still background. GNOME 50 or 51 on Wayland is required.',
               )
             : _('Applies a still image to light and dark appearances.'),
       );

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-20 10:56+0800\n"
+"POT-Creation-Date: 2026-10-20 11:30+0200\n"
 "PO-Revision-Date: 2026-10-20 00:00+0000\n"
 "Last-Translator: Wallshader translation draft\n"
 "Language-Team: de\n"
@@ -2648,13 +2648,13 @@ msgstr ""
 "Kitty-Hintergrundpfade müssen absolut sein und dürfen weder Zeilenumbrüche "
 "noch Dollarzeichen enthalten."
 
-#: src/live.js:57
+#: src/live.js:61
 msgid "The extension bundle contains an unsupported file. Rebuild Wallshader."
 msgstr ""
 "Das Erweiterungspaket enthält eine nicht unterstützte Datei. Erstelle "
 "Wallshader neu."
 
-#: src/live.js:70
+#: src/live.js:74
 msgid ""
 "Animation support is installed. Log out and back in once so GNOME can "
 "discover it. Then open Wallshader and choose “Set Animated Wallpaper” again."
@@ -2663,19 +2663,20 @@ msgstr ""
 "damit GNOME sie erkennt. Öffne dann Wallshader und wähle erneut „Animiertes "
 "Hintergrundbild festlegen“."
 
-#: src/live.js:122
-msgid "Animated wallpapers currently support GNOME 50 on Wayland."
+#: src/live.js:127
+#, fuzzy
+msgid "Animated wallpapers currently support GNOME 50 and 51 on Wayland."
 msgstr ""
 "Animierte Hintergrundbilder unterstützen derzeit GNOME 50 unter Wayland."
 
-#: src/live.js:142
+#: src/live.js:148
 msgid ""
 "Build Wallshader with “bun run build” to include animated wallpaper support."
 msgstr ""
 "Erstelle Wallshader mit „bun run build“, um animierte Hintergrundbilder "
 "einzubinden."
 
-#: src/live.js:180
+#: src/live.js:186
 msgid "Enable Wallshader Live Wallpaper in GNOME Extensions, then try again."
 msgstr ""
 "Aktiviere Wallshader Live Wallpaper in GNOME Erweiterungen und versuche es "
@@ -3140,9 +3141,10 @@ msgstr ""
 "bleibt unverändert."
 
 #: src/window.js:675
+#, fuzzy
 msgid ""
 "Animates on every display and sets its first frame as the still background. "
-"GNOME 50 on Wayland is required."
+"GNOME 50 or 51 on Wayland is required."
 msgstr ""
 "Animiert auf jedem Bildschirm und setzt das erste Bild als "
 "Standbildhintergrund. GNOME 50 unter Wayland ist erforderlich."

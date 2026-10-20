@@ -9,6 +9,10 @@ import {
   normalizeLiveConfig,
 } from './live-config.js';
 
+// Shell releases whose desktop window and overview internals this extension
+// is verified against.
+const SUPPORTED_GNOME_MAJORS = [50, 51];
+
 function call(destination, path, iface, method, parameters = null) {
   return new Promise((resolve, reject) =>
     Gio.DBus.session.call(
@@ -117,9 +121,9 @@ export class LiveWallpaper {
       new GLib.Variant('(ss)', ['org.gnome.Shell.Extensions', 'ShellVersion']),
     );
     const shellVersion = version.deepUnpack?.() ?? version;
-    if (!shellVersion.startsWith('50.'))
+    if (!SUPPORTED_GNOME_MAJORS.includes(Number.parseInt(shellVersion, 10)))
       throw new Error(
-        _('Animated wallpapers currently support GNOME 50 on Wayland.'),
+        _('Animated wallpapers currently support GNOME 50 and 51 on Wayland.'),
       );
     const directory = Gio.File.new_for_path(
       GLib.build_filenamev([

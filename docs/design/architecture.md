@@ -120,7 +120,7 @@ never queue catch-up draws, and a single long stall advances at most one second.
 Pause cancels the pending callback and resume starts a fresh clock. This aligns
 WebGL drawing with WebKit's repaint cycle instead of submitting frames from an
 independent interval. The Shell test verifies that animation also continues in
-the overview, where GNOME's background actors present the wallpaper surface.
+the overview, where Shell clones the wallpaper surface.
 Shaders whose pinned fragment source does not use `u_time` schedule no animation
 callbacks in the editor or desktop, even when their saved speed is nonzero.
 Resizing and parameter edits still redraw them; saved settings are preserved.
@@ -291,14 +291,10 @@ inside GNOME Shell as part of this integration.
 `extension/extension.js` exports a small session D-Bus interface used by `live.js`.
 It validates and persists a separate `live-wallpaper.json`, then launches the
 bundled GJS `desktop-renderer.js` through Mutter's `Meta.WaylandClient`.
-Only windows owned by that Wayland client are managed. They provide the external
-rendering surfaces; `extension/background.js` presents their frames through
-GNOME's existing `Meta.BackgroundActor` objects. The owned window actors have
-zero opacity while their backgrounds are attached. GNOME 50's
-`Meta.Window.set_type(DESKTOP)` keeps those source windows behind applications,
-on all workspaces and out of task lists. Input regions are empty so desktop
-interaction passes through. No Shell methods are replaced and no Paper shader
-code runs in Shell.
+Only windows owned by that Wayland client are managed. GNOME 50's
+`Meta.Window.set_type(DESKTOP)` keeps them behind application windows, on all
+workspaces, and out of task lists. Input regions are empty so desktop interaction
+passes through. No Shell methods are replaced and no GLSL code runs in Shell.
 
 The renderer creates one undecorated GTK/WebKit window per monitor, with its
 minimum size set to the full monitor size so GTK cannot clamp it to the work area.
@@ -311,12 +307,13 @@ behind the panel. It clears fullscreen state on owned wallpaper windows during
 placement and after fullscreen-state changes: Mutter otherwise hides the panel
 even for a desktop window. Empty workspaces keep the top bar visible, and regular
 fullscreen applications retain GNOME's normal panel behavior.
-Visible wallpaper retains a balanced `Meta.Compositor` unredirect inhibitor.
-This preserves the existing protection for Shell chrome while presentation moves
-from opaque desktop windows to background actors. Manual pause retains the
-inhibitor because the wallpaper is still visible. Window mapping, stacking,
-minimization and workspace changes update coverage immediately. The hold is
-released when all monitor work areas are
+Visible wallpaper also holds a balanced `Meta.Compositor` unredirect inhibitor.
+Mutter can select an opaque, monitor-sized Wayland surface for direct scanout even
+when its window is not fullscreen. Keeping the wallpaper composited protects the
+Shell chrome on physical displays; clearing fullscreen state alone does not
+exclude this path. Manual pause retains the inhibitor because the wallpaper is
+still visible. Window mapping, stacking, minimization and workspace changes update
+coverage immediately. The hold is released when all monitor work areas are
 covered, or on stop, failure and disable, without releasing other Shell components'
 references. This API applies to the whole compositor: a visible wallpaper on one
 monitor also inhibits direct scanout on another until all displays are covered.
@@ -340,37 +337,16 @@ these report configuration, not proof of physical GPU use.
 GApplication actions carry pause, reload, readiness and diagnostics. The extension
 waits for the renderer's D-Bus owner before subscribing to its action group.
 
-`extension/background.js` captures each owned surface through a Clutter clone's
-offscreen effect, preserving Mutter's handling of buffer transforms, subsurfaces
-and Wayland frame callbacks. The capture clone is a sibling immediately below its
-background, with matching position and size. This prepares its texture before
-the background effect builds its pipeline; a child capture runs too late and
-flashes the saved still on the first paint, or samples an old texture after resize.
-The clone also follows the background's final allocation in the same layout pass,
-including newly created secondary-monitor views.
-Keeping source damage on the sibling also lets the background effect reuse its
-cached native mask while the shader animates. Texture bindings and the Cogl layer
-combiner are updated only when the texture or pipeline changes.
-Captures follow the background actor's color space
-to preserve the renderer's colors. That capture draws no pixels into its parent. A
-second offscreen effect on the background actor uses Cogl's standard layer
-combiner to multiply the captured frame by the original `Meta.BackgroundContent`
-alpha. GNOME continues to supply the overview's rounded corners and animated
-clip bounds; no corner geometry or GLSL source is duplicated. These GPU-only
-composition passes add offscreen textures and rendering work, with no CPU frame
-readback or additional WebKit process. Damage from the owned source drives
-repaints; there is no polling animation loop in Shell. Removing or destroying a
-background also releases its sibling capture clone.
-
-`extension/overview.js` attaches this presentation to the existing workspace
-background actors on every monitor. Workspace thumbnails receive a background
-actor beneath their window previews, using the monitor's existing background.
-The source clones request no minimum size, so desktop dimensions cannot enlarge
-GNOME's workspace layout. Workspace and background container changes handle new
-workspaces and replaced background actors. Closing the overview releases its
-effects, source clones and signals. Stop and disable also restore the source
-window opacity and remove the desktop effects, revealing GNOME's saved still
-image. Shell methods and saved background settings remain untouched.
+`extension/overview.js` adds non-interactive Clutter clones of the owned renderer
+windows behind the overview's window previews and workspace thumbnails, on every
+monitor. These share the existing Wayland textures; no extra WebKit processes or
+shader implementations are needed. It watches workspace container changes to
+handle newly created workspaces and releases clones and signals when the overview
+closes, the renderer stops, or the extension is disabled. Shell methods and GNOME's
+saved background settings remain untouched.
+Clones request no minimum size, so the desktop's dimensions cannot enlarge GNOME's
+workspace layout. They currently use rectangular clipping; GNOME's rounded
+BackgroundContent mask applies only to its built-in background texture.
 
 Only the user's Pause control pauses playback. Maximized applications, covered
 workspaces and screen lock do not send pause commands or reset the animation

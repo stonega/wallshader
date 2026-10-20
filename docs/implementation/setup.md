@@ -82,8 +82,7 @@ frames for cleared/black regions, including
 checking that paused pixels remain unchanged during both operations. This covers
 the rendering path under window update load, but cannot rule out every driver-specific
 or intermittent artifact on a physical display.
-Desktop checks require background-actor presentation with hidden renderer windows.
-Overview checks cover live background actors on both monitors, workspace thumbnails,
+Overview checks cover live clones on both monitors, workspace thumbnails,
 continued animation, manual pause, and cleanup after closing, stopping or disabling.
 Transition checks use a green live surface over a red saved background and sample
 from the first overview frame, repeating entry during playback and manual pause.
@@ -91,8 +90,6 @@ Every monitor must keep the live pixels without restarting the renderer. The
 suite allows five minutes for cold startup and its composited frame captures.
 For slower test machines, set `WALLSHADER_TEST_TIMEOUT` to a larger number of
 seconds for either graphical suite; the native suite defaults to 240 seconds.
-Pixel checks compare the live overview with GNOME's original background: all four
-rounded corners must retain their original pixels while the centers show the shader.
 Its test-only session mode enables only the live wallpaper extension and its test
 driver. `artifacts/shell-test.log` and desktop captures help diagnose failures.
 The Shell test also switches between GPU and Compatibility, verifies the new

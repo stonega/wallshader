@@ -7,7 +7,6 @@ await mkdir(`${output}/app/src`, { recursive: true });
 for (const file of [
   'extension.js',
   'overview.js',
-  'background.js',
   'compositing.js',
   'metadata.json',
 ])

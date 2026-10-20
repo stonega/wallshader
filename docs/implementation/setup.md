@@ -14,6 +14,10 @@ changes only require restarting the app.
 
 `bun run check` uses Biome for JavaScript and JSON. Native GTK CSS is excluded from
 the web CSS parser and checked by GTK during the native smoke test.
+Run graphical UI tests inside an isolated virtual GNOME desktop with a private
+D-Bus session, runtime directory, displays and settings. Do not use the user's
+active graphical session. `test:native` isolates its application settings and
+data but uses the selected display, so start the virtual desktop before running it.
 `bun test` exercises state validation, every upstream preset's parameter values,
 settings/code round trips, search and capture limits. Frame-clock tests cover
 30/60 fps pacing across display refresh rates, timestamp jitter and stalls.

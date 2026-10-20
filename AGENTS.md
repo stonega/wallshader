@@ -47,6 +47,9 @@ user's approval. Account for the index watcher's 500 ms write debounce.
 Run `bun run check` and `bun test` for relevant logic changes. Run
 `bun run test:native` when changing GTK, WebKit or GNOME integration. The native
 smoke test must isolate settings and data, and must not change the real wallpaper.
+Run all UI tests inside an isolated virtual GNOME desktop, never in the user's
+active graphical session. Keep its D-Bus, runtime directory, displays and settings
+private, including when running the native smoke test.
 Never change the user's wallpaper as a side effect of startup or testing.
 Use `bun run test:shell` for extension changes. It must keep its private D-Bus,
 runtime directory, virtual displays and isolated settings; never exercise apply,

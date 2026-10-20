@@ -56,7 +56,7 @@ app.connect('startup', () => {
     const about = new Adw.AboutDialog({
       application_name: 'Wallshader',
       application_icon: APP_ID,
-      version: '0.1.14',
+      version: '0.1.15',
       developer_name: _('Wallshader contributors'),
       comments: _(
         'A little color for your desktop. Native GNOME wallpapers made with Paper Shaders.',

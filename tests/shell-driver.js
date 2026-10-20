@@ -49,7 +49,7 @@ const apply = (preset, fps = 30, rendering = 'compatibility') =>
   );
 async function until(callback, message) {
   for (let attempt = 0; attempt < 150; attempt++) {
-    if (callback()) return;
+    if (await callback()) return;
     await delay(200);
   }
   throw new Error(message);
@@ -167,7 +167,9 @@ function checkOverview(extension) {
       );
     if (thumbnail)
       assert(
-        actor._contents.get_first_child() === live.actor,
+        actor._contents
+          .get_children()
+          .filter((child) => child !== live.driver)[0] === live.actor,
         'Wallpaper covers thumbnail windows',
       );
   }
@@ -181,6 +183,91 @@ async function capturePixels() {
   loader.write_bytes(stream.steal_as_bytes());
   loader.close();
   return loader.get_pixbuf();
+}
+
+async function checkOverviewTransition(extension) {
+  // A red saved still and a green live surface make a one-frame fallback visible.
+  const settings = new Gio.Settings({
+    schema_id: 'org.gnome.desktop.background',
+  });
+  settings.set_string('picture-options', 'none');
+  settings.set_string('primary-color', '#FF0000');
+  const preset = createPreset('paper-dithering');
+  preset.params.colorBack = '#00FF00';
+  preset.params.colorFront = '#00FF00';
+  await apply(preset, 60);
+  const scan = (image) => {
+    const pixels = image.get_pixels();
+    const stride = image.rowstride;
+    const channels = image.n_channels;
+    return Main.layoutManager.monitors.map((monitor) => {
+      let red = 0;
+      let green = 0;
+      for (
+        let y = monitor.y + 40;
+        y < monitor.y + monitor.height - 20;
+        y += 19
+      ) {
+        for (
+          let x = monitor.x + 20;
+          x < monitor.x + monitor.width - 20;
+          x += 19
+        ) {
+          const pixelX = Math.floor((x * image.width) / global.stage.width);
+          const pixelY = Math.floor((y * image.height) / global.stage.height);
+          const offset = pixelY * stride + pixelX * channels;
+          red +=
+            pixels[offset] > 80 &&
+            pixels[offset + 1] < 20 &&
+            pixels[offset + 2] < 20;
+          green +=
+            pixels[offset + 1] > 80 &&
+            pixels[offset] < 20 &&
+            pixels[offset + 2] < 20;
+        }
+      }
+      return { index: monitor.index, red, green };
+    });
+  };
+  // Wait for the applied surface, rather than testing the previous shader's buffer.
+  await until(
+    async () => scan(await capturePixels()).every(({ green }) => green > 20),
+    'Green live surface did not reach every monitor',
+  );
+  const process = extension._process;
+  for (const paused of [false, true]) {
+    await rpc('SetPaused', new GLib.Variant('(b)', [paused]));
+    Main.overview.show();
+    const monitors = new Set();
+    for (let frame = 0; frame < 4; frame++) {
+      const image = await capturePixels();
+      // Scan the captured pixels, not actor positions from a later animation frame.
+      for (const { index, red, green } of scan(image)) {
+        if (green > 20) monitors.add(index);
+        if (!red) continue;
+        image.savev(
+          `${GLib.getenv('WALLSHADER_ARTIFACTS')}/overview-transition-failure.png`,
+          'png',
+          [],
+          [],
+        );
+        throw new Error(
+          `Overview flashed the saved still: paused=${paused}, frame=${frame}, monitor=${index}, red=${red}`,
+        );
+      }
+    }
+    assert(
+      monitors.size === Main.layoutManager.monitors.length,
+      'Overview transition missed a monitor',
+    );
+    Main.overview.hide();
+    await delay(500);
+  }
+  assert(extension._process === process, 'Overview restarted the renderer');
+  await rpc('SetPaused', new GLib.Variant('(b)', [false]));
+  console.log(
+    'Verified live pixels from the first overview frame across repeated entries.',
+  );
 }
 
 async function checkOverviewCorners(extension) {
@@ -785,14 +872,16 @@ export default class ShellTest extends Extension {
     debugStore.state.debugInfo = true;
     debugStore.save();
     await delay(1600);
-    const debug = await inspect();
+    let debug;
+    await until(async () => {
+      debug = await inspect();
+      return debug.debugStats.every(
+        (info) => info?.fps > 0 && info.canvas[0] > 0,
+      );
+    }, 'Desktop debug statistics did not update on all monitors');
     assert(
       debug.debugInfo.every(Boolean),
       'Desktop did not pick up the saved debug toggle',
-    );
-    assert(
-      debug.debugStats.every((info) => info?.fps > 0 && info.canvas[0] > 0),
-      'Desktop debug statistics did not update on all monitors',
     );
     await screenshot('live-desktop-debug');
     debugStore.state.debugInfo = false;
@@ -820,6 +909,21 @@ export default class ShellTest extends Extension {
     await checkResize(extension, this.path);
     await checkWorkspacePlayback(extension, this.path, inspect);
     await checkLockPlayback(extension, inspect);
+    const staticPreset = createPreset('paper-static-mesh-gradient');
+    staticPreset.speed = 1;
+    await apply(staticPreset, 60);
+    await delay(600);
+    const staticFirst = await inspect();
+    await delay(600);
+    const staticNext = await inspect();
+    assert(
+      !staticNext.paused &&
+        staticNext.frames.every(
+          (frame, index) => frame === staticFirst.frames[index],
+        ),
+      'Static desktop shader kept advancing at 60 FPS',
+    );
+    await checkOverviewTransition(extension);
     await apply(preset);
     await delay(500);
     await rpc('SetPaused', new GLib.Variant('(b)', [true]));

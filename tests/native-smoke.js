@@ -495,6 +495,46 @@ async function checkAnimatedPreview(window, artifacts) {
   }
 }
 
+async function checkStaticPreview(window) {
+  const original = window.preset;
+  const preset = createPreset('paper-static-mesh-gradient');
+  preset.speed = 1;
+  await window.preview.select(preset);
+  await window.preview.pause(false);
+  try {
+    await settle();
+    await window.preview.evaluate(`(() => {
+      const gl = document.querySelector('#preview canvas').getContext('webgl2');
+      const draw = gl.drawArrays.bind(gl);
+      window.staticDraws = 0;
+      gl.drawArrays = (...args) => {
+        window.staticDraws++;
+        draw(...args);
+      };
+    })()`);
+    const first = await window.preview.request('state');
+    await settle();
+    const next = await window.preview.request('state');
+    assert(next.frame === first.frame, 'Static shader advanced its clock');
+    await window.preview.evaluate(`(() => {
+      if (window.staticDraws !== 0)
+        throw new Error('Static shader kept redrawing: ' + window.staticDraws);
+    })()`);
+    await window.preview.select({ ...preset, scale: 1.7 });
+    await window.preview.evaluate(`(() => {
+      if (window.staticDraws === 0)
+        throw new Error('Static shader did not redraw after an edit');
+      delete window.staticDraws;
+    })()`);
+    console.log(
+      'Verified static preview has no recurring draws and still redraws edits.',
+    );
+  } finally {
+    await window.preview.pause(true);
+    await window.preview.select(original);
+  }
+}
+
 async function checkDebugInfo(window) {
   assert(!window.store.state.debugInfo, 'Debug info must default to off');
   const settings = window.wallpaper.settings;
@@ -800,6 +840,7 @@ export async function run(window) {
   const artifacts = GLib.getenv('WALLSHADER_ARTIFACTS');
   if (artifacts) GLib.mkdir_with_parents(artifacts, 0o755);
   await checkAnimatedPreview(window, artifacts);
+  await checkStaticPreview(window);
   await checkDebugInfo(window);
   await checkSavedPresets(window, artifacts);
   for (const id of ['paper-paper-texture', 'paper-water']) {

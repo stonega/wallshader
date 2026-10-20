@@ -121,6 +121,9 @@ Pause cancels the pending callback and resume starts a fresh clock. This aligns
 WebGL drawing with WebKit's repaint cycle instead of submitting frames from an
 independent interval. The Shell test verifies that animation also continues in
 the overview, where GNOME's background actors present the wallpaper surface.
+Shaders whose pinned fragment source does not use `u_time` schedule no animation
+callbacks in the editor or desktop, even when their saved speed is nonzero.
+Resizing and parameter edits still redraw them; saved settings are preserved.
 
 ## Paper editor
 
@@ -339,7 +342,16 @@ waits for the renderer's D-Bus owner before subscribing to its action group.
 
 `extension/background.js` captures each owned surface through a Clutter clone's
 offscreen effect, preserving Mutter's handling of buffer transforms, subsurfaces
-and Wayland frame callbacks. Captures follow the background actor's color space
+and Wayland frame callbacks. The capture clone is a sibling immediately below its
+background, with matching position and size. This prepares its texture before
+the background effect builds its pipeline; a child capture runs too late and
+flashes the saved still on the first paint, or samples an old texture after resize.
+The clone also follows the background's final allocation in the same layout pass,
+including newly created secondary-monitor views.
+Keeping source damage on the sibling also lets the background effect reuse its
+cached native mask while the shader animates. Texture bindings and the Cogl layer
+combiner are updated only when the texture or pipeline changes.
+Captures follow the background actor's color space
 to preserve the renderer's colors. That capture draws no pixels into its parent. A
 second offscreen effect on the background actor uses Cogl's standard layer
 combiner to multiply the captured frame by the original `Meta.BackgroundContent`
@@ -347,7 +359,8 @@ alpha. GNOME continues to supply the overview's rounded corners and animated
 clip bounds; no corner geometry or GLSL source is duplicated. These GPU-only
 composition passes add offscreen textures and rendering work, with no CPU frame
 readback or additional WebKit process. Damage from the owned source drives
-repaints; there is no polling animation loop in Shell.
+repaints; there is no polling animation loop in Shell. Removing or destroying a
+background also releases its sibling capture clone.
 
 `extension/overview.js` attaches this presentation to the existing workspace
 background actors on every monitor. Workspace thumbnails receive a background

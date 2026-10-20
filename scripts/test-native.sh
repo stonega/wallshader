@@ -24,4 +24,4 @@ fi
 export WALLSHADER_ARTIFACTS="$app_dir/artifacts"
 if [ "$#" -eq 0 ]; then set -- --smoke-test; fi
 export GTK_A11Y=none
-dbus-run-session -- timeout 240 gjs -m "$app_dir/src/main.js" "$@"
+dbus-run-session -- timeout "${WALLSHADER_TEST_TIMEOUT:-240}" gjs -m "$app_dir/src/main.js" "$@"

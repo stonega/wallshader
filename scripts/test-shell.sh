@@ -43,7 +43,8 @@ dbus-run-session -- sh -c '
   shell_pid=$!
   trap '\''kill -TERM "$shell_pid" 2>/dev/null || true'\'' EXIT HUP INT TERM
   attempt=0
-  while [ ! -f "$WALLSHADER_SHELL_TEST_RESULT" ] && [ "$attempt" -lt 100 ]; do
+  # Include cold renderer startup and per-frame overview/resize screenshots.
+  while [ ! -f "$WALLSHADER_SHELL_TEST_RESULT" ] && [ "$attempt" -lt "${WALLSHADER_TEST_TIMEOUT:-300}" ]; do
     kill -0 "$shell_pid" 2>/dev/null || break
     sleep 1
     attempt=$((attempt + 1))

@@ -150,6 +150,8 @@ jobs:
           fi
           install -d -m 700 "$GNUPGHOME"
           printf '%s' "$PPA_GPG_PRIVATE_KEY" | gpg --batch --import
+          gpg --batch --list-secret-keys "$PPA_GPG_FINGERPRINT" > /dev/null
+          printf '%s:6:\n' "$PPA_GPG_FINGERPRINT" | gpg --batch --import-ownertrust
           (umask 077; printf '%s' "$PPA_GPG_PASSPHRASE" > "$GNUPGHOME/passphrase")
           cat > "$RUNNER_TEMP/ppa-gpg" <<'GPG'
           #!/bin/sh
@@ -157,6 +159,9 @@ jobs:
           GPG
           chmod 700 "$RUNNER_TEMP/ppa-gpg"
           debsign -p"$RUNNER_TEMP/ppa-gpg" -k"$PPA_GPG_FINGERPRINT" ppa/*_source.changes
+          gpg --verify ppa/*_source.changes
+          gpg --verify ppa/*.dsc
+          dput -o ppa:xijieyin/ppa ppa/*_source.changes
 
       - name: Upload signed sources to Launchpad
         run: dput ppa:xijieyin/ppa ppa/*_source.changes

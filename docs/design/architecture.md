@@ -285,6 +285,16 @@ inside GNOME Shell as part of this integration.
 
 ## Animated desktop
 
+`extension/desktop-menu.js` adds **Open Wallshader** after GNOME's **Change
+Background…** action. It activates the installed desktop application, reusing an
+existing window. Background-manager signals restore the action when backgrounds
+or monitors change. The action follows Shell's settings visibility, remains
+available when playback stops, and is removed when the extension is disabled.
+Preferences saves `showDesktopMenu` (enabled by default) in `state.json`.
+The extension watches the config directory for atomic replacements and updates
+the shortcut's visibility immediately, without restarting playback. Disable
+cancels this monitor along with the menu's signals and pending work.
+
 `extension/extension.js` exports a small session D-Bus interface used by `live.js`.
 It validates and persists a separate `live-wallpaper.json`, then launches the
 bundled GJS `desktop-renderer.js` through Mutter's `Meta.WaylandClient`.

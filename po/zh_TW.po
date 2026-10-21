@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-20 11:30+0200\n"
+"POT-Creation-Date: 2026-10-21 14:23+0800\n"
 "PO-Revision-Date: 2026-10-20 00:00+0000\n"
 "Last-Translator: Wallshader translation draft\n"
 "Language-Team: zh_TW\n"
@@ -27,6 +27,14 @@ msgstr "讓桌面多一點色彩"
 #: data/io.github.wallshader.Wallshader.desktop:9
 msgid "Wallpaper;Background;Shader;Paper;Gradient;"
 msgstr "桌布;背景;著色器;Paper;漸層;"
+
+#: extension/desktop-menu.js:64
+msgid "Open Wallshader"
+msgstr ""
+
+#: extension/desktop-menu.js:84
+msgid "Install Wallshader to open it from the desktop menu."
+msgstr ""
 
 #. Translators: Paper shader names, controls, descriptions, and enum labels.
 #: po/paper-catalog.js:5
@@ -2444,7 +2452,7 @@ msgstr "速度"
 msgid "Frame (ms)"
 msgstr "影格（毫秒）"
 
-#: src/catalog.js:430
+#: src/catalog.js:431
 msgid "Choose a wallpaper size up to 8K."
 msgstr "選擇最高 8K 的桌布尺寸。"
 
@@ -2651,17 +2659,17 @@ msgstr ""
 "已安裝動畫支援。請登出並重新登入，讓 GNOME 偵測擴充套件。然後開啟 "
 "Wallshader，再次選擇「設定動態桌布」。"
 
-#: src/live.js:127
+#: src/live.js:126
 #, fuzzy
 msgid "Animated wallpapers currently support GNOME 50 and 51 on Wayland."
 msgstr "動態桌布目前支援 Wayland 上的 GNOME 50。"
 
-#: src/live.js:148
+#: src/live.js:146
 msgid ""
 "Build Wallshader with “bun run build” to include animated wallpaper support."
 msgstr "使用「bun run build」建置 Wallshader 以包含動態桌布支援。"
 
-#: src/live.js:186
+#: src/live.js:184
 msgid "Enable Wallshader Live Wallpaper in GNOME Extensions, then try again."
 msgstr "請在 GNOME 擴充套件中啟用 Wallshader Live Wallpaper，然後重試。"
 
@@ -2750,6 +2758,14 @@ msgstr "語言"
 msgid "System Default"
 msgstr "系統預設"
 
+#: src/preferences.js:74
+msgid "Show Desktop Menu Shortcut"
+msgstr ""
+
+#: src/preferences.js:75
+msgid "Show “Open Wallshader” in the desktop right-click menu."
+msgstr ""
+
 #: src/save-preset-dialog.js:13
 msgid "Save Preset"
 msgstr "儲存預設"
@@ -2835,7 +2851,7 @@ msgstr "套用設定"
 msgid "Copy to Clipboard"
 msgstr "複製到剪貼簿"
 
-#: src/storage.js:59
+#: src/storage.js:64
 msgid "Saved settings could not be read: {error}"
 msgstr "無法讀取已儲存的設定：{error}"
 

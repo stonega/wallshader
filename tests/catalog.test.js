@@ -84,6 +84,15 @@ test('GPU wallpaper rendering is opt-in and survives saved state', () => {
   );
 });
 
+test('desktop menu shortcut defaults on and preserves an explicit opt-out', () => {
+  for (const showDesktopMenu of [undefined, null, 'false', 0, true])
+    expect(normalizeState({ showDesktopMenu }).showDesktopMenu).toBe(true);
+  const state = normalizeState({ showDesktopMenu: false });
+  expect(
+    normalizeState(JSON.parse(JSON.stringify(state))).showDesktopMenu,
+  ).toBe(false);
+});
+
 test('filters compose category and case-insensitive search', () => {
   expect(
     filterPresets('Image Filters', 'simplex').map((item) => item.id),

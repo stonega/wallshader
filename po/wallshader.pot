@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-20 11:30+0200\n"
+"POT-Creation-Date: 2026-10-21 14:23+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -28,6 +28,14 @@ msgstr ""
 
 #: data/io.github.wallshader.Wallshader.desktop:9
 msgid "Wallpaper;Background;Shader;Paper;Gradient;"
+msgstr ""
+
+#: extension/desktop-menu.js:64
+msgid "Open Wallshader"
+msgstr ""
+
+#: extension/desktop-menu.js:84
+msgid "Install Wallshader to open it from the desktop menu."
 msgstr ""
 
 #. Translators: Paper shader names, controls, descriptions, and enum labels.
@@ -2446,7 +2454,7 @@ msgstr ""
 msgid "Frame (ms)"
 msgstr ""
 
-#: src/catalog.js:430
+#: src/catalog.js:431
 msgid "Choose a wallpaper size up to 8K."
 msgstr ""
 
@@ -2652,16 +2660,16 @@ msgid ""
 "discover it. Then open Wallshader and choose “Set Animated Wallpaper” again."
 msgstr ""
 
-#: src/live.js:127
+#: src/live.js:126
 msgid "Animated wallpapers currently support GNOME 50 and 51 on Wayland."
 msgstr ""
 
-#: src/live.js:148
+#: src/live.js:146
 msgid ""
 "Build Wallshader with “bun run build” to include animated wallpaper support."
 msgstr ""
 
-#: src/live.js:186
+#: src/live.js:184
 msgid "Enable Wallshader Live Wallpaper in GNOME Extensions, then try again."
 msgstr ""
 
@@ -2750,6 +2758,14 @@ msgstr ""
 msgid "System Default"
 msgstr ""
 
+#: src/preferences.js:74
+msgid "Show Desktop Menu Shortcut"
+msgstr ""
+
+#: src/preferences.js:75
+msgid "Show “Open Wallshader” in the desktop right-click menu."
+msgstr ""
+
 #: src/save-preset-dialog.js:13
 msgid "Save Preset"
 msgstr ""
@@ -2834,7 +2850,7 @@ msgstr ""
 msgid "Copy to Clipboard"
 msgstr ""
 
-#: src/storage.js:59
+#: src/storage.js:64
 msgid "Saved settings could not be read: {error}"
 msgstr ""
 

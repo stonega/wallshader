@@ -9,6 +9,7 @@ for (const file of [
   'overview.js',
   'background.js',
   'compositing.js',
+  'desktop-menu.js',
   'metadata.json',
 ])
   await copyFile(`${root}/extension/${file}`, `${output}/${file}`);

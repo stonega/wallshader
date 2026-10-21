@@ -137,6 +137,13 @@ open Wallshader and choose **Set Animated Wallpaper** again.
 After installing an extension update, log out and back in to load its new Shell
 code. Reopening the editor uses the extension already loaded in the current session.
 
+While the extension is enabled, right-click the desktop and choose **Open
+Wallshader**, directly below **Change Background…**, to open the app or bring its
+existing window forward. This shortcut also works when animation is stopped.
+To hide it, turn off **Show Desktop Menu Shortcut** in the app menu's
+**Preferences** dialog. The change takes effect immediately and is saved for
+future sessions. Turn the switch back on to restore the shortcut.
+
 Applying also sets the animation's first frame as a still background
 for both light and dark appearances, at the selected output resolution. It uses
 the frame where the animation starts, including your chosen frame time. This still

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-20 11:30+0200\n"
+"POT-Creation-Date: 2026-10-21 14:23+0800\n"
 "PO-Revision-Date: 2026-10-20 00:00+0000\n"
 "Last-Translator: Wallshader translation draft\n"
 "Language-Team: ko\n"
@@ -27,6 +27,14 @@ msgstr "데스크톱을 조금 더 다채롭게"
 #: data/io.github.wallshader.Wallshader.desktop:9
 msgid "Wallpaper;Background;Shader;Paper;Gradient;"
 msgstr "배경화면;배경;셰이더;Paper;그라데이션;"
+
+#: extension/desktop-menu.js:64
+msgid "Open Wallshader"
+msgstr ""
+
+#: extension/desktop-menu.js:84
+msgid "Install Wallshader to open it from the desktop menu."
+msgstr ""
 
 #. Translators: Paper shader names, controls, descriptions, and enum labels.
 #: po/paper-catalog.js:5
@@ -2444,7 +2452,7 @@ msgstr "속도"
 msgid "Frame (ms)"
 msgstr "프레임(ms)"
 
-#: src/catalog.js:430
+#: src/catalog.js:431
 msgid "Choose a wallpaper size up to 8K."
 msgstr "최대 8K의 배경화면 크기를 선택하세요."
 
@@ -2661,18 +2669,18 @@ msgstr ""
 "시 로그인하세요. 그런 다음 Wallshader를 열고 “움직이는 배경화면 설정”을 다시 "
 "선택하세요."
 
-#: src/live.js:127
+#: src/live.js:126
 #, fuzzy
 msgid "Animated wallpapers currently support GNOME 50 and 51 on Wayland."
 msgstr "움직이는 배경화면은 현재 Wayland의 GNOME 50을 지원합니다."
 
-#: src/live.js:148
+#: src/live.js:146
 msgid ""
 "Build Wallshader with “bun run build” to include animated wallpaper support."
 msgstr ""
 "“bun run build”로 Wallshader를 빌드하여 움직이는 배경화면 지원을 포함하세요."
 
-#: src/live.js:186
+#: src/live.js:184
 msgid "Enable Wallshader Live Wallpaper in GNOME Extensions, then try again."
 msgstr ""
 "GNOME 확장에서 Wallshader Live Wallpaper를 활성화한 후 다시 시도하세요."
@@ -2767,6 +2775,14 @@ msgstr "언어"
 msgid "System Default"
 msgstr "시스템 기본값"
 
+#: src/preferences.js:74
+msgid "Show Desktop Menu Shortcut"
+msgstr ""
+
+#: src/preferences.js:75
+msgid "Show “Open Wallshader” in the desktop right-click menu."
+msgstr ""
+
 #: src/save-preset-dialog.js:13
 msgid "Save Preset"
 msgstr "프리셋 저장"
@@ -2857,7 +2873,7 @@ msgstr "설정 적용"
 msgid "Copy to Clipboard"
 msgstr "클립보드에 복사"
 
-#: src/storage.js:59
+#: src/storage.js:64
 msgid "Saved settings could not be read: {error}"
 msgstr "저장된 설정을 읽지 못했습니다: {error}"
 

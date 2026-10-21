@@ -47,6 +47,14 @@ immutable copies, selection matching, and image restoration across presets.
 `bun run test:shell` needs GNOME Shell 50 or 51 with its headless Wayland backend. It
 starts a separate Shell on a private D-Bus session, with private runtime, data,
 config and cache directories, in-memory settings, and two virtual monitors.
+It checks **Open Wallshader** immediately after **Change Background…** on each
+desktop menu, launching the editor and presenting its existing window. Menu
+checks also cover background replacement, monitor changes, stopped playback and
+extension disable. `artifacts/desktop-menu.png` shows the menu in the test session.
+The shortcut preference is tested for immediate show/hide updates, background
+recreation, persistence across menu setup and monitor cleanup. The native suite
+checks the Preferences switch, saved state and recovery from failed saves;
+`artifacts/preferences-desktop-menu.png` shows the setting.
 Use `WALLSHADER_TEST_MONITORS=1 bun run test:shell` for the single-monitor case.
 The primary monitor is 2560 × 1600. Coverage checks compare both window frames
 and Wayland buffers to their full monitor bounds, including after late resizes,

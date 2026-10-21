@@ -2,6 +2,7 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GdkPixbuf from 'gi://GdkPixbuf';
 import Graphene from 'gi://Graphene';
+import Clutter from 'gi://Clutter';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
@@ -21,6 +22,157 @@ const delay = (ms) =>
 function assert(value, message) {
   if (!value) throw new Error(message);
 }
+
+function checkDesktopMenus(enabled = true, visible = true) {
+  const menus = Main.layoutManager._bgManagers.map(
+    ({ backgroundActor }) => backgroundActor._backgroundMenu,
+  );
+  assert(menus.length > 0, 'Desktop has no background menus');
+  for (const menu of menus) {
+    const items = menu._getMenuItems();
+    const matches = items.filter(
+      (item) => item.label?.text === 'Open Wallshader',
+    );
+    assert(
+      matches.length === (enabled ? 1 : 0),
+      'Desktop menu has a missing, duplicate, or stale Wallshader action',
+    );
+    if (!enabled) continue;
+    const background = menu._settingsActions['gnome-background-panel.desktop'];
+    assert(
+      items.indexOf(matches[0]) === items.indexOf(background) + 1,
+      'Open Wallshader must follow Change Background',
+    );
+    assert(
+      matches[0].visible === visible,
+      'Desktop menu shortcut ignored its visibility preference',
+    );
+  }
+  return menus[0];
+}
+
+async function checkDesktopMenuPreference(extension) {
+  const store = new Store();
+  for (const show of [false, true, false]) {
+    store.state.showDesktopMenu = show;
+    store.save();
+    await until(
+      () => extension._desktopMenu._showMenu === show,
+      'Desktop menu did not update after saving Preferences',
+    );
+    checkDesktopMenus(true, show);
+  }
+  await Main.layoutManager._updateBackgrounds();
+  await until(
+    () =>
+      Main.layoutManager._bgManagers.every(({ backgroundActor }) =>
+        extension._desktopMenu._items.has(backgroundActor._backgroundMenu),
+      ),
+    'Recreated desktop menus did not receive their shortcut',
+  );
+  checkDesktopMenus(true, false);
+  const monitor = extension._desktopMenu._monitor;
+  extension._desktopMenu.destroy();
+  assert(
+    monitor.is_cancelled(),
+    'Desktop menu left its preference monitor running',
+  );
+  const { DesktopMenu } = await import(
+    '../wallshader@wallshader.github.io/desktop-menu.js'
+  );
+  extension._desktopMenu = new DesktopMenu(extension.path);
+  checkDesktopMenus(true, false);
+  delete store.state.showDesktopMenu;
+  store.save();
+  await until(
+    () => extension._desktopMenu._showMenu,
+    'Missing desktop menu preference did not restore the default',
+  );
+  checkDesktopMenus();
+  console.log(
+    'Verified immediate desktop menu visibility, saved opt-out, background rebuild and monitor cleanup.',
+  );
+}
+
+async function checkDesktopLaunch() {
+  const menu = checkDesktopMenus();
+  Main.layoutManager.setDummyCursorGeometry(400, 300, 0, 0);
+  menu.open();
+  await delay(300);
+  await screenshot('desktop-menu');
+  const item = menu
+    ._getMenuItems()
+    .find((entry) => entry.label?.text === 'Open Wallshader');
+  const keyboard = global.stage.context
+    .get_backend()
+    .get_default_seat()
+    .create_virtual_device(Clutter.InputDeviceType.KEYBOARD_DEVICE);
+  const activate = async () => {
+    menu.open();
+    item.grab_key_focus();
+    keyboard.notify_keyval(
+      GLib.get_monotonic_time(),
+      Clutter.KEY_Return,
+      Clutter.KeyState.PRESSED,
+    );
+    keyboard.notify_keyval(
+      GLib.get_monotonic_time(),
+      Clutter.KEY_Return,
+      Clutter.KeyState.RELEASED,
+    );
+    await delay(100);
+  };
+  const windows = () =>
+    global
+      .get_window_actors()
+      .filter(
+        (actor) =>
+          actor.meta_window.get_gtk_application_id() ===
+          'io.github.wallshader.Wallshader',
+      );
+  await activate();
+  await until(
+    () => windows().length === 1,
+    'Desktop menu did not open Wallshader',
+  );
+  const window = windows()[0].meta_window;
+  const app = Shell.AppSystem.get_default().lookup_app(
+    'io.github.wallshader.Wallshader.desktop',
+  );
+  await until(
+    () =>
+      app.get_state() === Shell.AppState.RUNNING &&
+      app.get_windows().includes(window),
+    'Shell did not associate the editor with its desktop application',
+  );
+  await delay(500);
+  window.minimize();
+  await delay(300);
+  await activate();
+  await until(
+    () => !window.minimized,
+    'Desktop menu did not present Wallshader',
+  );
+  assert(windows().length === 1, 'Desktop menu opened a duplicate app window');
+  const actions = Gio.DBusActionGroup.get(
+    Gio.DBus.session,
+    'io.github.wallshader.Wallshader',
+    '/io/github/wallshader/Wallshader',
+  );
+  await until(
+    () => actions.has_action('quit'),
+    'Editor quit action is unavailable',
+  );
+  actions.activate_action('quit', null);
+  await until(
+    () => windows().length === 0,
+    'Desktop menu test left the editor open',
+  );
+  console.log(
+    'Verified desktop menu order, app launch, and existing-window activation.',
+  );
+}
+
 function rpc(method, parameters = null) {
   return new Promise((resolve, reject) =>
     Gio.DBus.session.call(
@@ -847,6 +999,8 @@ export default class ShellTest extends Extension {
       'wallshader@wallshader.github.io',
     ).stateObj;
     assert(extension, 'Live wallpaper extension did not load');
+    await checkDesktopLaunch();
+    await checkDesktopMenuPreference(extension);
     assert(
       !JSON.parse(extension.GetStatus()).active,
       'Extension started a wallpaper without an apply action',
@@ -1040,6 +1194,7 @@ export default class ShellTest extends Extension {
         ),
       'Replaced GNOME backgrounds lost the live wallpaper',
     );
+    checkDesktopMenus();
     await delay(300);
     checkOverview(extension);
     await checkCoverage(extension);
@@ -1141,6 +1296,7 @@ export default class ShellTest extends Extension {
         JSON.parse(extension.GetStatus()).ready,
       'Monitor layout restart failed',
     );
+    checkDesktopMenus();
     await checkCoverage(extension);
     // GNOME closes Activities on a monitor layout change.
     Main.overview.show();
@@ -1149,6 +1305,7 @@ export default class ShellTest extends Extension {
     const process = extension._process;
     const desktopBackgrounds = [...extension._desktop._backgrounds.keys()];
     await rpc('Stop');
+    checkDesktopMenus();
     assert(
       extension._desktop._backgrounds.size === 0 &&
         extension._desktop._hidden.size === 0 &&
@@ -1196,6 +1353,14 @@ export default class ShellTest extends Extension {
     await delay(800);
     checkOverview(extension);
     extension.disable();
+    checkDesktopMenus(false);
+    assert(
+      extension._desktopMenu._pending === 0 &&
+        extension._desktopMenu._monitor === null &&
+        extension._desktopMenu._items.size === 0 &&
+        extension._desktopMenu._managers.size === 0,
+      'Disable left desktop menu items, signals, or pending work',
+    );
     assert(
       extension._desktop._backgrounds.size === 0 &&
         extension._desktop._hidden.size === 0 &&

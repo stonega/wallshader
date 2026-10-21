@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-20 11:30+0200\n"
+"POT-Creation-Date: 2026-10-21 14:23+0800\n"
 "PO-Revision-Date: 2026-10-20 00:00+0000\n"
 "Last-Translator: Nacho <vnacho@proton.me>\n"
 "Language-Team: Spanish\n"
@@ -27,6 +27,14 @@ msgstr "Dale un poco más de color a tu escritorio"
 msgid "Wallpaper;Background;Shader;Paper;Gradient;"
 msgstr ""
 "Fondo de pantalla;Fondo;Wallpaper;Background;Shader;Paper;Degradado;Gradient;"
+
+#: extension/desktop-menu.js:64
+msgid "Open Wallshader"
+msgstr ""
+
+#: extension/desktop-menu.js:84
+msgid "Install Wallshader to open it from the desktop menu."
+msgstr ""
 
 #. Translators: Paper shader names, controls, descriptions, and enum labels.
 #: po/paper-catalog.js:5
@@ -2629,7 +2637,7 @@ msgstr "Velocidad"
 msgid "Frame (ms)"
 msgstr "Fotograma (ms)"
 
-#: src/catalog.js:430
+#: src/catalog.js:431
 msgid "Choose a wallpaper size up to 8K."
 msgstr "Elige un tamaño de fondo de pantalla de hasta 8K."
 
@@ -2848,20 +2856,19 @@ msgstr ""
 "a iniciarla para que GNOME pueda detectarla. Después abre Wallshader y elige "
 "«Establecer fondo animado» de nuevo."
 
-#: src/live.js:127
+#: src/live.js:126
 msgid "Animated wallpapers currently support GNOME 50 and 51 on Wayland."
 msgstr ""
-"Los fondos animados son compatibles actualmente con GNOME 50 y 51 en "
-"Wayland."
+"Los fondos animados son compatibles actualmente con GNOME 50 y 51 en Wayland."
 
-#: src/live.js:148
+#: src/live.js:146
 msgid ""
 "Build Wallshader with “bun run build” to include animated wallpaper support."
 msgstr ""
 "Compila Wallshader con «bun run build» para incluir la compatibilidad con "
 "fondos animados."
 
-#: src/live.js:186
+#: src/live.js:184
 msgid "Enable Wallshader Live Wallpaper in GNOME Extensions, then try again."
 msgstr ""
 "Activa Wallshader Live Wallpaper en Extensiones de GNOME e inténtalo de "
@@ -2961,6 +2968,14 @@ msgstr "Idioma"
 msgid "System Default"
 msgstr "Predeterminado del sistema"
 
+#: src/preferences.js:74
+msgid "Show Desktop Menu Shortcut"
+msgstr ""
+
+#: src/preferences.js:75
+msgid "Show “Open Wallshader” in the desktop right-click menu."
+msgstr ""
+
 #: src/save-preset-dialog.js:13
 msgid "Save Preset"
 msgstr "Guardar preajuste"
@@ -3057,7 +3072,7 @@ msgstr "Aplicar ajustes"
 msgid "Copy to Clipboard"
 msgstr "Copiar al portapapeles"
 
-#: src/storage.js:59
+#: src/storage.js:64
 msgid "Saved settings could not be read: {error}"
 msgstr "No se pudieron leer los ajustes guardados: {error}"
 

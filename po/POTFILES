@@ -1,4 +1,5 @@
 data/io.github.wallshader.Wallshader.desktop
+extension/desktop-menu.js
 po/paper-catalog.js
 src/catalog.js
 src/debug-info.js

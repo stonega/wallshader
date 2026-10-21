@@ -15,7 +15,7 @@ import { importImage } from '../src/images.js';
 import { exportSettings } from '../src/sharing.js';
 import { showSharingDialog } from '../src/sharing-dialog.js';
 import { ROOT } from '../src/paths.js';
-import { Store, watchDebugInfo } from '../src/storage.js';
+import { Store, watchDebugInfo, watchState } from '../src/storage.js';
 import { pngBytes, savePng } from '../src/wallpaper.js';
 import {
   deleteNamedPreset,
@@ -25,6 +25,75 @@ import {
 import { presetFingerprint } from '../src/preset-options.js';
 import { _ } from '../src/i18n.js';
 import { checkKittyBackground } from './kitty-native.js';
+
+async function checkDesktopMenuPreference(window, artifacts) {
+  const background = window.wallpaper.settings.get_string('picture-uri');
+  let observed;
+  const monitor = watchState((state) => {
+    observed = state.showDesktopMenu !== false;
+  });
+  const open = () => {
+    window.application.lookup_action('preferences').activate(null);
+    return window.preferencesDialog;
+  };
+  let dialog = open();
+  try {
+    assert(
+      dialog.desktopMenuRow instanceof Adw.SwitchRow &&
+        dialog.desktopMenuRow.active,
+      'Desktop menu shortcut must default to enabled in Preferences',
+    );
+    dialog.desktopMenuRow.active = false;
+    await settle();
+    assert(
+      !new Store().state.showDesktopMenu && observed === false,
+      'Desktop menu setting did not persist or notify',
+    );
+    dialog.close();
+    await settle();
+    dialog = open();
+    assert(
+      !dialog.desktopMenuRow.active,
+      'Preferences forgot the hidden desktop shortcut',
+    );
+    const save = window.store.save;
+    window.store.save = () => {
+      throw new Error('Simulated preference save failure');
+    };
+    try {
+      dialog.desktopMenuRow.active = true;
+      assert(
+        !dialog.desktopMenuRow.active &&
+          !window.store.state.showDesktopMenu &&
+          dialog.errorLabel.visible,
+        'Failed preference save did not restore the switch or show the error',
+      );
+    } finally {
+      window.store.save = save;
+    }
+    dialog.desktopMenuRow.active = true;
+    await settle();
+    assert(
+      new Store().state.showDesktopMenu &&
+        observed &&
+        !dialog.errorLabel.visible,
+      'Desktop menu shortcut did not restore and save',
+    );
+    if (artifacts)
+      await screenshot(window, `${artifacts}/preferences-desktop-menu.png`);
+    assert(
+      window.wallpaper.settings.get_string('picture-uri') === background,
+      'Desktop menu preference changed the wallpaper',
+    );
+  } finally {
+    monitor.cancel();
+    dialog.close();
+    await settle();
+  }
+  console.log(
+    'Verified desktop shortcut Preferences, persistence, notification and failed-save recovery.',
+  );
+}
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -801,6 +870,7 @@ export async function run(window) {
   if (artifacts) GLib.mkdir_with_parents(artifacts, 0o755);
   await checkAnimatedPreview(window, artifacts);
   await checkDebugInfo(window);
+  await checkDesktopMenuPreference(window, artifacts);
   await checkSavedPresets(window, artifacts);
   for (const id of ['paper-paper-texture', 'paper-water']) {
     await window.selectPreset(id);

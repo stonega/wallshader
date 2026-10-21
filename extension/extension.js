@@ -6,6 +6,7 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { OverviewWallpapers } from './overview.js';
 import { DesktopWallpapers } from './background.js';
 import { CompositingHold } from './compositing.js';
+import { DesktopMenu } from './desktop-menu.js';
 import {
   LIVE_XML,
   LIVE_PATH,
@@ -20,6 +21,7 @@ import { readJson, writeJson } from './app/src/storage.js';
 export default class WallshaderExtension extends Extension {
   enable() {
     this._enabled = true;
+    this._desktopMenu = new DesktopMenu(this.path);
     this._compositing = new CompositingHold(global.compositor);
     this._windows = new Map();
     const sourceForMonitor = (index) => {
@@ -435,6 +437,7 @@ export default class WallshaderExtension extends Extension {
 
   disable() {
     this._enabled = false;
+    this._desktopMenu.destroy();
     this._stop();
     this._desktop.destroy();
     if (this._periodic) GLib.source_remove(this._periodic);

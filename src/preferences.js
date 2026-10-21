@@ -11,7 +11,7 @@ export function showPreferences(window) {
   const dialog = new Adw.PreferencesDialog({
     title: _('Preferences'),
     content_width: 460,
-    content_height: 300,
+    content_height: 400,
   });
   const page = new Adw.PreferencesPage({
     title: _('General'),
@@ -70,11 +70,36 @@ export function showPreferences(window) {
     }
   });
   group.add(row);
+  const desktopMenu = new Adw.SwitchRow({
+    title: _('Show Desktop Menu Shortcut'),
+    subtitle: _('Show “Open Wallshader” in the desktop right-click menu.'),
+    active: window.store.state.showDesktopMenu,
+  });
+  let updatingMenu = false;
+  desktopMenu.connect('notify::active', () => {
+    if (updatingMenu) return;
+    const saved = window.store.state.showDesktopMenu;
+    window.store.state.showDesktopMenu = desktopMenu.active;
+    try {
+      window._remember();
+      window.store.save();
+      error.visible = false;
+    } catch (exception) {
+      window.store.state.showDesktopMenu = saved;
+      updatingMenu = true;
+      desktopMenu.active = saved;
+      updatingMenu = false;
+      error.label = exception.message;
+      error.visible = true;
+    }
+  });
+  group.add(desktopMenu);
   group.add(notice);
   group.add(error);
   page.add(group);
   dialog.add(page);
   dialog.languageRow = row;
+  dialog.desktopMenuRow = desktopMenu;
   dialog.languageCodes = availableLanguages;
   dialog.errorLabel = error;
   dialog.connect('closed', () => {

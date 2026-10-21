@@ -28,15 +28,16 @@ export function writeJson(path, value) {
 }
 
 // Watching the directory survives atomic replacement of state.json.
-export function watchDebugInfo(onChange) {
+export function watchState(onChange) {
   const path = GLib.build_filenamev([CONFIG_DIR, 'state.json']);
   const refresh = () => {
     try {
-      onChange(readJson(path)?.debugInfo === true);
+      onChange(readJson(path) ?? {});
     } catch (error) {
-      console.warn(`Could not read debug preference: ${error.message}`);
+      console.warn(`Could not read preferences: ${error.message}`);
     }
   };
+  GLib.mkdir_with_parents(CONFIG_DIR, 0o700);
   const monitor = Gio.File.new_for_path(CONFIG_DIR).monitor_directory(
     Gio.FileMonitorFlags.NONE,
     null,
@@ -46,6 +47,10 @@ export function watchDebugInfo(onChange) {
   });
   refresh();
   return monitor;
+}
+
+export function watchDebugInfo(onChange) {
+  return watchState((state) => onChange(state.debugInfo === true));
 }
 
 export class Store {

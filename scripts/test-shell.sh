@@ -11,8 +11,10 @@ export XDG_CACHE_HOME="$test_dir/cache"
 export XDG_RUNTIME_DIR="$test_dir/runtime"
 mkdir -m 700 "$XDG_RUNTIME_DIR"
 export XDG_DATA_DIRS="$XDG_DATA_HOME:/usr/local/share:/usr/share"
+unset DISPLAY WAYLAND_DISPLAY GNOME_SETUP_DISPLAY XAUTHORITY DBUS_SESSION_BUS_ADDRESS DBUS_SESSION_BUS_PID
 export GSETTINGS_BACKEND=memory
 export GTK_A11Y=none
+export GDK_BACKEND=wayland
 export WALLSHADER_TRACE=1
 export WALLSHADER_ARTIFACTS="$app_dir/artifacts"
 export WALLSHADER_SHELL_TEST_RESULT="$test_dir/result"
@@ -25,6 +27,13 @@ case "$WALLSHADER_TEST_MONITORS" in
   *) echo 'WALLSHADER_TEST_MONITORS must be 1 or 2' >&2; exit 1 ;;
 esac
 mkdir -p "$XDG_CONFIG_HOME" "$XDG_CACHE_HOME" "$XDG_DATA_HOME/gnome-shell/extensions/wallshader-test@local" "$XDG_DATA_HOME/gnome-shell/modes" "$WALLSHADER_ARTIFACTS"
+mkdir -p "$XDG_DATA_HOME/applications"
+cat > "$XDG_DATA_HOME/applications/io.github.wallshader.Wallshader.desktop" <<EOF
+[Desktop Entry]
+Name=Wallshader
+Exec=gjs -m "$app_dir/src/main.js"
+Type=Application
+EOF
 cp -R build/extension "$XDG_DATA_HOME/gnome-shell/extensions/wallshader@wallshader.github.io"
 cp tests/shell-driver.js "$XDG_DATA_HOME/gnome-shell/extensions/wallshader-test@local/extension.js"
 cp tests/resize-client.js "$XDG_DATA_HOME/gnome-shell/extensions/wallshader-test@local/resize-client.js"

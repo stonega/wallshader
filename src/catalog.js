@@ -363,6 +363,7 @@ export function normalizeState(input = {}) {
     version: 3,
     language: normalizeLanguage(input.language),
     debugInfo: input.debugInfo === true,
+    showDesktopMenu: input.showDesktopMenu !== false,
     wallpaperTarget: input.wallpaperTarget === 'kitty' ? 'kitty' : 'desktop',
     liveRendering: input.liveRendering === 'gpu' ? 'gpu' : 'compatibility',
     selected: ids.has(input.selected) ? input.selected : PRESETS[0].id,

@@ -62,11 +62,11 @@ it from your download directory:
 sudo dnf install ./wallshader-*.noarch.rpm
 ```
 
-### Debian / Ubuntu
+### Ubuntu (PPA)
 
-Ubuntu 26.04 LTS builds are hosted in
-[`ppa:xijieyin/ppa`](https://launchpad.net/~xijieyin/+archive/ubuntu/ppa).
-Once Launchpad lists a published binary package, enable the PPA and install:
+On **Ubuntu 26.04 LTS**, add the
+[Wallshader PPA](https://launchpad.net/~xijieyin/+archive/ubuntu/ppa)
+and install:
 
 ```sh
 sudo add-apt-repository ppa:xijieyin/ppa
@@ -74,8 +74,17 @@ sudo apt update
 sudo apt install wallshader
 ```
 
-Updates arrive through normal APT upgrades. The PPA targets Ubuntu 26.04;
-see the [PPA guide](docs/implementation/ppa.md) for publishing details.
+If `add-apt-repository` is unavailable, install it with
+`sudo apt install software-properties-common`, then run the commands above.
+
+Updates arrive through normal APT upgrades:
+
+```sh
+sudo apt update
+sudo apt upgrade
+```
+
+### Debian / Ubuntu (downloaded package)
 
 For Debian 13, Ubuntu 24.04, or newer with the required GNOME libraries, download
 the `_all.deb` asset and install it with APT so runtime dependencies are included:

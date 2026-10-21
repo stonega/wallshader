@@ -148,6 +148,10 @@ bun run build
 ./scripts/run.sh
 ```
 
+After changing the Shell extension, run `./scripts/install-extension.sh --files-only`,
+then log out and back in. GNOME loads extension modules for the current session;
+restarting the editor keeps using that loaded code.
+
 For a custom prefix, use `meson setup build-native --prefix=/your/prefix` and
 `meson install -C build-native` after installing dependencies and building assets.
 The application runs with GJS; runtime assets are entirely local.

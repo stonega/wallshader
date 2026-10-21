@@ -4,6 +4,7 @@ import Meta from 'gi://Meta';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { OverviewWallpapers } from './overview.js';
+import { DesktopWallpapers } from './background.js';
 import { CompositingHold } from './compositing.js';
 import {
   LIVE_XML,
@@ -21,12 +22,14 @@ export default class WallshaderExtension extends Extension {
     this._enabled = true;
     this._compositing = new CompositingHold(global.compositor);
     this._windows = new Map();
-    this._overview = new OverviewWallpapers((index) => {
+    const sourceForMonitor = (index) => {
       for (const [window, managed] of this._windows) {
         if (managed.index === index) return window.get_compositor_private();
       }
       return null;
-    });
+    };
+    this._desktop = new DesktopWallpapers(sourceForMonitor);
+    this._overview = new OverviewWallpapers(sourceForMonitor);
     this._sources = new Set();
     this._signals = [];
     this._error = '';
@@ -322,6 +325,7 @@ export default class WallshaderExtension extends Extension {
     ];
     this._windows.set(window, managed);
     place();
+    this._desktop.sync();
     this._overview.sync();
     this._updatePause();
     this._notify();
@@ -331,6 +335,7 @@ export default class WallshaderExtension extends Extension {
     const managed = this._windows.get(window);
     if (!managed) return;
     this._windows.delete(window);
+    this._desktop.sync();
     this._overview.sync();
     if (this._sources.delete(managed.placement))
       GLib.source_remove(managed.placement);
@@ -408,6 +413,7 @@ export default class WallshaderExtension extends Extension {
     this._needsReload = false;
     for (const window of [...this._windows.keys()]) this._release(window);
     this._overview.clear();
+    this._desktop.clear();
     this._setCompositing(false);
     // This handle identifies only the renderer we own, never another application.
     if (process && terminate) {
@@ -430,6 +436,7 @@ export default class WallshaderExtension extends Extension {
   disable() {
     this._enabled = false;
     this._stop();
+    this._desktop.destroy();
     if (this._periodic) GLib.source_remove(this._periodic);
     this._periodic = 0;
     for (const [object, id] of this._signals) object.disconnect(id);

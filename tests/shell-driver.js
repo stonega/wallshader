@@ -1,6 +1,7 @@
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GdkPixbuf from 'gi://GdkPixbuf';
+import Graphene from 'gi://Graphene';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
@@ -91,6 +92,19 @@ async function checkCoverage(extension) {
       }),
     'Wallpaper frame or buffer does not cover the full monitor',
   );
+  for (const monitor of Main.layoutManager.monitors) {
+    const background =
+      Main.layoutManager._bgManagers[monitor.index].backgroundActor;
+    const entry = extension._desktop._backgrounds.get(background);
+    assert(
+      entry && entry.live.source.opacity === 0,
+      `Desktop still presents the renderer window: monitor=${monitor.index}, background=${Boolean(entry)}, opacity=${entry?.live.source.opacity}`,
+    );
+    assert(
+      background.get_effect('wallshader-background') === entry.live.effect,
+      'Desktop lost its live background actor',
+    );
+  }
 }
 async function screenshot(name) {
   const path = `${GLib.getenv('WALLSHADER_ARTIFACTS')}/${name}.png`;
@@ -108,16 +122,44 @@ async function screenshot(name) {
 }
 
 function checkOverview(extension) {
-  const entries = [...extension._overview._clones];
+  const entries = [...extension._overview._backgrounds];
+  const visit = (actor) => {
+    if (actor instanceof Workspace) {
+      for (const background of actor._background._backgroundGroup.get_children())
+        if (background instanceof Meta.BackgroundActor && background.mapped)
+          assert(
+            extension._overview._backgrounds.has(background),
+            `Visible workspace background has no live texture on monitor ${actor.monitorIndex}`,
+          );
+    } else if (actor instanceof WorkspaceThumbnail) {
+      if (actor.mapped)
+        assert(
+          extension._overview._backgrounds.has(actor),
+          `Visible thumbnail has no live texture on monitor ${actor.monitorIndex}`,
+        );
+    } else {
+      for (const child of actor.get_children()) visit(child);
+    }
+  };
+  const controls = Main.overview._overview.controls;
+  visit(controls._workspacesDisplay);
+  visit(controls._thumbnailsBox);
+  for (const view of controls._workspacesDisplay._workspacesViews) visit(view);
+  for (const background of Main.layoutManager._backgroundGroup.get_children())
+    if (background instanceof Meta.BackgroundActor && background.mapped)
+      assert(
+        extension._desktop._backgrounds.has(background),
+        'Visible desktop background has no live texture',
+      );
   for (const monitor of Main.layoutManager.monitors) {
     assert(
       entries.some(
-        ([actor, { clone }]) =>
-          actor instanceof Workspace &&
-          actor.monitorIndex === monitor.index &&
-          clone.mapped &&
-          clone.width > 0 &&
-          clone.height > 0,
+        ([_actor, { live, thumbnail }]) =>
+          !thumbnail &&
+          live.actor.content.monitor === monitor.index &&
+          live.actor.mapped &&
+          live.actor.width > 0 &&
+          live.actor.height > 0,
       ),
       `Overview has no shader for monitor ${monitor.index}`,
     );
@@ -126,20 +168,42 @@ function checkOverview(extension) {
     entries.some(([actor]) => actor instanceof WorkspaceThumbnail),
     'Workspace thumbnails have no shader',
   );
-  for (const [actor, { clone, source }] of entries) {
-    assert(clone.get_source() === source, 'Overview lost its live source');
+  for (const [actor, { live, source, thumbnail }] of entries) {
+    assert(
+      live.actor instanceof Meta.BackgroundActor,
+      'Wallpaper bypasses the background actor',
+    );
+    assert(
+      live.actor.content instanceof Meta.BackgroundContent,
+      'Wallpaper replaced the native background content',
+    );
+    assert(
+      live.driver.get_source() === source && live.driver.has_effects(),
+      'Wallpaper lost its frame source',
+    );
+    assert(
+      live.actor.get_effect('wallshader-background') === live.effect,
+      'Background lost its live texture',
+    );
+    assert(
+      live.driver.get_parent() === live.actor.get_parent() &&
+        live.driver.get_next_sibling() === live.actor,
+      'Live capture must paint immediately before its background',
+    );
     assert(
       extension._windows.has(source.meta_window),
-      'Overview cloned an unrelated window',
+      'Overview sampled an unrelated window',
     );
-    if (clone.mapped)
+    if (live.actor.mapped)
       assert(
-        clone.width > 0 && clone.height > 0,
+        live.actor.width > 0 && live.actor.height > 0,
         'Visible overview shader has no allocation',
       );
-    if (actor instanceof WorkspaceThumbnail)
+    if (thumbnail)
       assert(
-        actor._contents.get_first_child() === clone,
+        actor._contents
+          .get_children()
+          .filter((child) => child !== live.driver)[0] === live.actor,
         'Wallpaper covers thumbnail windows',
       );
   }
@@ -205,27 +269,77 @@ async function checkOverviewTransition(extension) {
     'Green live surface did not reach every monitor',
   );
   const process = extension._process;
-  for (const paused of [false, true]) {
+  for (const [entry, paused] of [
+    ['show', false],
+    ['show', true],
+    ['redraw', false],
+    ['redraw', true],
+    ['gesture', false],
+    ['gesture', true],
+  ]) {
     await rpc('SetPaused', new GLib.Variant('(b)', [paused]));
-    Main.overview.show();
-    const monitors = new Set();
-    for (let frame = 0; frame < 4; frame++) {
-      const image = await capturePixels();
-      // Scan the captured pixels, not actor positions from a later animation frame.
-      for (const { index, red, green } of scan(image)) {
-        if (green > 20) monitors.add(index);
-        if (!red) continue;
-        image.savev(
-          `${GLib.getenv('WALLSHADER_ARTIFACTS')}/overview-transition-failure.png`,
-          'png',
-          [],
-          [],
-        );
-        throw new Error(
-          `Overview flashed the saved still: paused=${paused}, frame=${frame}, monitor=${index}, red=${red}`,
-        );
+    // Input and Shell callbacks can enter during a compositor frame, before an
+    // idle callback gets a chance to attach newly created thumbnail clones.
+    let paintError;
+    let paints = 0;
+    const paintId = global.stage.connect('before-paint', () => {
+      paints++;
+      try {
+        checkOverview(extension);
+      } catch (error) {
+        paintError ??= error;
       }
+    });
+    const controls = Main.overview._overview.controls;
+    if (entry === 'redraw') {
+      await new Promise((resolve) =>
+        global.compositor.get_laters().add(Meta.LaterType.BEFORE_REDRAW, () => {
+          Main.overview.show();
+          resolve();
+          return GLib.SOURCE_REMOVE;
+        }),
+      );
+    } else if (entry === 'gesture') {
+      controls.gestureBegin({ confirmSwipe() {} });
+      Main.overview._gestureUpdate(null, 0.05);
+    } else {
+      Main.overview.show();
     }
+    const monitors = new Set();
+    try {
+      for (let frame = 0; frame < 4; frame++) {
+        if (entry === 'gesture')
+          Main.overview._gestureUpdate(null, 0.05 + frame * 0.3);
+        // Applying a still image can replace backgrounds while entry is running.
+        if (frame === 1)
+          settings.set_string(
+            'primary-color',
+            settings.get_string('primary-color') === '#FF0000'
+              ? '#EE0000'
+              : '#FF0000',
+          );
+        const image = await capturePixels();
+        // Scan the captured pixels, not actor positions from a later animation frame.
+        for (const { index, red, green } of scan(image)) {
+          if (green > 20) monitors.add(index);
+          if (!red) continue;
+          image.savev(
+            `${GLib.getenv('WALLSHADER_ARTIFACTS')}/overview-transition-failure.png`,
+            'png',
+            [],
+            [],
+          );
+          throw new Error(
+            `Overview flashed the saved still: entry=${entry}, paused=${paused}, frame=${frame}, monitor=${index}, red=${red}`,
+          );
+        }
+      }
+    } finally {
+      global.stage.disconnect(paintId);
+      if (entry === 'gesture') Main.overview._gestureEnd(null, 0, 1);
+    }
+    assert(paints > 0, 'Overview transition did not paint');
+    if (paintError) throw paintError;
     assert(
       monitors.size === Main.layoutManager.monitors.length,
       'Overview transition missed a monitor',
@@ -237,6 +351,94 @@ async function checkOverviewTransition(extension) {
   await rpc('SetPaused', new GLib.Variant('(b)', [false]));
   console.log(
     'Verified live pixels from the first overview frame across repeated entries.',
+  );
+}
+
+async function checkOverviewCorners(extension) {
+  const entries = [...extension._overview._backgrounds.values()];
+  const livePixels = await capturePixels();
+  let nativePixels;
+  try {
+    for (const { live } of entries) live.effect.enabled = false;
+    await delay(150);
+    nativePixels = await capturePixels();
+  } finally {
+    for (const { live } of entries) live.effect.enabled = true;
+  }
+  const liveData = livePixels.get_pixels();
+  const nativeData = nativePixels.get_pixels();
+  const monitors = new Set();
+  let corners = 0;
+  for (const { live, thumbnail } of entries) {
+    if (thumbnail || !live.actor.mapped) continue;
+    assert(
+      live.actor.content.rounded_clip_radius > 0,
+      'GNOME overview mask has no rounding',
+    );
+    const index = live.actor.content.monitor;
+    const monitor = Main.layoutManager.monitors[index];
+    const area = Main.layoutManager.getWorkAreaForMonitor(index);
+    // BackgroundContent maps monitor coordinates into the preview allocation.
+    const scaleX = live.actor.width / monitor.width;
+    const scaleY = live.actor.height / monitor.height;
+    const left = (area.x - monitor.x) * scaleX;
+    const top = (area.y - monitor.y) * scaleY;
+    const width = area.width * scaleX;
+    const height = area.height * scaleY;
+    const points = [
+      [left + 1, top + 1],
+      [left + width - 1, top + 1],
+      [left + 1, top + height - 1],
+      [left + width - 1, top + height - 1],
+      [left + width / 2, top + height / 2],
+    ];
+    for (const [position, [x, y]] of points.entries()) {
+      const point = live.actor.apply_relative_transform_to_point(
+        global.stage,
+        new Graphene.Point3D({ x, y, z: 0 }),
+      );
+      if (
+        point.x < monitor.x ||
+        point.y < monitor.y ||
+        point.x >= monitor.x + monitor.width ||
+        point.y >= monitor.y + monitor.height
+      )
+        continue;
+      const pixelX = Math.floor(
+        (point.x * livePixels.width) / global.stage.width,
+      );
+      const pixelY = Math.floor(
+        (point.y * livePixels.height) / global.stage.height,
+      );
+      const offset =
+        pixelY * livePixels.rowstride + pixelX * livePixels.n_channels;
+      let difference = 0;
+      for (let channel = 0; channel < 3; channel++)
+        difference += Math.abs(
+          liveData[offset + channel] - nativeData[offset + channel],
+        );
+      if (position === 4) {
+        assert(
+          difference > 30,
+          `Overview monitor ${index} has no visible shader pixels`,
+        );
+        monitors.add(index);
+      } else {
+        assert(
+          difference <= 6,
+          `Shader painted over GNOME's rounded corner on monitor ${index}: ${difference}`,
+        );
+        corners++;
+      }
+    }
+  }
+  assert(
+    monitors.size === Main.layoutManager.monitors.length &&
+      corners >= 4 * monitors.size,
+    `Rounded corner checks missed a monitor: monitors=${[...monitors]}, corners=${corners}`,
+  );
+  console.log(
+    'Verified live overview pixels and native rounded corners on every monitor.',
   );
 }
 
@@ -754,16 +956,14 @@ export default class ShellTest extends Extension {
     debugStore.state.debugInfo = true;
     debugStore.save();
     await delay(1600);
-    let debug;
-    await until(async () => {
-      debug = await inspect();
-      return debug.debugStats.every(
-        (info) => info?.fps > 0 && info.canvas[0] > 0,
-      );
-    }, 'Desktop debug statistics did not update on all monitors');
+    const debug = await inspect();
     assert(
       debug.debugInfo.every(Boolean),
       'Desktop did not pick up the saved debug toggle',
+    );
+    assert(
+      debug.debugStats.every((info) => info?.fps > 0 && info.canvas[0] > 0),
+      'Desktop debug statistics did not update on all monitors',
     );
     await screenshot('live-desktop-debug');
     debugStore.state.debugInfo = false;
@@ -791,20 +991,6 @@ export default class ShellTest extends Extension {
     await checkResize(extension, this.path);
     await checkWorkspacePlayback(extension, this.path, inspect);
     await checkLockPlayback(extension, inspect);
-    const staticPreset = createPreset('paper-static-mesh-gradient');
-    staticPreset.speed = 1;
-    await apply(staticPreset, 60);
-    await delay(600);
-    const staticFirst = await inspect();
-    await delay(600);
-    const staticNext = await inspect();
-    assert(
-      !staticNext.paused &&
-        staticNext.frames.every(
-          (frame, index) => frame === staticFirst.frames[index],
-        ),
-      'Static desktop shader kept advancing at 60 FPS',
-    );
     await checkOverviewTransition(extension);
     await apply(preset);
     await delay(500);
@@ -827,15 +1013,36 @@ export default class ShellTest extends Extension {
     checkOverview(extension);
     workspaceSettings.set_int('num-workspaces', 4);
     await delay(800);
-    const primaryPreviews = [...extension._overview._clones.keys()].filter(
-      (actor) =>
-        actor instanceof Workspace &&
-        actor.monitorIndex === Main.layoutManager.primaryIndex,
+    const primaryPreviews = [
+      ...extension._overview._backgrounds.values(),
+    ].filter(
+      ({ live, thumbnail }) =>
+        !thumbnail &&
+        live.actor.content.monitor === Main.layoutManager.primaryIndex,
     );
     assert(
       primaryPreviews.length === 4,
       'New workspace did not receive the live background',
     );
+    const previousBackground =
+      Main.layoutManager._bgManagers[0].backgroundActor;
+    const backgroundSettings = new Gio.Settings({
+      schema_id: 'org.gnome.desktop.background',
+    });
+    backgroundSettings.set_string('picture-options', 'none');
+    backgroundSettings.set_string('primary-color', '#182030');
+    await until(
+      () =>
+        Main.layoutManager._bgManagers[0].backgroundActor !==
+          previousBackground &&
+        Main.layoutManager._bgManagers.every(({ backgroundActor }) =>
+          extension._desktop._backgrounds.has(backgroundActor),
+        ),
+      'Replaced GNOME backgrounds lost the live wallpaper',
+    );
+    await delay(300);
+    checkOverview(extension);
+    await checkCoverage(extension);
     const overviewFirst = await inspect();
     await screenshot('live-overview-first');
     await delay(1000);
@@ -844,7 +1051,7 @@ export default class ShellTest extends Extension {
       overviewNext.frames.every(
         (frame, index) => frame > overviewFirst.frames[index] + 100,
       ),
-      'Overview shader did not animate',
+      `Overview shader did not animate: ${overviewFirst.frames} -> ${overviewNext.frames}`,
     );
     await screenshot('live-overview-second');
     await rpc('SetPaused', new GLib.Variant('(b)', [true]));
@@ -857,12 +1064,14 @@ export default class ShellTest extends Extension {
       ),
       'Overview ignored manual pause',
     );
+    await checkOverviewCorners(extension);
     await rpc('SetPaused', new GLib.Variant('(b)', [false]));
     Main.overview.hide();
     await delay(800);
     assert(
-      extension._overview._clones.size === 0 &&
-        extension._overview._watched.size === 0,
+      extension._overview._backgrounds.size === 0 &&
+        extension._overview._watched.size === 0 &&
+        extension._overview._pending === 0,
       'Overview left actors or signals after closing',
     );
     await checkCoverage(extension);
@@ -938,14 +1147,25 @@ export default class ShellTest extends Extension {
     await delay(800);
     checkOverview(extension);
     const process = extension._process;
+    const desktopBackgrounds = [...extension._desktop._backgrounds.keys()];
     await rpc('Stop');
+    assert(
+      extension._desktop._backgrounds.size === 0 &&
+        extension._desktop._hidden.size === 0 &&
+        extension._desktop._pending === 0 &&
+        desktopBackgrounds.every(
+          (actor) => !actor.get_effect('wallshader-background'),
+        ),
+      'Stop left desktop effects or hidden windows',
+    );
     assert(
       !JSON.parse(extension.GetStatus()).compositing,
       'Stopping retained the wallpaper compositor inhibitor',
     );
     assert(
-      extension._overview._clones.size === 0 &&
-        extension._overview._watched.size === 0,
+      extension._overview._backgrounds.size === 0 &&
+        extension._overview._watched.size === 0 &&
+        extension._overview._pending === 0,
       'Stop left overview actors or signals',
     );
     await until(
@@ -977,12 +1197,19 @@ export default class ShellTest extends Extension {
     checkOverview(extension);
     extension.disable();
     assert(
+      extension._desktop._backgrounds.size === 0 &&
+        extension._desktop._hidden.size === 0 &&
+        extension._desktop._pending === 0,
+      'Disable left desktop effects or hidden windows',
+    );
+    assert(
       !JSON.parse(extension.GetStatus()).compositing,
       'Disabling retained the wallpaper compositor inhibitor',
     );
     assert(
-      extension._overview._clones.size === 0 &&
-        extension._overview._watched.size === 0,
+      extension._overview._backgrounds.size === 0 &&
+        extension._overview._watched.size === 0 &&
+        extension._overview._pending === 0,
       'Disable left overview actors or signals',
     );
     await until(

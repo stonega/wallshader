@@ -134,6 +134,9 @@ dialog explains that you need to log out and back in once so GNOME can discover
 it. Dismiss it with **Got It**, then log out when ready. After logging back in,
 open Wallshader and choose **Set Animated Wallpaper** again.
 
+After installing an extension update, log out and back in to load its new Shell
+code. Reopening the editor uses the extension already loaded in the current session.
+
 Applying also sets the animation's first frame as a still background
 for both light and dark appearances, at the selected output resolution. It uses
 the frame where the animation starts, including your chosen frame time. This still
@@ -157,6 +160,7 @@ in reverse. Stop reveals the animation's static first frame. Applying a still im
 also stops animation. PNG export always captures a still frame.
 
 Activities shows the same animated shader in workspace previews and thumbnails.
+Workspace previews retain GNOME's rounded background corners.
 Maximized windows and workspace switches keep playback enabled. Only **Pause**
 pauses animation, and manual pause stays in effect across workspace switches and
 screen lock. The renderer stays running through locking and unlocking. The lock

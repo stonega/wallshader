@@ -15,7 +15,6 @@ import {
 const { ShaderMount } = Paper;
 let mount;
 let preset;
-let animated = false;
 let paused = false;
 let busy = false;
 let liveFps = 0;
@@ -75,8 +74,8 @@ function updatePlayback() {
   resetFrameStats();
   if (liveFrame !== null) cancelAnimationFrame(liveFrame);
   liveFrame = null;
-  mount?.setSpeed(liveFps || paused || !animated ? 0 : preset.speed);
-  if (!mount || !liveFps || paused || !animated || !preset.speed) return;
+  mount?.setSpeed(liveFps || paused ? 0 : preset.speed);
+  if (!mount || !liveFps || paused || !preset.speed) return;
   const advance = createFrameClock(liveFps, performance.now());
   const render = (now) => {
     const elapsed = advance(now);
@@ -176,15 +175,11 @@ async function select(input) {
   const changed =
     !preset || next.id !== preset.id || next.shader !== preset.shader;
   if (changed) {
-    const fragment = Paper[SHADERS[next.shader].fragment];
-    // Several Paper effects are static even when their saved speed is nonzero.
-    // Keep resize/uniform redraws, without scheduling identical animated frames.
-    animated = /\bu_time\b/.test(fragment);
     dispose(mount);
     document.getElementById('preview').replaceChildren();
     mount = new ShaderMount(
       document.getElementById('preview'),
-      fragment,
+      Paper[SHADERS[next.shader].fragment],
       nextUniforms,
       // Every frame replaces the full canvas. Only the separate PNG capture
       // needs a preserved buffer; the fullscreen quad needs no MSAA or depth.

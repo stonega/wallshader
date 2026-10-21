@@ -31,9 +31,6 @@ start, pause, or stop wallpapers in the user's running Shell.
 After gallery generation it samples 120 frames of the animated preview, checking
 for missing/cleared regions and verifying that both shader time and visible pixels
 change. `artifacts/preview-animation-failure.png` preserves the failing frame.
-Static preview checks count WebGL draw calls: a nonzero saved speed must produce
-no recurring draws, while a parameter edit must still render immediately. The
-Shell suite checks that static desktop shaders also stay idle at a requested 60 FPS.
 The native test also saves a named configuration through the preview dialog,
 reloads its settings and PNG, selects Paper and saved grid tiles, and checks
 cancellation, duplicate names, failed writes, and missing-thumbnail recovery.
@@ -82,14 +79,21 @@ frames for cleared/black regions, including
 checking that paused pixels remain unchanged during both operations. This covers
 the rendering path under window update load, but cannot rule out every driver-specific
 or intermittent artifact on a physical display.
-Overview checks cover live clones on both monitors, workspace thumbnails,
+Desktop checks require background-actor presentation with hidden renderer windows.
+Overview checks cover live background actors on both monitors, workspace thumbnails,
 continued animation, manual pause, and cleanup after closing, stopping or disabling.
+Pixel checks compare the live overview with GNOME's original background: all four
+rounded corners must retain their original pixels while the centers show the shader.
 Transition checks use a green live surface over a red saved background and sample
-from the first overview frame, repeating entry during playback and manual pause.
-Every monitor must keep the live pixels without restarting the renderer. The
-suite allows five minutes for cold startup and its composited frame captures.
+from the first overview frame. Normal show, compositor redraw and incremental
+touchpad gestures run during both playback and manual pause. Every paint must
+have live desktop, workspace and thumbnail backgrounds; captured pixels must not
+reveal the saved still, including when GNOME replaces backgrounds during entry.
+Capture siblings must paint immediately before their native backgrounds. Closing,
+stopping and disabling must also cancel pending background synchronization.
 For slower test machines, set `WALLSHADER_TEST_TIMEOUT` to a larger number of
-seconds for either graphical suite; the native suite defaults to 240 seconds.
+seconds for either graphical suite; the native suite defaults to 240 seconds and
+the Shell suite to 300 seconds.
 Its test-only session mode enables only the live wallpaper extension and its test
 driver. `artifacts/shell-test.log` and desktop captures help diagnose failures.
 The Shell test also switches between GPU and Compatibility, verifies the new

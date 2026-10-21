@@ -108,3 +108,15 @@ jobs:
             --verify-tag \
             --title "$GITHUB_REF_NAME" \
             --generate-notes
+
+  ppa:
+    name: Ubuntu PPA
+    needs: release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    uses: ./.github/workflows/publish-ppa.yml
+    with:
+      tag: ${{ github.ref_name }}
+      publish: ${{ vars.PPA_ENABLED == 'true' }}
+    secrets:
+      PPA_GPG_PRIVATE_KEY: ${{ secrets.PPA_GPG_PRIVATE_KEY }}
+      PPA_GPG_PASSPHRASE: ${{ secrets.PPA_GPG_PASSPHRASE }}

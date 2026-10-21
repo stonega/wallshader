@@ -64,6 +64,12 @@ sudo dnf install ./wallshader-*.noarch.rpm
 
 ### Debian / Ubuntu
 
+An Ubuntu 26.04 LTS PPA is being set up at
+[`ppa:xijieyin/ppa`](https://launchpad.net/~xijieyin/+archive/ubuntu/ppa).
+Initial publication is pending; use the downloaded package below until a package
+appears there. See the [PPA guide](docs/implementation/ppa.md) for publishing and
+installation instructions.
+
 Use Debian 13, Ubuntu 24.04, or newer, with the required GNOME libraries. Download
 the `_all.deb` asset and install it with APT so runtime dependencies are included:
 

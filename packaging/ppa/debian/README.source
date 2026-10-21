@@ -1,0 +1,13 @@
+The usr/ tree is the architecture-independent, generated installation tree
+from the checksum-verified GitHub release, also used by the Fedora COPR recipe.
+Launchpad assembles it into a Debian package without downloading build tools or
+JavaScript dependencies. No native executable or Bun runtime is bundled.
+
+source/ contains the corresponding Git tag, including the original renderer
+sources, lockfile, build scripts, and the pinned Paper npm dependency under
+node_modules/. With Bun 1.3.14 and gettext installed, the renderer can be rebuilt
+offline with `cd source && bun run build`; Meson installs the full application.
+
+scripts/package-ppa.py in the packaging checkout creates this source package.
+It verifies the release archive against SHA256SUMS and includes the full source
+tree so generated/minified JavaScript is accompanied by its editable source.

@@ -1,0 +1,15 @@
+Source: wallshader
+Section: graphics
+Priority: optional
+Maintainer: stone <xijieyin@gmail.com>
+Build-Depends: debhelper-compat (= 13), desktop-file-utils
+Standards-Version: 4.7.0
+Homepage: https://github.com/stonega/wallshader
+Rules-Requires-Root: no
+
+Package: wallshader
+Architecture: all
+Depends: ${misc:Depends}, gjs (>= 1.80), gir1.2-gtk-4.0 (>= 4.14), gir1.2-adw-1 (>= 1.5), gir1.2-gdkpixbuf-2.0, gir1.2-webkit-6.0 (>= 2.44), gsettings-desktop-schemas, hicolor-icon-theme, librsvg2-common
+Description: Native GNOME wallpapers made with Paper Shaders
+ Edit shader wallpapers, export PNG images, and apply still backgrounds.
+ Animated wallpapers use the bundled extension on GNOME 50 or 51 with Wayland.

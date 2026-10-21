@@ -1,0 +1,36 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: Wallshader
+Source: https://github.com/stonega/wallshader
+
+Files: *
+Copyright: 2026 Wallshader contributors
+License: GPL-3+
+
+Files: usr/share/wallshader/build/renderer/*
+ usr/share/wallshader/extension/app/build/renderer/*
+ source/src/renderer/sample.webp
+ source/node_modules/@paper-design/shaders/*
+Copyright: 2026 Paper and Wallshader contributors
+License: GPL-3+ and Apache-2.0
+Comment: Renderer bundles combine Wallshader code and Apache-licensed Paper
+ Shaders. Paper's LICENSE and NOTICE are preserved in the application and its
+ extension. See data/third-party in the corresponding source for asset notices.
+
+Files: packaging/ppa/*
+ debian/*
+Copyright: 2026 Wallshader contributors
+License: GPL-3+
+
+License: GPL-3+
+ This program is free software: you can redistribute it and/or modify it
+ under the terms of the GNU General Public License as published by the Free
+ Software Foundation, either version 3 of the License, or (at your option)
+ any later version.
+ .
+ On Debian systems the complete license is in
+ /usr/share/common-licenses/GPL-3.
+
+License: Apache-2.0
+ Licensed under the Apache License, Version 2.0.
+ On Debian systems the complete license is in
+ /usr/share/common-licenses/Apache-2.0.

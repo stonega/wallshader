@@ -234,6 +234,12 @@ installation.
 
 ## Packages and releases
 
+Ubuntu 26.04 PPA packaging and the GitHub Actions publishing workflow are described
+in the [PPA guide](ppa.md). After initial signing-key registration, enable
+`PPA_ENABLED` so tagged releases also publish to `ppa:xijieyin/ppa`. The workflow
+rebuilds and installs the source package in a clean Ubuntu container before upload,
+then verifies the released version in public APT metadata.
+
 Arch Linux uses the source recipe in `packaging/aur`. See the
 [AUR guide](aur.md) for initial submission, isolated build verification, and
 updates. Once initially published, update AUR for every release alongside GitHub

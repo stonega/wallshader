@@ -1,0 +1,16 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@ --buildsystem=none
+
+override_dh_auto_test:
+	desktop-file-validate usr/share/applications/io.github.wallshader.Wallshader.desktop
+	test -x usr/bin/wallshader
+	test -s usr/share/wallshader/build/renderer/renderer.js
+	test -s usr/share/wallshader/extension/app/src/desktop-renderer.js
+	test -s usr/share/wallshader/extension/metadata.json
+	test -s usr/share/wallshader/data/third-party/Paper-Shaders-LICENSE
+
+override_dh_auto_install:
+	mkdir -p debian/wallshader
+	cp -a usr debian/wallshader/

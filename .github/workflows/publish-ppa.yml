@@ -1,0 +1,173 @@
+name: Publish Ubuntu PPA
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        required: true
+        type: string
+      revision:
+        default: '1'
+        type: string
+      publish:
+        default: true
+        type: boolean
+    secrets:
+      PPA_GPG_PRIVATE_KEY:
+        required: false
+      PPA_GPG_PASSPHRASE:
+        required: false
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing GitHub release tag (vMAJOR.MINOR.PATCH)
+        required: true
+        type: string
+      revision:
+        description: PPA revision (increase after any accepted upload)
+        default: '1'
+        type: string
+      publish:
+        description: Sign, upload to Launchpad, and wait for publication
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ppa-${{ inputs.tag }}-${{ inputs.revision }}
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    name: Prepare Ubuntu 26.04 source package
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.3.14'
+
+      - name: Install source packaging tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y debhelper desktop-file-utils dpkg-dev zstd
+
+      - name: Download and verify the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          mkdir release
+          gh release download "$RELEASE_TAG" --repo "$GITHUB_REPOSITORY" --dir release
+          (cd release && sha256sum --check SHA256SUMS)
+
+      - name: Prepare unsigned source upload
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+          PPA_REVISION: ${{ inputs.revision }}
+        run: python3 scripts/package-ppa.py "$RELEASE_TAG" release --revision "$PPA_REVISION"
+
+      - name: Retain the complete source upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: wallshader-ppa-source
+          path: dist/ppa/*
+          compression-level: 0
+          if-no-files-found: error
+
+  verify:
+    name: Rebuild and install on Ubuntu 26.04
+    needs: prepare
+    runs-on: ubuntu-24.04
+    container: ubuntu:26.04
+    timeout-minutes: 25
+    steps:
+      - name: Install Debian build tools
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+            build-essential ca-certificates debhelper desktop-file-utils dpkg-dev lintian
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: wallshader-ppa-source
+          path: ppa
+
+      - name: Rebuild from the source upload and install with APT
+        run: |
+          dpkg-source -x ppa/*.dsc package
+          (cd package && dpkg-buildpackage -b -us -uc)
+          lintian --fail-on error ./*_all.deb
+          DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ./*_all.deb
+          desktop-file-validate /usr/share/applications/io.github.wallshader.Wallshader.desktop
+          test -x /usr/bin/wallshader
+          test -s /usr/share/wallshader/extension/app/build/renderer/renderer.js
+          dpkg-query -W wallshader
+
+  upload:
+    name: Upload and verify PPA publication
+    needs: verify
+    if: inputs.publish
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Create a private signing directory
+        run: |
+          install -d -m 700 "$RUNNER_TEMP/ppa-gnupg"
+          printf 'GNUPGHOME=%s\n' "$RUNNER_TEMP/ppa-gnupg" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@v5
+        with:
+          name: wallshader-ppa-source
+          path: ppa
+
+      - name: Install upload tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y devscripts dput gnupg
+
+      - name: Import the registered signing key and sign the upload
+        env:
+          PPA_ENABLED: ${{ vars.PPA_ENABLED }}
+          PPA_GPG_FINGERPRINT: ${{ vars.PPA_GPG_FINGERPRINT }}
+          PPA_GPG_PRIVATE_KEY: ${{ secrets.PPA_GPG_PRIVATE_KEY }}
+          PPA_GPG_PASSPHRASE: ${{ secrets.PPA_GPG_PASSPHRASE }}
+        run: |
+          if [[ "$PPA_ENABLED" != true || -z "$PPA_GPG_FINGERPRINT" || -z "$PPA_GPG_PRIVATE_KEY" || -z "$PPA_GPG_PASSPHRASE" ]]; then
+            echo 'Configure the registered PPA key and PPA_ENABLED first; see docs/implementation/ppa.md.' >&2
+            exit 1
+          fi
+          install -d -m 700 "$GNUPGHOME"
+          printf '%s' "$PPA_GPG_PRIVATE_KEY" | gpg --batch --import
+          (umask 077; printf '%s' "$PPA_GPG_PASSPHRASE" > "$GNUPGHOME/passphrase")
+          cat > "$RUNNER_TEMP/ppa-gpg" <<'GPG'
+          #!/bin/sh
+          exec gpg --batch --no-tty --pinentry-mode loopback --passphrase-file "$GNUPGHOME/passphrase" "$@"
+          GPG
+          chmod 700 "$RUNNER_TEMP/ppa-gpg"
+          debsign -p"$RUNNER_TEMP/ppa-gpg" -k"$PPA_GPG_FINGERPRINT" ppa/*_source.changes
+
+      - name: Upload signed sources to Launchpad
+        run: dput ppa:xijieyin/ppa ppa/*_source.changes
+
+      - name: Wait for the version in public APT metadata
+        run: |
+          version=$(sed -n 's/^Version: //p' ppa/*.dsc)
+          python3 scripts/wait-ppa.py "$version"
+
+      - name: Remove the temporary signing key
+        if: always()
+        run: |
+          gpgconf --homedir "$RUNNER_TEMP/ppa-gnupg" --kill all || true
+          rm -rf -- "$RUNNER_TEMP/ppa-gnupg" "$RUNNER_TEMP/ppa-gpg"

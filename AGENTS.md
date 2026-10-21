@@ -75,6 +75,10 @@ pause, or stop against the user's running Shell during verification.
 - Publish every release, including patch releases, to both GitHub Releases and
   the existing Fedora COPR project `stonegate/wallshader`. A GitHub tag alone
   does not complete a release.
+- Publish every release to the Ubuntu 26.04 PPA `ppa:xijieyin/ppa` through the
+  GitHub Actions PPA workflow. Follow `docs/implementation/ppa.md`; verify the
+  exact package version in public APT metadata before reporting publication
+  complete. Keep the registered signing-key secrets and `PPA_ENABLED` configured.
 - Follow the version bump and publishing steps in
   `docs/implementation/setup.md`. Keep the versions in `package.json`,
   `meson.build`, `src/main.js`, and `data/wallshader-copr.spec` aligned.

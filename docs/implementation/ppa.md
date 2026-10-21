@@ -103,7 +103,7 @@ python3 scripts/package-ppa.py v0.1.17 /tmp/wallshader-release
 
 ## User installation
 
-Ubuntu 26.04 users can install with:
+After publication, Ubuntu 26.04 users can install with:
 
 ```sh
 sudo add-apt-repository ppa:xijieyin/ppa

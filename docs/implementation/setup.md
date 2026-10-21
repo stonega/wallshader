@@ -89,8 +89,10 @@ from the first overview frame. Normal show, compositor redraw and incremental
 touchpad gestures run during both playback and manual pause. Every paint must
 have live desktop, workspace and thumbnail backgrounds; captured pixels must not
 reveal the saved still, including when GNOME replaces backgrounds during entry.
-Capture siblings must paint immediately before their native backgrounds. Closing,
-stopping and disabling must also cancel pending background synchronization.
+Backgrounds on one monitor must share a capture within the renderer's pixel
+budget, painted before the Shell scene. Covered workspaces hide captures and
+uncovering restores them immediately. Closing, stopping and disabling must also
+cancel pending synchronization and release captures after their last consumer.
 For slower test machines, set `WALLSHADER_TEST_TIMEOUT` to a larger number of
 seconds for either graphical suite; the native suite defaults to 240 seconds and
 the Shell suite to 300 seconds.
@@ -100,6 +102,20 @@ The Shell test also switches between GPU and Compatibility, verifies the new
 renderer process and its Skia environment, and checks that same-mode applies
 reuse the process and that manual pause works in both modes. It verifies startup
 and playback, not GPU performance or freedom from driver-specific GPU artifacts.
+
+Run `bun run test:performance` separately from other graphical tests. It uses the
+same isolated Shell launcher with one 3840 × 2160 virtual monitor, two workspaces,
+a solid gray saved background, and the Dusk shader. The real editor stays open
+for both wallpaper and stopped baselines. Five
+repetitions of Overview and app-grid entry/exit measure compositor `after-paint`
+intervals during each animation's first 250 ms. Compatibility and GPU modes run
+at both 30 and 60 wallpaper FPS, including manual pause. The P95 budget is the
+larger of 25 ms and 1.75 times the stopped baseline. First-paint P95 must stay
+within the larger of 100 ms and twice the baseline. Timing failures retain raw frame
+timestamps in `artifacts/shell-performance.json` and logs in
+`artifacts/shell-performance.log`. These measure compositor paint cadence on the
+test GPU, not physical presentation feedback or every graphics driver's behavior.
+
 Native checks exercise the saved rendering selection and its apply payload;
 `artifacts/wallpaper-settings{,-gpu}.png` show the dialog.
 The native suite also isolates `KITTY_CONFIG_DIRECTORY`, exercises the Desktop /
@@ -235,8 +251,8 @@ installation.
 ## Packages and releases
 
 Ubuntu 26.04 PPA packaging and the GitHub Actions publishing workflow are described
-in the [PPA guide](ppa.md). After initial signing-key registration, enable
-`PPA_ENABLED` so tagged releases also publish to `ppa:xijieyin/ppa`. The workflow
+in the [PPA guide](ppa.md). Tagged releases also publish to `ppa:xijieyin/ppa`
+using the registered signing key and the enabled `PPA_ENABLED` variable. The workflow
 rebuilds and installs the source package in a clean Ubuntu container before upload,
 then verifies the released version in public APT metadata.
 

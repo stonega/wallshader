@@ -63,10 +63,19 @@ rebuilds the `.deb`, runs Lintian, installs with APT to check native dependencie
 and validates the installed desktop file and extension assets. It launches no GUI.
 
 When **publish** is selected, the verified upload is signed and sent to Launchpad.
-The workflow waits up to 30 minutes for the exact version in the public PPA's APT
+The workflow waits up to two hours for the exact version in the public PPA's APT
 metadata. A successful upload alone is not publication. On failure or timeout,
 inspect Launchpad's upload email and package build logs before retrying. Queued
 builds may take longer; confirm their state before increasing the revision.
+For an already accepted version, select **verify_only** to resume checking public
+metadata without rebuilding, signing or uploading it again. This mode needs no
+signing secrets. A new PPA can also be delayed while Launchpad provisions its
+archive signing key; the uploader's registered OpenPGP key is a separate key.
+
+```sh
+gh workflow run publish-ppa.yml --repo stonega/wallshader \
+  -f tag=v0.1.17 -f revision=1 -F verify_only=true
+```
 
 The main Build and Release workflow calls this reusable workflow after publishing
 a tagged GitHub release. Before `PPA_ENABLED=true`, releases prepare and test the
@@ -94,7 +103,7 @@ python3 scripts/package-ppa.py v0.1.17 /tmp/wallshader-release
 
 ## User installation
 
-Once the first package has been published, Ubuntu 26.04 users can install with:
+Ubuntu 26.04 users can install with:
 
 ```sh
 sudo add-apt-repository ppa:xijieyin/ppa

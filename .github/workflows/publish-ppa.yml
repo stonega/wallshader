@@ -12,6 +12,9 @@ on:
       publish:
         default: true
         type: boolean
+      verify_only:
+        default: false
+        type: boolean
     secrets:
       PPA_GPG_PRIVATE_KEY:
         required: false
@@ -31,6 +34,10 @@ on:
         description: Sign, upload to Launchpad, and wait for publication
         default: false
         type: boolean
+      verify_only:
+        description: Only verify an upload already accepted by Launchpad
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -42,6 +49,7 @@ concurrency:
 jobs:
   prepare:
     name: Prepare Ubuntu 26.04 source package
+    if: ${{ !inputs.verify_only }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
@@ -114,9 +122,9 @@ jobs:
   upload:
     name: Upload and verify PPA publication
     needs: verify
-    if: inputs.publish
+    if: inputs.publish && !inputs.verify_only
     runs-on: ubuntu-24.04
-    timeout-minutes: 40
+    timeout-minutes: 140
     steps:
       - name: Create a private signing directory
         run: |
@@ -169,10 +177,32 @@ jobs:
       - name: Wait for the version in public APT metadata
         run: |
           version=$(sed -n 's/^Version: //p' ppa/*.dsc)
-          python3 scripts/wait-ppa.py "$version"
+          python3 scripts/wait-ppa.py "$version" --timeout 7200
 
       - name: Remove the temporary signing key
         if: always()
         run: |
           gpgconf --homedir "$RUNNER_TEMP/ppa-gnupg" --kill all || true
           rm -rf -- "$RUNNER_TEMP/ppa-gnupg" "$RUNNER_TEMP/ppa-gpg"
+
+  verify-publication:
+    name: Verify an accepted PPA upload
+    if: inputs.verify_only
+    runs-on: ubuntu-24.04
+    timeout-minutes: 125
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Wait for the accepted version in public APT metadata
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+          PPA_REVISION: ${{ inputs.revision }}
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ || ! "$PPA_REVISION" =~ ^[1-9][0-9]*$ ]]; then
+            echo 'Provide a vMAJOR.MINOR.PATCH tag and a positive PPA revision.' >&2
+            exit 1
+          fi
+          version="${RELEASE_TAG#v}-1~ppa${PPA_REVISION}~ubuntu26.04.1"
+          python3 scripts/wait-ppa.py "$version" --timeout 7200

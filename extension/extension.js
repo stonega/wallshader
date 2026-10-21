@@ -376,6 +376,7 @@ export default class WallshaderExtension extends Extension {
   _updatePause(force = false) {
     if (!this._process) return;
     const covered = !Main.overview.visible && this._desktopCovered();
+    this._desktop.setVisible(!covered);
     // A monitor-sized Wayland surface can qualify for direct scanout even
     // without fullscreen state. Keep visible wallpaper beneath Shell chrome.
     // Coverage, not playback state, decides this: manual pause still shows it.

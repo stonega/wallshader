@@ -347,38 +347,55 @@ these report configuration, not proof of physical GPU use.
 GApplication actions carry pause, reload, readiness and diagnostics. The extension
 waits for the renderer's D-Bus owner before subscribing to its action group.
 
-`extension/background.js` captures each owned surface through a Clutter clone's
-offscreen effect, preserving Mutter's handling of buffer transforms, subsurfaces
-and Wayland frame callbacks. The capture clone is a sibling immediately before
-the background so its texture is ready for that background's first paint. It
-follows the background's final allocation in the same layout pass, including new
-secondary-monitor views. Captures follow the background actor's color space
-to preserve the renderer's colors. That capture draws no pixels into its parent. A
-second offscreen effect on the background actor uses Cogl's standard layer
-combiner to multiply the captured frame by the original `Meta.BackgroundContent`
-alpha. GNOME continues to supply the overview's rounded corners and animated
-clip bounds; no corner geometry or GLSL source is duplicated. These GPU-only
-composition passes add offscreen textures and rendering work, with no CPU frame
-readback or additional WebKit process. Damage from the owned source drives
-repaints; there is no polling animation loop in Shell.
+`extension/background.js` captures each owned surface once through a Clutter
+clone's offscreen effect, preserving Mutter's handling of buffer transforms,
+subsurfaces and Wayland frame callbacks. Desktop, workspace and thumbnail
+backgrounds on the same monitor share this capture. Its fixed source aspect ratio
+and 1080p pixel budget include the monitor's resource scale; overview allocations
+cannot create a full-monitor capture for every preview. The clone paints before
+the Shell scene and follows the background's color space, drawing no pixels into
+the stage itself.
+
+Backgrounds without rounded clipping draw the shared texture directly through a
+Clutter texture node. Rounded backgrounds draw their opaque center and side strips
+directly, and capture only the four corner rectangles of GNOME's original
+`Meta.BackgroundContent`. Each small RGBA framebuffer uses an orthographic view
+of its original actor coordinates at resource scale, preserving the native curve
+and antialiasing without a full-monitor mask allocation. The rectangles include
+work-area insets and a filtering margin. A standard Cogl layer combiner multiplies
+the corresponding portion of the shared live frame by each corner's alpha.
+Unusually small allocations with overlapping corner rectangles retain the full
+native mask path.
+
+The masks retain RGBA storage so their alpha is preserved by the framebuffer's
+channel mapping. Buffers and pipelines are reused, with native content repainted
+when dirty or when rounding changes. GNOME supplies the curve and animated clip
+bounds; no rounded-curve geometry or GLSL source is duplicated. Source damage
+invalidates the shared capture and repaints consumers while allowing unchanged
+masks to stay cached. There is no CPU frame readback, additional WebKit process,
+or polling animation loop in Shell.
 
 `extension/overview.js` attaches this presentation to the existing workspace
 background actors on every monitor. Workspace thumbnails receive a background
 actor beneath their window previews, using the monitor's existing background.
-The source clones request no minimum size, so desktop dimensions cannot enlarge
-GNOME's workspace layout. Workspace and background container changes handle new
+The shared capture lives outside GNOME's workspace layout, so its desktop
+dimensions cannot enlarge workspace previews. Workspace and background container changes handle new
 workspaces and replaced background actors. Both desktop and overview synchronize
 new backgrounds before compositor redraw, including thumbnails created by later
 overview handlers, so the saved still cannot paint before its live texture is
 attached. Closing the overview cancels pending redraw callbacks and releases its
-effects, source clones and signals. Stop and disable also restore the source
+effects and signals. The last consumer releases its shared capture and source
+signals. Stop and disable also restore the source
 window opacity and remove the desktop effects, revealing GNOME's saved still
 image. Shell methods and saved background settings remain untouched.
 
 Only the user's Pause control pauses playback. Maximized applications, covered
 workspaces and screen lock do not send pause commands or reset the animation
-clock. Active workspace changes update the compositing hold immediately, without
-waiting for the two-second coverage poll. Activities shows the animated shader
+clock. When all monitors are covered and Activities is closed, the shared captures
+are hidden; uncovering a workspace invalidates them before the next redraw.
+Playback state remains unchanged while normal compositor throttling can apply.
+Active workspace changes update capture visibility and the compositing hold
+immediately, without waiting for the two-second coverage poll. Activities shows the animated shader
 and honors manual pause. The extension supports both `user` and `unlock-dialog`
 session modes so its renderer and windows survive locking and unlocking. GNOME's
 lock-screen background still uses the captured still image; the desktop renderer

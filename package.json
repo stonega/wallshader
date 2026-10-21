@@ -18,6 +18,7 @@
     "test:i18n": "./scripts/test-i18n.sh",
     "test:kitty": "bun scripts/test-kitty.js",
     "test:shell": "./scripts/test-shell.sh",
+    "test:performance": "WALLSHADER_PERFORMANCE_TEST=1 WALLSHADER_TEST_MONITORS=1 ./scripts/test-shell.sh",
     "test:kitty:render": "./scripts/test-kitty-render.sh"
   },
   "dependencies": {

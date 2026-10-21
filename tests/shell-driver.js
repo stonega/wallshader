@@ -3,6 +3,8 @@ import GLib from 'gi://GLib';
 import GdkPixbuf from 'gi://GdkPixbuf';
 import Graphene from 'gi://Graphene';
 import Clutter from 'gi://Clutter';
+import Cogl from 'gi://Cogl';
+import GObject from 'gi://GObject';
 import Meta from 'gi://Meta';
 import Shell from 'gi://Shell';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
@@ -338,10 +340,24 @@ function checkOverview(extension) {
       'Background lost its live texture',
     );
     assert(
-      live.driver.get_parent() === live.actor.get_parent() &&
-        live.driver.get_next_sibling() === live.actor,
-      'Live capture must paint immediately before its background',
+      live.driver.get_parent() === global.stage &&
+        global.stage.get_children().indexOf(live.driver) <
+          global.stage.get_children().indexOf(Main.uiGroup),
+      'Shared live capture must paint before desktop and overview backgrounds',
     );
+    assert(
+      entries.every(
+        ([_otherActor, other]) =>
+          other.source !== source || other.live.capture === live.capture,
+      ),
+      'Backgrounds on one monitor must share a captured frame',
+    );
+    const frame = live.capture.frame.get_texture();
+    if (frame)
+      assert(
+        frame.get_width() * frame.get_height() <= 1920 * 1080 * 1.01,
+        'Shared frame exceeds the renderer pixel budget',
+      );
     assert(
       extension._windows.has(source.meta_window),
       'Overview sampled an unrelated window',
@@ -506,6 +522,228 @@ async function checkOverviewTransition(extension) {
   );
 }
 
+async function checkMaskColors(extension) {
+  // Mask RGB must never tint the live frame through framebuffer channel mapping.
+  const settings = new Gio.Settings({
+    schema_id: 'org.gnome.desktop.background',
+  });
+  const original = settings.get_string('primary-color');
+  await rpc('SetPaused', new GLib.Variant('(b)', [true]));
+  try {
+    for (const color of ['#0000FF', '#000000', '#FFFFFF']) {
+      settings.set_string('primary-color', color);
+      Main.overview.show();
+      await delay(400);
+      const pixels = await capturePixels();
+      const data = pixels.get_pixels();
+      for (const {
+        live,
+        thumbnail,
+      } of extension._overview._backgrounds.values()) {
+        if (thumbnail || !live.actor.mapped) continue;
+        const point = live.actor.apply_relative_transform_to_point(
+          global.stage,
+          new Graphene.Point3D({
+            x: live.actor.width / 2,
+            y: live.actor.height / 2,
+            z: 0,
+          }),
+        );
+        const x = Math.floor((point.x * pixels.width) / global.stage.width);
+        const y = Math.floor((point.y * pixels.height) / global.stage.height);
+        if (x < 0 || y < 0 || x >= pixels.width || y >= pixels.height) continue;
+        const offset = y * pixels.rowstride + x * pixels.n_channels;
+        assert(
+          data[offset] < 20 && data[offset + 1] > 80 && data[offset + 2] < 20,
+          `Background RGB tinted the live green frame: mask=${color}, pixel=${[...data.slice(offset, offset + 3)]}`,
+        );
+      }
+      Main.overview.hide();
+      await delay(400);
+    }
+  } finally {
+    Main.overview.hide();
+    settings.set_string('primary-color', original);
+    await rpc('SetPaused', new GLib.Variant('(b)', [false]));
+  }
+  console.log(
+    'Verified live colors through blue, black and white background masks.',
+  );
+}
+
+// Compare tiled native content with a full-surface render at the same resource
+// scale and actor coordinates, including a nonuniform live texture.
+const ReferenceMask = GObject.registerClass(
+  class WallshaderTestReferenceMask extends Clutter.Effect {
+    _init(frame) {
+      super._init();
+      this.frame = frame;
+    }
+
+    vfunc_paint(node, _context, _flags) {
+      const actor = this.get_actor();
+      const frame = this.frame.get_texture();
+      const texture = Cogl.Texture2D.new_with_size(
+        frame.get_context(),
+        Math.ceil(actor.width * actor.get_resource_scale()),
+        Math.ceil(actor.height * actor.get_resource_scale()),
+      );
+      const buffer = Cogl.Offscreen.new_with_texture(texture);
+      buffer.allocate();
+      const identity = new Graphene.Matrix();
+      identity.init_identity();
+      buffer.set_modelview_matrix(identity);
+      buffer.orthographic(0, 0, actor.width, actor.height, -1, 1);
+      buffer.set_viewport(0, 0, texture.get_width(), texture.get_height());
+      const pipeline = Cogl.Pipeline.new(frame.get_context());
+      pipeline.set_layer_texture(0, texture);
+      pipeline.set_layer_filters(
+        0,
+        Cogl.PipelineFilter.LINEAR,
+        Cogl.PipelineFilter.LINEAR,
+      );
+      pipeline.set_layer_texture(1, frame);
+      pipeline.set_layer_combine(1, 'RGBA = MODULATE (TEXTURE, PREVIOUS[A])');
+      const opacity = actor.get_paint_opacity() / 255;
+      const color = new Cogl.Color();
+      color.init_from_4f(opacity, opacity, opacity, opacity);
+      pipeline.set_color(color);
+      const layer = Clutter.LayerNode.new_to_framebuffer(buffer, pipeline);
+      layer.add_child(Clutter.ActorNode.new(actor, 255));
+      layer.add_rectangle(
+        new Clutter.ActorBox({
+          x1: 0,
+          y1: 0,
+          x2: actor.width,
+          y2: actor.height,
+        }),
+      );
+      node.add_child(layer);
+    }
+  },
+);
+
+async function checkCornerMaskPixels(extension) {
+  await apply(createPreset('dusk'));
+  await delay(800);
+  await rpc('SetPaused', new GLib.Variant('(b)', [true]));
+  await delay(300);
+  Main.overview.show();
+  await delay(500);
+  const entries = [...extension._overview._backgrounds.values()].filter(
+    ({ live, thumbnail }) => !thumbnail && live.actor.mapped,
+  );
+  const references = [];
+  const livePixels = await capturePixels();
+  let referencePixels;
+  try {
+    for (const { live } of entries) {
+      assert(live.effect._masks.length === 4, 'Overview lost its corner masks');
+      const pixels = live.effect._masks.reduce(
+        (sum, mask) => sum + mask.width * mask.height,
+        0,
+      );
+      assert(
+        pixels <
+          live.actor.width *
+            live.actor.height *
+            live.actor.get_resource_scale() ** 2 *
+            0.05,
+        'Corner masks still allocate a full-size workspace buffer',
+      );
+      const reference = new ReferenceMask(live.capture.frame);
+      live.actor.remove_effect(live.effect);
+      live.actor.add_effect(reference);
+      references.push({ live, reference });
+    }
+    await delay(150);
+    referencePixels = await capturePixels();
+  } finally {
+    for (const { live, reference } of references) {
+      live.actor.remove_effect(reference);
+      live.actor.add_effect_with_name('wallshader-background', live.effect);
+    }
+  }
+  const actual = livePixels.get_pixels();
+  const expected = referencePixels.get_pixels();
+  const artifacts = GLib.getenv('WALLSHADER_ARTIFACTS');
+  livePixels.savev(`${artifacts}/corner-tiles.png`, 'png', [], []);
+  referencePixels.savev(`${artifacts}/corner-reference.png`, 'png', [], []);
+  let checked = 0;
+  let worst = 0;
+  let worstPixel;
+  for (const { live } of entries) {
+    const index = live.actor.content.monitor;
+    const monitor = Main.layoutManager.monitors[index];
+    const area = Main.layoutManager.getWorkAreaForMonitor(index);
+    const radius = live.actor.content.rounded_clip_radius + 4;
+    const sx = live.actor.width / monitor.width;
+    const sy = live.actor.height / monitor.height;
+    for (const right of [false, true]) {
+      for (const bottom of [false, true]) {
+        const x = (area.x - monitor.x + (right ? area.width - radius : 0)) * sx;
+        const y =
+          (area.y - monitor.y + (bottom ? area.height - radius : 0)) * sy;
+        const project = (px, py) =>
+          live.actor.apply_relative_transform_to_point(
+            global.stage,
+            new Graphene.Point3D({ x: px, y: py, z: 0 }),
+          );
+        const first = project(x, y);
+        const last = project(x + radius * sx, y + radius * sy);
+        for (let py = Math.ceil(first.y); py < Math.floor(last.y); py++) {
+          for (let px = Math.ceil(first.x); px < Math.floor(last.x); px++) {
+            if (
+              px < monitor.x ||
+              py < monitor.y ||
+              px >= monitor.x + monitor.width ||
+              py >= monitor.y + monitor.height
+            )
+              continue;
+            const pixelX = Math.floor(
+              (px * livePixels.width) / global.stage.width,
+            );
+            const pixelY = Math.floor(
+              (py * livePixels.height) / global.stage.height,
+            );
+            const offset =
+              pixelY * livePixels.rowstride + pixelX * livePixels.n_channels;
+            for (let c = 0; c < 3; c++) {
+              const difference = Math.abs(
+                actual[offset + c] - expected[offset + c],
+              );
+              if (difference > worst) {
+                worst = difference;
+                worstPixel = {
+                  index,
+                  px,
+                  py,
+                  actual: [...actual.slice(offset, offset + 3)],
+                  expected: [...expected.slice(offset, offset + 3)],
+                };
+              }
+            }
+            checked++;
+          }
+        }
+      }
+    }
+  }
+  assert(
+    checked > 100,
+    'Corner pixel comparison missed the workspace previews',
+  );
+  assert(
+    worst <= 6,
+    `Corner masks differ from the full native mask: maximum channel difference ${worst}; ${JSON.stringify(worstPixel)}`,
+  );
+  Main.overview.hide();
+  await rpc('SetPaused', new GLib.Variant('(b)', [false]));
+  console.log(
+    `Verified ${checked} corner pixels against full native masks (maximum difference ${worst}).`,
+  );
+}
+
 async function checkOverviewCorners(extension) {
   const entries = [...extension._overview._backgrounds.values()];
   const livePixels = await capturePixels();
@@ -664,6 +902,12 @@ async function checkWorkspacePlayback(extension, path, inspect) {
       !JSON.parse(extension.GetStatus()).compositing,
       'Covered desktop retained its compositor inhibitor',
     );
+    assert(
+      [...extension._desktop._backgrounds.values()].every(
+        ({ live }) => !live.driver.visible,
+      ),
+      'Covered desktop still captures hidden wallpaper frames',
+    );
     for (let attempt = 0; attempt < 3; attempt++) {
       const before = await inspect();
       assert(
@@ -679,6 +923,12 @@ async function checkWorkspacePlayback(extension, path, inspect) {
       assert(
         JSON.parse(extension.GetStatus()).compositing,
         'Visible wallpaper can bypass Shell compositing',
+      );
+      assert(
+        [...extension._desktop._backgrounds.values()].every(
+          ({ live }) => live.driver.visible,
+        ),
+        'Uncovered desktop did not resume frame capture before redraw',
       );
       await delay(500);
       const playing = await inspect();
@@ -999,6 +1249,11 @@ export default class ShellTest extends Extension {
       'wallshader@wallshader.github.io',
     ).stateObj;
     assert(extension, 'Live wallpaper extension did not load');
+    if (GLib.getenv('WALLSHADER_PERFORMANCE_TEST') === '1') {
+      const { checkPerformance } = await import('./shell-performance.js');
+      await checkPerformance(extension);
+      return;
+    }
     await checkDesktopLaunch();
     await checkDesktopMenuPreference(extension);
     assert(
@@ -1146,6 +1401,8 @@ export default class ShellTest extends Extension {
     await checkWorkspacePlayback(extension, this.path, inspect);
     await checkLockPlayback(extension, inspect);
     await checkOverviewTransition(extension);
+    await checkMaskColors(extension);
+    await checkCornerMaskPixels(extension);
     await apply(preset);
     await delay(500);
     await rpc('SetPaused', new GLib.Variant('(b)', [true]));
@@ -1316,6 +1573,12 @@ export default class ShellTest extends Extension {
       'Stop left desktop effects or hidden windows',
     );
     assert(
+      global.stage
+        .get_children()
+        .every((actor) => actor.name !== 'wallshader-frame'),
+      'Stop left a shared frame capture on the stage',
+    );
+    assert(
       !JSON.parse(extension.GetStatus()).compositing,
       'Stopping retained the wallpaper compositor inhibitor',
     );
@@ -1366,6 +1629,12 @@ export default class ShellTest extends Extension {
         extension._desktop._hidden.size === 0 &&
         extension._desktop._pending === 0,
       'Disable left desktop effects or hidden windows',
+    );
+    assert(
+      global.stage
+        .get_children()
+        .every((actor) => actor.name !== 'wallshader-frame'),
+      'Disable left a shared frame capture on the stage',
     );
     assert(
       !JSON.parse(extension.GetStatus()).compositing,

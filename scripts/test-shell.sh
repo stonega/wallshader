@@ -16,9 +16,14 @@ export GSETTINGS_BACKEND=memory
 export GTK_A11Y=none
 export GDK_BACKEND=wayland
 export WALLSHADER_TRACE=1
+export WALLSHADER_TEST_APP_DIR="$app_dir"
 export WALLSHADER_ARTIFACTS="$app_dir/artifacts"
 export WALLSHADER_SHELL_TEST_RESULT="$test_dir/result"
 export WALLSHADER_SHELL_TEST_LOG="$app_dir/artifacts/shell-test.log"
+if [ "${WALLSHADER_PERFORMANCE_TEST:-0}" = 1 ]; then
+  export WALLSHADER_SHELL_TEST_LOG="$app_dir/artifacts/shell-performance.log"
+  export WALLSHADER_TRACE=0
+fi
 export WALLSHADER_TEST_DISPLAY="wallshader-test-$$"
 # Exercise both the common single-monitor desktop and the multi-monitor path.
 export WALLSHADER_TEST_MONITORS="${WALLSHADER_TEST_MONITORS:-2}"
@@ -36,6 +41,7 @@ Type=Application
 EOF
 cp -R build/extension "$XDG_DATA_HOME/gnome-shell/extensions/wallshader@wallshader.github.io"
 cp tests/shell-driver.js "$XDG_DATA_HOME/gnome-shell/extensions/wallshader-test@local/extension.js"
+cp tests/shell-performance.js "$XDG_DATA_HOME/gnome-shell/extensions/wallshader-test@local/shell-performance.js"
 cp tests/resize-client.js "$XDG_DATA_HOME/gnome-shell/extensions/wallshader-test@local/resize-client.js"
 cat > "$XDG_DATA_HOME/gnome-shell/extensions/wallshader-test@local/metadata.json" <<'JSON'
 {"uuid":"wallshader-test@local","name":"Wallshader Test","description":"Isolated integration tests","shell-version":["50","51"],"session-modes":["wallshader-test","user","unlock-dialog"]}
@@ -45,6 +51,9 @@ cat > "$XDG_DATA_HOME/gnome-shell/modes/wallshader-test.json" <<'JSON'
 JSON
 dbus-run-session -- sh -c '
   set -- --virtual-monitor=2560x1600
+  if [ "${WALLSHADER_PERFORMANCE_TEST:-0}" = 1 ]; then
+    set -- --virtual-monitor=3840x2160
+  fi
   if [ "$WALLSHADER_TEST_MONITORS" = 2 ]; then
     set -- "$@" --virtual-monitor=800x600
   fi

@@ -278,11 +278,6 @@ using the registered signing key and the enabled `PPA_ENABLED` variable. The wor
 rebuilds and installs the source package in a clean Ubuntu container before upload,
 then verifies the released version in public APT metadata.
 
-Arch Linux uses the source recipe in `packaging/aur`. See the
-[AUR guide](aur.md) for initial submission, isolated build verification, and
-updates. Once initially published, update AUR for every release alongside GitHub
-and Fedora COPR; the GitHub workflow does not submit the AUR recipe.
-
 The [Build and Release workflow](../../.github/workflows/build-and-release.yml)
 checks the code, runs the logic tests, and builds three architecture-independent
 assets on pushes to `main`, pull requests to `main`, and manual runs:

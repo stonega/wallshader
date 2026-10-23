@@ -82,7 +82,7 @@ a tagged GitHub release. Before `PPA_ENABLED=true`, releases prepare and test th
 source artifact but skip the upload job. Once enabled, every release also uploads
 and verifies the PPA. The reusable call is intentional: release events created
 with `GITHUB_TOKEN` do not ordinarily trigger a separate release-event workflow.
-Fedora COPR and AUR publication remain required by the release instructions.
+Fedora COPR publication remains required by the release instructions.
 
 To bootstrap the existing release after this workflow reaches `main`:
 

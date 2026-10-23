@@ -100,21 +100,6 @@ the bundled extension for your user; log out and back in when prompted.
 Install a newer downloaded package with the same command to update the app.
 Remove it with `sudo dnf remove wallshader` or `sudo apt remove wallshader`.
 
-### Arch Linux
-
-An AUR recipe for the stable source release is available in
-[`packaging/aur`](packaging/aur). Initial AUR publication is pending. Until then,
-build and install it from this checkout on Arch with `base-devel` installed:
-
-```sh
-cd packaging/aur
-makepkg --syncdeps --install
-```
-
-Bun, Meson, and gettext are build dependencies only. Animated wallpapers require
-GNOME 50 or 51 on Wayland. See the [AUR guide](docs/implementation/aur.md) for verification,
-publication, and release updates.
-
 ### Development packages and archives
 
 Every successful main-branch, pull-request, and manual

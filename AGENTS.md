@@ -67,11 +67,6 @@ pause, or stop against the user's running Shell during verification.
 
 ## Releases
 
-- Maintain the Arch source package in `packaging/aur`; follow
-  `docs/implementation/aur.md` for testing and publication. After initial AUR
-  publication, update its `PKGBUILD` and generated `.SRCINFO` for every release,
-  push the tested recipe to AUR, and verify the public version before reporting
-  publication complete.
 - Publish every release, including patch releases, to both GitHub Releases and
   the existing Fedora COPR project `stonegate/wallshader`. A GitHub tag alone
   does not complete a release.

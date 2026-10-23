@@ -4,6 +4,7 @@ po/paper-catalog.js
 src/catalog.js
 src/debug-info.js
 src/editor.js
+src/extension-install.js
 src/images.js
 src/kitty.js
 src/kitty-config.js

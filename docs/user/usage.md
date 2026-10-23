@@ -134,8 +134,12 @@ dialog explains that you need to log out and back in once so GNOME can discover
 it. Dismiss it with **Got It**, then log out when ready. After logging back in,
 open Wallshader and choose **Set Animated Wallpaper** again.
 
-After installing an extension update, log out and back in to load its new Shell
-code. Reopening the editor uses the extension already loaded in the current session.
+After upgrading Wallshader, open the app to automatically update an existing
+animation extension. If GNOME is still running older Shell code, **Log Out to
+Finish Update** explains the required logout/login. Dismiss it and log out when
+ready, then reopen Wallshader and apply the animation. Your wallpaper and playback
+stay unchanged while the app updates the installed files. Renderer-only updates
+do not need logout; stop and reapply the animation to load their new files.
 
 While the extension is enabled, right-click the desktop and choose **Open
 Wallshader**, directly below **Change Background…**, to open the app or bring its

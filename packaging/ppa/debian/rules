@@ -9,6 +9,7 @@ override_dh_auto_test:
 	test -s usr/share/wallshader/build/renderer/renderer.js
 	test -s usr/share/wallshader/extension/app/src/desktop-renderer.js
 	test -s usr/share/wallshader/extension/metadata.json
+	test -s usr/share/wallshader/extension/build-info.js
 	test -s usr/share/wallshader/data/third-party/Paper-Shaders-LICENSE
 
 override_dh_auto_install:

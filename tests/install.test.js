@@ -38,10 +38,23 @@ test('installer refreshes an existing extension without touching other extension
         },
       );
       expect(result.status, result.stdout + result.stderr).toBe(0);
-      for (const file of ['extension.js', 'compositing.js', 'metadata.json'])
+      for (const file of ['extension.js', 'compositing.js'])
         expect(await readFile(join(destination, file), 'utf8')).toBe(
           await readFile(join(root, 'extension', file), 'utf8'),
         );
+      const metadata = JSON.parse(
+        await readFile(join(destination, 'metadata.json'), 'utf8'),
+      );
+      expect(metadata['wallshader-shell-id']).toMatch(/^[a-f0-9]{64}$/);
+      expect(
+        await readFile(join(destination, 'build-info.js'), 'utf8'),
+      ).toContain(metadata['wallshader-shell-id']);
+      delete metadata['wallshader-shell-id'];
+      expect(metadata).toEqual(
+        JSON.parse(
+          await readFile(join(root, 'extension', 'metadata.json'), 'utf8'),
+        ),
+      );
       expect(
         await readFile(join(extensions, 'unrelated-extension'), 'utf8'),
       ).toBe('keep');

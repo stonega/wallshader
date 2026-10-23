@@ -1,7 +1,7 @@
 import { _ } from './i18n.js';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
-import { ROOT } from './paths.js';
+import { syncExtension } from './extension-install.js';
 import {
   EXTENSION_UUID,
   LIVE_INTERFACE,
@@ -36,44 +36,18 @@ function call(destination, path, iface, method, parameters = null) {
   );
 }
 
-function copyDirectory(source, destination) {
-  destination.make_directory_with_parents(null);
-  const children = source.enumerate_children(
-    'standard::name,standard::type',
-    Gio.FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
-    null,
-  );
-  try {
-    for (
-      let child = children.next_file(null);
-      child;
-      child = children.next_file(null)
-    ) {
-      const input = source.get_child(child.get_name());
-      const output = destination.get_child(child.get_name());
-      if (child.get_file_type() === Gio.FileType.DIRECTORY)
-        copyDirectory(input, output);
-      else if (child.get_file_type() === Gio.FileType.REGULAR)
-        input.copy(output, Gio.FileCopyFlags.NONE, null, null);
-      else
-        throw new Error(
-          _(
-            'The extension bundle contains an unsupported file. Rebuild Wallshader.',
-          ),
-        );
-    }
-  } finally {
-    children.close(null);
-  }
-}
-
 export class LoginRequiredError extends Error {
-  constructor() {
+  constructor(updated = false) {
     super(
-      _(
-        'Animation support is installed. Log out and back in once so GNOME can discover it. Then open Wallshader and choose “Set Animated Wallpaper” again.',
-      ),
+      updated
+        ? _(
+            'Animation support was updated automatically. Log out and back in to load the updated extension. Then open Wallshader and choose “Set Animated Wallpaper” again.',
+          )
+        : _(
+            'Animation support is installed. Log out and back in once so GNOME can discover it. Then open Wallshader and choose “Set Animated Wallpaper” again.',
+          ),
     );
+    this.updated = updated;
     this.name = 'LoginRequiredError';
   }
 }
@@ -90,13 +64,32 @@ export class LiveWallpaper {
       null,
       Gio.DBusSignalFlags.NONE,
       (_connection, _sender, _path, _iface, _signal, parameters) => {
-        this.status = JSON.parse(parameters.deepUnpack()[0]);
-        this._onChange(this.status);
+        this._setStatus(JSON.parse(parameters.deepUnpack()[0]));
       },
     );
   }
 
+  _setStatus(status) {
+    if (this._shellId && status.available) {
+      this._shellChanged = status.shellBuildId !== this._shellId;
+    }
+    this.status = {
+      ...status,
+      loginRequired: Boolean(status.available && this._shellChanged),
+    };
+    this._onChange(this.status);
+  }
+
+  async initialize() {
+    const result = syncExtension();
+    this._shellId = result.shellId;
+    this._shellChanged ||= result.shellChanged;
+    await this.refresh();
+    if (this.status.loginRequired) throw new LoginRequiredError(true);
+  }
+
   async refresh() {
+    let status;
     try {
       const [source] = await call(
         'org.gnome.Shell',
@@ -104,11 +97,11 @@ export class LiveWallpaper {
         LIVE_INTERFACE,
         'GetStatus',
       );
-      this.status = JSON.parse(source);
+      status = JSON.parse(source);
     } catch {
-      this.status = { available: false, active: false };
+      status = { available: false, active: false };
     }
-    this._onChange(this.status);
+    this._setStatus(status);
     return this.status;
   }
 
@@ -125,33 +118,9 @@ export class LiveWallpaper {
       throw new Error(
         _('Animated wallpapers currently support GNOME 50 and 51 on Wayland.'),
       );
-    const directory = Gio.File.new_for_path(
-      GLib.build_filenamev([
-        GLib.get_user_data_dir(),
-        'gnome-shell',
-        'extensions',
-      ]),
-    );
-    const destination = directory.get_child(EXTENSION_UUID);
-    if (!destination.query_exists(null)) {
-      const bundle = [
-        GLib.build_filenamev([ROOT, 'build', 'extension']),
-        GLib.build_filenamev([ROOT, 'extension']),
-      ]
-        .map((path) => Gio.File.new_for_path(path))
-        .find((file) => file.get_child('app').query_exists(null));
-      if (!bundle)
-        throw new Error(
-          _(
-            'Build Wallshader with “bun run build” to include animated wallpaper support.',
-          ),
-        );
-      const staging = directory.get_child(
-        `.wallshader-${GLib.uuid_string_random()}`,
-      );
-      copyDirectory(bundle, staging);
-      staging.move(destination, Gio.FileCopyFlags.NONE, null, null);
-    }
+    const result = syncExtension({ install: true });
+    this._shellId = result.shellId;
+    this._shellChanged ||= result.shellChanged;
     const [enabled] = await call(
       'org.gnome.Shell.Extensions',
       '/org/gnome/Shell/Extensions',
@@ -168,10 +137,13 @@ export class LiveWallpaper {
           ...extensions,
           EXTENSION_UUID,
         ]);
-      throw new LoginRequiredError();
+      throw new LoginRequiredError(Boolean(this._shellChanged));
     }
     for (let attempt = 0; attempt < 10; attempt++) {
-      if ((await this.refresh()).available) return;
+      if ((await this.refresh()).available) {
+        if (this.status.loginRequired) throw new LoginRequiredError(true);
+        return;
+      }
       await new Promise((resolve) =>
         GLib.timeout_add(GLib.PRIORITY_DEFAULT, 250, () => {
           resolve();
@@ -187,6 +159,7 @@ export class LiveWallpaper {
   }
 
   async apply(preset, fps = 30, rendering = 'compatibility') {
+    await this.initialize();
     if (!(await this.refresh()).available) await this.setUp();
     const config = normalizeLiveConfig({
       preset,

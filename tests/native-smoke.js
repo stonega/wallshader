@@ -24,6 +24,7 @@ import {
 } from '../src/saved-presets.js';
 import { presetFingerprint } from '../src/preset-options.js';
 import { _ } from '../src/i18n.js';
+import { LoginRequiredError } from '../src/live.js';
 import { checkKittyBackground } from './kitty-native.js';
 
 async function checkDesktopMenuPreference(window, artifacts) {
@@ -266,6 +267,7 @@ async function checkAnimatedWallpaper(window) {
   // Exercise the editor and real PNG/GSettings path without contacting Shell.
   window.live = {
     status: { available: true, active: false },
+    async initialize() {},
     async apply(preset, fps, rendering) {
       assert(
         !window.liveRendering.sensitive,
@@ -398,6 +400,25 @@ async function checkAnimatedWallpaper(window) {
       !window._busy && window.applyButton.sensitive,
       'Failed apply did not restore editor controls',
     );
+    const beforeUpdate = settings.get_string('picture-uri');
+    const beforePresets = window.store.state.savedPresets.length;
+    window.live.initialize = async () => {
+      throw new LoginRequiredError(true);
+    };
+    await window.applyWallpaper();
+    assert(
+      window._loginDialog?.heading === _('Log Out to Finish Update'),
+      'An outdated loaded extension must show the update notice',
+    );
+    assert(
+      settings.get_string('picture-uri') === beforeUpdate &&
+        window.store.state.savedPresets.length === beforePresets,
+      'Waiting for an extension update must preserve the wallpaper and saved presets',
+    );
+    const artifacts = GLib.getenv('WALLSHADER_ARTIFACTS');
+    if (artifacts)
+      await screenshot(window, `${artifacts}/extension-update-dialog.png`);
+    window._loginDialog.close();
   } finally {
     window.live = live;
     window.showError = showError;
@@ -408,7 +429,7 @@ async function checkAnimatedWallpaper(window) {
     window._syncAvailability();
   }
   console.log(
-    'Verified animated first-frame wallpaper, reapply, and failure handling.',
+    'Verified animated first-frame wallpaper, reapply, update notice, and failure handling.',
   );
 }
 

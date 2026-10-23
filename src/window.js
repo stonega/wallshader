@@ -127,7 +127,7 @@ export const WallshaderWindow = GObject.registerClass(
       this._filter();
       this.set_focus(this.searchButton);
       this._syncAvailability();
-      this.live.refresh();
+      this.live.initialize().catch((error) => this._showLiveError(error));
 
       this.connect('close-request', () => {
         this._closed = true;
@@ -677,7 +677,9 @@ export const WallshaderWindow = GObject.registerClass(
             : _('Applies a still image to light and dark appearances.'),
       );
       this.liveStatus.set_label(
-        status.error ||
+        (status.loginRequired
+          ? _('Log out and back in to finish updating animation support.')
+          : status.error) ||
           (status.active
             ? !status.ready
               ? _('Starting desktop animation…')
@@ -1412,6 +1414,7 @@ export const WallshaderWindow = GObject.registerClass(
       this._syncAvailability();
       this.applyButton.set_label(_('Starting…'));
       try {
+        await this.live.initialize();
         await this.preview.select(this.preset);
         const state = await this.preview.request('state');
         const preset = normalizePreset(this.preset.id, {
@@ -1439,22 +1442,34 @@ export const WallshaderWindow = GObject.registerClass(
           }),
         );
       } catch (error) {
-        if (error instanceof LoginRequiredError) {
-          if (!this._closed) {
-            const dialog = new Adw.AlertDialog({
-              heading: _('Log Out to Finish Setup'),
-              body: error.message,
-              default_response: 'ok',
-              close_response: 'ok',
-            });
-            dialog.add_response('ok', _('Got It'));
-            dialog.present(this);
-          }
-        } else this.showError(error);
+        this._showLiveError(error);
       } finally {
         this._busy = false;
         this._syncAvailability();
       }
+    }
+
+    _showLiveError(error) {
+      if (this._closed) return;
+      if (!(error instanceof LoginRequiredError)) {
+        this.showError(error);
+        return;
+      }
+      if (this._loginDialog) return;
+      const dialog = new Adw.AlertDialog({
+        heading: error.updated
+          ? _('Log Out to Finish Update')
+          : _('Log Out to Finish Setup'),
+        body: error.message,
+        default_response: 'ok',
+        close_response: 'ok',
+      });
+      this._loginDialog = dialog;
+      dialog.connect('response', () => {
+        this._loginDialog = null;
+      });
+      dialog.add_response('ok', _('Got It'));
+      dialog.present(this);
     }
 
     exportPng() {

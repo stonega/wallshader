@@ -421,3 +421,16 @@ extensions at login, so first installation may require logout/login. `live.js`
 signals this with `LoginRequiredError`; animated apply presents a native
 `Adw.AlertDialog` explaining the one-time logout/login and subsequent apply.
 The notice stays open until dismissed. There is no automatic logout or Shell restart.
+
+On app startup, `extension-install.js` compares an existing per-user installation
+with the bundled files, including removed files and renderer resources. A changed
+bundle is staged and replaces only Wallshader's directory, with rollback on a
+failed replacement. First-time installation remains an explicit animated apply.
+Startup does not enable extensions, write wallpaper settings, or restart playback.
+The build hashes the Shell modules, their shared dependencies and metadata into
+`wallshader-shell-id`. The identifier is embedded in `build-info.js`; `GetStatus`
+reads its imported constant, tracking the modules cached in the running Shell.
+An outdated loaded identifier
+shows **Log Out to Finish Update** and blocks animated apply before saving a still
+frame. Reopening the app keeps this notice until a fresh Shell loads the new code.
+Renderer-only changes refresh the files without requiring a new Shell session.

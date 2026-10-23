@@ -171,8 +171,17 @@ Never reload the user's Kitty or modify its live configuration during tests.
 run the same checks with an explicit compositor and verify the selected backend
 in the renderer's diagnostics. Without an override, GTK chooses its default.
 
+Opening the app automatically refreshes an existing per-user animation extension
+from the installed bundle. It compares file contents, stages a complete replacement,
+and restores the previous directory if publishing the replacement fails. Matching
+installations are left untouched. Initial installation still requires an explicit
+animated apply. Startup never enables an extension or changes wallpaper/playback.
+The build records an identifier for the Shell code, which the loaded extension
+reports over D-Bus. The app asks for logout/login while that identifier is outdated,
+including after reopening the editor. Renderer-only updates do not require logout.
+
 Use `./scripts/install-extension.sh` to install animation support independently
-of the editor or update an existing installation. It stages the complete bundle
+of the editor. It stages the complete bundle
 and replaces the installed directory, restoring the previous directory if the
 replacement fails. `--files-only` installs the bundle without contacting Shell
 or changing enabled extensions; it is also exercised by an isolated installer

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-21 14:23+0800\n"
+"POT-Creation-Date: 2026-10-23 17:45+0800\n"
 "PO-Revision-Date: 2026-10-20 00:00+0000\n"
 "Last-Translator: Wallshader translation draft\n"
 "Language-Team: de\n"
@@ -2616,6 +2616,19 @@ msgstr "Bild entfernen"
 msgid "Use Sample"
 msgstr "Beispiel verwenden"
 
+#: src/extension-install.js:120
+msgid ""
+"Build Wallshader with “bun run build” to include animated wallpaper support."
+msgstr ""
+"Erstelle Wallshader mit „bun run build“, um animierte Hintergrundbilder "
+"einzubinden."
+
+#: src/extension-install.js:127
+msgid "The extension bundle contains an unsupported file. Rebuild Wallshader."
+msgstr ""
+"Das Erweiterungspaket enthält eine nicht unterstützte Datei. Erstelle "
+"Wallshader neu."
+
 #: src/images.js:22
 msgid "Choose an image smaller than 32 MB."
 msgstr "Wähle ein Bild mit weniger als 32 MB."
@@ -2656,13 +2669,17 @@ msgstr ""
 "Kitty-Hintergrundpfade müssen absolut sein und dürfen weder Zeilenumbrüche "
 "noch Dollarzeichen enthalten."
 
-#: src/live.js:61
-msgid "The extension bundle contains an unsupported file. Rebuild Wallshader."
+#: src/live.js:44
+msgid ""
+"Animation support was updated automatically. Log out and back in to load the "
+"updated extension. Then open Wallshader and choose “Set Animated Wallpaper” "
+"again."
 msgstr ""
-"Das Erweiterungspaket enthält eine nicht unterstützte Datei. Erstelle "
-"Wallshader neu."
+"Die Animationsunterstützung wurde automatisch aktualisiert. Melde dich ab "
+"und wieder an, um die aktualisierte Erweiterung zu laden. Öffne danach "
+"Wallshader und wähle erneut „Animierten Hintergrund festlegen“."
 
-#: src/live.js:74
+#: src/live.js:47
 msgid ""
 "Animation support is installed. Log out and back in once so GNOME can "
 "discover it. Then open Wallshader and choose “Set Animated Wallpaper” again."
@@ -2671,20 +2688,13 @@ msgstr ""
 "damit GNOME sie erkennt. Öffne dann Wallshader und wähle erneut „Animiertes "
 "Hintergrundbild festlegen“."
 
-#: src/live.js:126
+#: src/live.js:119
 #, fuzzy
 msgid "Animated wallpapers currently support GNOME 50 and 51 on Wayland."
 msgstr ""
 "Animierte Hintergrundbilder unterstützen derzeit GNOME 50 unter Wayland."
 
-#: src/live.js:146
-msgid ""
-"Build Wallshader with “bun run build” to include animated wallpaper support."
-msgstr ""
-"Erstelle Wallshader mit „bun run build“, um animierte Hintergrundbilder "
-"einzubinden."
-
-#: src/live.js:184
+#: src/live.js:156
 msgid "Enable Wallshader Live Wallpaper in GNOME Extensions, then try again."
 msgstr ""
 "Aktiviere Wallshader Live Wallpaper in GNOME Erweiterungen und versuche es "
@@ -2976,7 +2986,7 @@ msgstr "Voreinstellung speichern…"
 msgid "Reset Changes"
 msgstr "Änderungen zurücksetzen"
 
-#: src/window.js:232 src/window.js:986
+#: src/window.js:232 src/window.js:988
 msgid "Add to favorites"
 msgstr "Zu Favoriten hinzufügen"
 
@@ -2984,11 +2994,11 @@ msgstr "Zu Favoriten hinzufügen"
 msgid "Preview unavailable"
 msgstr "Vorschau nicht verfügbar"
 
-#: src/window.js:266 src/window.js:1183
+#: src/window.js:266 src/window.js:1185
 msgid "Play preview"
 msgstr "Vorschau abspielen"
 
-#: src/window.js:266 src/window.js:1183
+#: src/window.js:266 src/window.js:1185
 msgid "Pause preview"
 msgstr "Vorschau pausieren"
 
@@ -3012,11 +3022,11 @@ msgstr "Favoriten"
 msgid "Recent"
 msgstr "Zuletzt verwendet"
 
-#: src/window.js:429 src/window.js:1023
+#: src/window.js:429 src/window.js:1025
 msgid "No wallpapers found"
 msgstr "Keine Hintergrundbilder gefunden"
 
-#: src/window.js:434 src/window.js:1030
+#: src/window.js:434 src/window.js:1032
 msgid "Try a different search or collection."
 msgstr "Versuche eine andere Suche oder Sammlung."
 
@@ -3032,7 +3042,7 @@ msgstr "Anpassen"
 msgid "Desktop"
 msgstr "Desktop"
 
-#: src/window.js:480 src/window.js:704 src/window.js:1292
+#: src/window.js:480 src/window.js:706 src/window.js:1294
 msgid "Set as Wallpaper"
 msgstr "Als Hintergrundbild festlegen"
 
@@ -3044,7 +3054,7 @@ msgstr "Dieses Bild auf den GNOME-Desktop anwenden"
 msgid "Choose wallpaper destination"
 msgstr "Ziel des Hintergrundbilds wählen"
 
-#: src/window.js:491 src/window.js:509 src/window.js:818
+#: src/window.js:491 src/window.js:509 src/window.js:820
 msgid "Wallpaper Settings"
 msgstr "Hintergrundbild-Einstellungen"
 
@@ -3100,7 +3110,7 @@ msgstr ""
 msgid "Runs on the desktop after closing this app."
 msgstr "Läuft nach dem Schließen der App auf dem Desktop weiter."
 
-#: src/window.js:579 src/window.js:694
+#: src/window.js:579 src/window.js:696
 msgid "Pause"
 msgstr "Pausieren"
 
@@ -3165,19 +3175,25 @@ msgstr ""
 "Animiert auf jedem Bildschirm und setzt das erste Bild als "
 "Standbildhintergrund. GNOME 50 unter Wayland ist erforderlich."
 
-#: src/window.js:683
+#: src/window.js:681
+msgid "Log out and back in to finish updating animation support."
+msgstr ""
+"Melde dich ab und wieder an, um die Aktualisierung der "
+"Animationsunterstützung abzuschließen."
+
+#: src/window.js:685
 msgid "Starting desktop animation…"
 msgstr "Desktop-Animation wird gestartet…"
 
-#: src/window.js:684
+#: src/window.js:686
 msgid "Playing on desktop"
 msgstr "Wiedergabe auf dem Desktop"
 
-#: src/window.js:686
+#: src/window.js:688
 msgid "Ready. Keeps playing after closing this app."
 msgstr "Bereit. Die Wiedergabe läuft nach dem Schließen der App weiter."
 
-#: src/window.js:688
+#: src/window.js:690
 msgid ""
 "First use installs animation support. GNOME may require one logout before it "
 "is available."
@@ -3185,140 +3201,144 @@ msgstr ""
 "Bei der ersten Verwendung wird die Animationsunterstützung installiert. "
 "GNOME erfordert möglicherweise eine einmalige Abmeldung."
 
-#: src/window.js:694
+#: src/window.js:696
 msgid "Resume"
 msgstr "Fortsetzen"
 
-#: src/window.js:700
+#: src/window.js:702
 msgid "Set Kitty Background"
 msgstr "Kitty-Hintergrund festlegen"
 
-#: src/window.js:701
+#: src/window.js:703
 msgid "Set Kitty Background (Still)"
 msgstr "Kitty-Hintergrund festlegen (Standbild)"
 
-#: src/window.js:703
+#: src/window.js:705
 msgid "Set Animated Wallpaper"
 msgstr "Animiertes Hintergrundbild festlegen"
 
-#: src/window.js:708
+#: src/window.js:710
 msgid "Apply this background to Kitty"
 msgstr "Diesen Hintergrund auf Kitty anwenden"
 
-#: src/window.js:709
+#: src/window.js:711
 msgid "Apply this wallpaper to your GNOME desktop"
 msgstr "Dieses Hintergrundbild auf den GNOME-Desktop anwenden"
 
-#: src/window.js:746
+#: src/window.js:748
 msgid "Deleted “{name}”"
 msgstr "„{name}“ gelöscht"
 
-#: src/window.js:782
+#: src/window.js:784
 msgid "Saved “{name}”"
 msgstr "„{name}“ gespeichert"
 
-#: src/window.js:798
+#: src/window.js:800
 msgid "Wait for the current image to finish rendering."
 msgstr "Warte, bis das aktuelle Bild fertig gerendert ist."
 
-#: src/window.js:815
+#: src/window.js:817
 msgid "Import Paper Settings"
 msgstr "Paper-Einstellungen importieren"
 
-#: src/window.js:817
+#: src/window.js:819
 msgid "Paper Code"
 msgstr "Paper-Code"
 
-#: src/window.js:948
+#: src/window.js:950
 msgid "Custom"
 msgstr "Benutzerdefiniert"
 
-#: src/window.js:986
+#: src/window.js:988
 msgid "Remove from favorites"
 msgstr "Aus Favoriten entfernen"
 
-#: src/window.js:1020
+#: src/window.js:1022
 msgid "No favorites yet"
 msgstr "Noch keine Favoriten"
 
-#: src/window.js:1022
+#: src/window.js:1024
 msgid "No recent presets yet"
 msgstr "Noch keine zuletzt verwendeten Voreinstellungen"
 
-#: src/window.js:1027
+#: src/window.js:1029
 msgid "Star a preset to keep it here."
 msgstr "Markiere eine Voreinstellung mit einem Stern, um sie hier zu behalten."
 
-#: src/window.js:1029
+#: src/window.js:1031
 msgid "Applied desktop and Kitty presets appear here."
 msgstr "Angewendete Desktop- und Kitty-Voreinstellungen erscheinen hier."
 
-#: src/window.js:1071
+#: src/window.js:1073
 msgid "Applied to Kitty"
 msgstr "Auf Kitty angewendet"
 
-#: src/window.js:1171
+#: src/window.js:1173
 msgid "Wallpaper changes reset"
 msgstr "Hintergrundbildänderungen zurückgesetzt"
 
-#: src/window.js:1274
+#: src/window.js:1276
 msgid "Rendering…"
 msgstr "Wird gerendert…"
 
-#: src/window.js:1324
+#: src/window.js:1326
 msgid "Wallpaper applied, but the preset could not be saved: {error}"
 msgstr ""
 "Hintergrundbild angewendet, aber die Voreinstellung konnte nicht gespeichert "
 "werden: {error}"
 
-#: src/window.js:1358
+#: src/window.js:1360
 msgid "{name} set as wallpaper"
 msgstr "{name} als Hintergrundbild festgelegt"
 
-#: src/window.js:1361 src/window.js:1437
+#: src/window.js:1363 src/window.js:1440
 msgid "Undo"
 msgstr "Rückgängig"
 
-#: src/window.js:1385
+#: src/window.js:1387
 msgid "Kitty background saved. Reload Kitty settings if needed."
 msgstr ""
 "Kitty-Hintergrund gespeichert. Lade bei Bedarf die Kitty-Einstellungen neu."
 
-#: src/window.js:1400
+#: src/window.js:1402
 msgid "Kitty background restored. Reload Kitty settings if needed."
 msgstr ""
 "Kitty-Hintergrund wiederhergestellt. Lade bei Bedarf die Kitty-Einstellungen "
 "neu."
 
-#: src/window.js:1413
+#: src/window.js:1415
 msgid "Starting…"
 msgstr "Wird gestartet…"
 
-#: src/window.js:1436
+#: src/window.js:1439
 msgid "Animated wallpaper requested"
 msgstr "Animiertes Hintergrundbild angefordert"
 
-#: src/window.js:1445
+#: src/window.js:1461
+msgid "Log Out to Finish Update"
+msgstr "Abmelden, um die Aktualisierung abzuschließen"
+
+#: src/window.js:1462
 msgid "Log Out to Finish Setup"
 msgstr "Abmelden, um die Einrichtung abzuschließen"
 
-#: src/window.js:1450
+#: src/window.js:1471
 msgid "Got It"
 msgstr "Verstanden"
 
-#: src/window.js:1462
+#: src/window.js:1477
 msgid "Export Wallpaper"
 msgstr "Hintergrundbild exportieren"
 
-#: src/window.js:1465
+#: src/window.js:1480
 msgid "PNG images"
 msgstr "PNG-Bilder"
 
-#: src/window.js:1476
+#: src/window.js:1491
 msgid "Wallpaper exported"
 msgstr "Hintergrundbild exportiert"
 
-#: src/window.js:1492
+#: src/window.js:1507
 msgid "Previous wallpaper restored"
 msgstr "Vorheriges Hintergrundbild wiederhergestellt"
 

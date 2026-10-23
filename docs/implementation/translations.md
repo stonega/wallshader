@@ -10,9 +10,9 @@ and take effect the next time Wallshader opens. The restart notice appears below
 the language selector.
 
 These are initial translation drafts; fluent-speaker review is welcome. Spanish
-covers all 768 current messages. Each of the seven additional catalogs covers 534
-messages: the app interface, dialogs, errors, shader names, editor labels, and
-options. The remaining 234 detailed Paper parameter explanations fall back to
+covers nearly all messages. The seven additional catalogs cover the main app
+interface, dialogs, errors, shader names, editor labels, and options. Untranslated
+or fuzzy entries, mostly detailed Paper parameter explanations, fall back to
 English. Empty entries remain in the PO files so contributors can complete them
 without changing app code. Do not mark English copies as translated to inflate
 coverage.

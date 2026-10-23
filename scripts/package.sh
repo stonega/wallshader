@@ -56,6 +56,7 @@ for file in \
   build/renderer/renderer.js \
   build/renderer/index.html \
   extension/extension.js \
+  extension/build-info.js \
   extension/metadata.json \
   extension/app/src/desktop-renderer.js \
   extension/app/build/renderer/renderer.js \

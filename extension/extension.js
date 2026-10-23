@@ -7,6 +7,7 @@ import { OverviewWallpapers } from './overview.js';
 import { DesktopWallpapers } from './background.js';
 import { CompositingHold } from './compositing.js';
 import { DesktopMenu } from './desktop-menu.js';
+import { SHELL_BUILD_ID } from './build-info.js';
 import {
   LIVE_XML,
   LIVE_PATH,
@@ -95,6 +96,7 @@ export default class WallshaderExtension extends Extension {
 
   GetStatus() {
     return JSON.stringify({
+      shellBuildId: SHELL_BUILD_ID,
       available: true,
       active: Boolean(this._process),
       ready: this._ready,

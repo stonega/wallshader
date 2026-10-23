@@ -100,6 +100,11 @@ the bundled extension for your user; log out and back in when prompted.
 Install a newer downloaded package with the same command to update the app.
 Remove it with `sudo dnf remove wallshader` or `sudo apt remove wallshader`.
 
+After an upgrade, opening Wallshader automatically refreshes an existing
+animation extension. If GNOME still has older extension code loaded, the app
+asks you to log out and back in. Dismiss the notice and log out when ready.
+The update does not change your wallpaper or playback state on startup.
+
 ### Development packages and archives
 
 Every successful main-branch, pull-request, and manual

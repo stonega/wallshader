@@ -1,4 +1,4 @@
-project('wallshader', version: '0.1.18', meson_version: '>=1.0.0', license: 'GPL-3.0-or-later')
+project('wallshader', version: '0.1.19', meson_version: '>=1.0.0', license: 'GPL-3.0-or-later')
 
 gnome = import('gnome')
 i18n = import('i18n')

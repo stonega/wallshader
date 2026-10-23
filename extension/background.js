@@ -11,10 +11,44 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 // surface, multiplied by that alpha. No Paper shaders run inside Shell.
 const FrameTexture = GObject.registerClass(
   { GTypeName: 'WallshaderFrameTexture' },
-  class FrameTexture extends Clutter.OffscreenEffect {
+  class FrameTexture extends Clutter.Effect {
     // Capture the clone through Mutter so buffer transforms, subsurfaces and
     // Wayland frame callbacks are handled normally. Only the background draws it.
-    vfunc_paint_target(_node, _context) {}
+    vfunc_paint(node, context, flags) {
+      const actor = this.get_actor();
+      const scale = Math.ceil(actor.get_resource_scale());
+      const width = Math.max(1, Math.ceil(actor.width * scale));
+      const height = Math.max(1, Math.ceil(actor.height * scale));
+      const resized =
+        !this._texture ||
+        this._texture.get_width() !== width ||
+        this._texture.get_height() !== height;
+      if (!resized && !(flags & Clutter.EffectPaintFlags.ACTOR_DIRTY)) return;
+      if (resized) {
+        const cogl = context.get_framebuffer().get_context();
+        this._texture = Cogl.Texture2D.new_with_size(cogl, width, height);
+        this._buffer = Cogl.Offscreen.new_with_texture(this._texture);
+        this._buffer.allocate();
+        this._pipeline = Cogl.Pipeline.new(cogl);
+      }
+      // OffscreenEffect pads its paint volume. An explicit canvas viewport keeps
+      // those transparent pixels out of every consumer's [0, 1] texture range.
+      const identity = new Graphene.Matrix();
+      identity.init_identity();
+      this._buffer.set_modelview_matrix(identity);
+      this._buffer.orthographic(0, 0, actor.width, actor.height, -1, 1);
+      this._buffer.set_viewport(0, 0, width, height);
+      const layer = Clutter.LayerNode.new_to_framebuffer(
+        this._buffer,
+        this._pipeline,
+      );
+      layer.add_child(Clutter.ActorNode.new(actor, 255));
+      node.add_child(layer);
+    }
+
+    get_texture() {
+      return this._texture ?? null;
+    }
   },
 );
 
@@ -66,7 +100,7 @@ const BackgroundTexture = GObject.registerClass(
       const sy = actor.height / monitor.height;
       // Only the corner rectangles contain non-opaque native mask pixels.
       // Include the work-area insets and two extra pixels for filtering. The
-      // curve itself is still painted by BackgroundContent, at resource scale.
+      // curve itself is still painted by BackgroundContent, on the output grid.
       const left = Math.ceil((area.x - monitor.x + radius + 2) * sx);
       const right = Math.floor(
         (area.x - monitor.x + area.width - radius - 2) * sx,
@@ -89,10 +123,36 @@ const BackgroundTexture = GObject.registerClass(
         rectangle(0, bottom, left, actor.height),
         rectangle(right, bottom, actor.width, actor.height),
       ];
-      const scale = actor.get_resource_scale();
+      const view = actor
+        .peek_stage_views()
+        .find(
+          (candidate) =>
+            candidate.get_framebuffer() === context.get_framebuffer(),
+        );
+      const scale = view?.get_scale() ?? actor.get_resource_scale();
+      const layout = view?.layout;
+      const [stageX, stageY] = actor.get_transformed_position();
+      const [stageWidth, stageHeight] = actor.get_transformed_size();
+      if (stageWidth <= 0 || stageHeight <= 0) return;
+      const pixelScaleX = (stageWidth / actor.width) * scale;
+      const pixelScaleY = (stageHeight / actor.height) * scale;
+      const originX = (stageX - (layout?.x ?? 0)) * scale;
+      const originY = (stageY - (layout?.y ?? 0)) * scale;
       for (const [i, box] of boxes.entries()) {
-        const width = Math.max(1, Math.ceil((box.x2 - box.x1) * scale));
-        const height = Math.max(1, Math.ceil((box.y2 - box.y1) * scale));
+        // Rasterize on the stage's pixel grid, including fractional translations.
+        // Resampling a mask on the actor's grid softens and distorts the curve.
+        const x1 = Math.floor(originX + box.x1 * pixelScaleX);
+        const y1 = Math.floor(originY + box.y1 * pixelScaleY);
+        const x2 = Math.ceil(originX + box.x2 * pixelScaleX);
+        const y2 = Math.ceil(originY + box.y2 * pixelScaleY);
+        const width = Math.max(1, x2 - x1);
+        const height = Math.max(1, y2 - y1);
+        const bounds = rectangle(
+          (x1 - originX) / pixelScaleX,
+          (y1 - originY) / pixelScaleY,
+          (x2 - originX) / pixelScaleX,
+          (y2 - originY) / pixelScaleY,
+        );
         let mask = this._masks[i];
         const changed = !mask || mask.width !== width || mask.height !== height;
         if (changed) {
@@ -120,12 +180,20 @@ const BackgroundTexture = GObject.registerClass(
         const identity = new Graphene.Matrix();
         identity.init_identity();
         mask.buffer.set_modelview_matrix(identity);
-        mask.buffer.orthographic(box.x1, box.y1, box.x2, box.y2, -1, 1);
+        mask.buffer.orthographic(
+          bounds.x1,
+          bounds.y1,
+          bounds.x2,
+          bounds.y2,
+          -1,
+          1,
+        );
         mask.buffer.set_viewport(0, 0, width, height);
         if (
           changed ||
           flags & Clutter.EffectPaintFlags.ACTOR_DIRTY ||
-          mask.radius !== radius
+          mask.radius !== radius ||
+          !mask.bounds?.equal(bounds)
         ) {
           const layer = Clutter.LayerNode.new_to_framebuffer(
             mask.buffer,
@@ -134,23 +202,30 @@ const BackgroundTexture = GObject.registerClass(
           layer.add_child(Clutter.ActorNode.new(actor, 255));
           node.add_child(layer);
           mask.radius = radius;
+          mask.bounds = bounds;
         }
         mask.pipeline.set_layer_texture(1, texture);
         // Each corner samples its own portion of the shared live frame; its
-        // native alpha texture still uses the complete [0, 1] coordinate range.
+        // native alpha texture includes the pixel-aligned filtering margin.
         const coordinates = new Graphene.Matrix();
         coordinates.init_from_2d(
-          (box.x2 - box.x1) / actor.width,
+          (bounds.x2 - bounds.x1) / actor.width,
           0,
           0,
-          (box.y2 - box.y1) / actor.height,
-          box.x1 / actor.width,
-          box.y1 / actor.height,
+          (bounds.y2 - bounds.y1) / actor.height,
+          bounds.x1 / actor.width,
+          bounds.y1 / actor.height,
         );
         mask.pipeline.set_layer_matrix(1, coordinates);
         mask.pipeline.set_color(color);
         const corner = Clutter.PipelineNode.new(mask.pipeline);
-        corner.add_rectangle(box);
+        corner.add_texture_rectangle(
+          box,
+          (box.x1 - bounds.x1) / (bounds.x2 - bounds.x1),
+          (box.y1 - bounds.y1) / (bounds.y2 - bounds.y1),
+          (box.x2 - bounds.x1) / (bounds.x2 - bounds.x1),
+          (box.y2 - bounds.y1) / (bounds.y2 - bounds.y1),
+        );
         node.add_child(corner);
       }
     }

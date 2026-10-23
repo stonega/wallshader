@@ -59,6 +59,11 @@ Use `WALLSHADER_TEST_MONITORS=1 bun run test:shell` for the single-monitor case.
 The primary monitor is 2560 × 1600. Coverage checks compare both window frames
 and Wayland buffers to their full monitor bounds, including after late resizes,
 moves, overview changes and renderer restarts.
+With a bright shader, pixel checks scan every visible desktop edge on every
+monitor during playback and manual pause, including the outermost pixels. This
+catches gaps from transparent capture padding even when window bounds are correct.
+`artifacts/desktop-edges.png` records the result; failures save
+`artifacts/desktop-edge-failure.png`.
 Panel checks cover empty-workspace switches, recovery from a fullscreen wallpaper
 state, and switching between an empty workspace and a regular fullscreen app.
 Playback checks maximize a test window on each monitor and switch both displays
@@ -92,9 +97,13 @@ Overview checks cover live background actors on both monitors, workspace thumbna
 continued animation, manual pause, and cleanup after closing, stopping or disabling.
 Pixel checks compare the live overview with GNOME's original background: all four
 rounded corners must retain their original pixels while the centers show the shader.
-Corner tiles also undergo a pixel comparison against a full-size native RGBA
-mask with a paused, nonuniform shader, checking projection, alpha and texture
-coordinates across each corner region. Their combined allocation must remain
+Solid green live corners are compared with GNOME painting the same background
+directly to the stage, including an additional fractional workspace translation.
+This catches transparent frame padding and mask resampling that can flatten or
+blur the curve. `artifacts/corner-{live,native}{,-fractional}.png` record the
+comparisons. Corner tiles also undergo a pixel comparison against a full-size
+native RGBA mask on the output pixel grid with a paused, nonuniform shader,
+checking projection, alpha and texture coordinates across each corner region. Their combined allocation must remain
 below five percent of the workspace's area.
 Transition checks use a green live surface over a red saved background and sample
 from the first overview frame. Normal show, compositor redraw and incremental

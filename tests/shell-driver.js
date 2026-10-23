@@ -387,6 +387,48 @@ async function capturePixels() {
   return loader.get_pixbuf();
 }
 
+async function checkDesktopEdges() {
+  // The bright Dithering preset makes transparent capture padding visible.
+  const image = await capturePixels();
+  const pixels = image.get_pixels();
+  const sx = image.width / global.stage.width;
+  const sy = image.height / global.stage.height;
+  for (const monitor of Main.layoutManager.monitors) {
+    const area = Main.layoutManager.getWorkAreaForMonitor(monitor.index);
+    const left = Math.round(monitor.x * sx);
+    const right = Math.round((monitor.x + monitor.width) * sx) - 1;
+    const top = Math.ceil(area.y * sy);
+    const bottom = Math.round((monitor.y + monitor.height) * sy) - 1;
+    const check = (x, y) => {
+      const offset = y * image.rowstride + x * image.n_channels;
+      if ([0, 1, 2].every((channel) => pixels[offset + channel] >= 60)) return;
+      image.savev(
+        `${GLib.getenv('WALLSHADER_ARTIFACTS')}/desktop-edge-failure.png`,
+        'png',
+        [],
+        [],
+      );
+      throw new Error(
+        `Wallpaper gap at monitor ${monitor.index} edge ${x},${y}: ${[...pixels.slice(offset, offset + 3)]}`,
+      );
+    };
+    for (let y = top; y <= bottom; y++) {
+      check(left, y);
+      check(right, y);
+    }
+    for (let x = left; x <= right; x++) {
+      check(x, top);
+      check(x, bottom);
+    }
+  }
+  image.savev(
+    `${GLib.getenv('WALLSHADER_ARTIFACTS')}/desktop-edges.png`,
+    'png',
+    [],
+    [],
+  );
+}
+
 async function checkOverviewTransition(extension) {
   // A red saved still and a green live surface make a one-frame fallback visible.
   const settings = new Gio.Settings({
@@ -571,104 +613,9 @@ async function checkMaskColors(extension) {
   );
 }
 
-// Compare tiled native content with a full-surface render at the same resource
-// scale and actor coordinates, including a nonuniform live texture.
-const ReferenceMask = GObject.registerClass(
-  class WallshaderTestReferenceMask extends Clutter.Effect {
-    _init(frame) {
-      super._init();
-      this.frame = frame;
-    }
-
-    vfunc_paint(node, _context, _flags) {
-      const actor = this.get_actor();
-      const frame = this.frame.get_texture();
-      const texture = Cogl.Texture2D.new_with_size(
-        frame.get_context(),
-        Math.ceil(actor.width * actor.get_resource_scale()),
-        Math.ceil(actor.height * actor.get_resource_scale()),
-      );
-      const buffer = Cogl.Offscreen.new_with_texture(texture);
-      buffer.allocate();
-      const identity = new Graphene.Matrix();
-      identity.init_identity();
-      buffer.set_modelview_matrix(identity);
-      buffer.orthographic(0, 0, actor.width, actor.height, -1, 1);
-      buffer.set_viewport(0, 0, texture.get_width(), texture.get_height());
-      const pipeline = Cogl.Pipeline.new(frame.get_context());
-      pipeline.set_layer_texture(0, texture);
-      pipeline.set_layer_filters(
-        0,
-        Cogl.PipelineFilter.LINEAR,
-        Cogl.PipelineFilter.LINEAR,
-      );
-      pipeline.set_layer_texture(1, frame);
-      pipeline.set_layer_combine(1, 'RGBA = MODULATE (TEXTURE, PREVIOUS[A])');
-      const opacity = actor.get_paint_opacity() / 255;
-      const color = new Cogl.Color();
-      color.init_from_4f(opacity, opacity, opacity, opacity);
-      pipeline.set_color(color);
-      const layer = Clutter.LayerNode.new_to_framebuffer(buffer, pipeline);
-      layer.add_child(Clutter.ActorNode.new(actor, 255));
-      layer.add_rectangle(
-        new Clutter.ActorBox({
-          x1: 0,
-          y1: 0,
-          x2: actor.width,
-          y2: actor.height,
-        }),
-      );
-      node.add_child(layer);
-    }
-  },
-);
-
-async function checkCornerMaskPixels(extension) {
-  await apply(createPreset('dusk'));
-  await delay(800);
-  await rpc('SetPaused', new GLib.Variant('(b)', [true]));
-  await delay(300);
-  Main.overview.show();
-  await delay(500);
-  const entries = [...extension._overview._backgrounds.values()].filter(
-    ({ live, thumbnail }) => !thumbnail && live.actor.mapped,
-  );
-  const references = [];
-  const livePixels = await capturePixels();
-  let referencePixels;
-  try {
-    for (const { live } of entries) {
-      assert(live.effect._masks.length === 4, 'Overview lost its corner masks');
-      const pixels = live.effect._masks.reduce(
-        (sum, mask) => sum + mask.width * mask.height,
-        0,
-      );
-      assert(
-        pixels <
-          live.actor.width *
-            live.actor.height *
-            live.actor.get_resource_scale() ** 2 *
-            0.05,
-        'Corner masks still allocate a full-size workspace buffer',
-      );
-      const reference = new ReferenceMask(live.capture.frame);
-      live.actor.remove_effect(live.effect);
-      live.actor.add_effect(reference);
-      references.push({ live, reference });
-    }
-    await delay(150);
-    referencePixels = await capturePixels();
-  } finally {
-    for (const { live, reference } of references) {
-      live.actor.remove_effect(reference);
-      live.actor.add_effect_with_name('wallshader-background', live.effect);
-    }
-  }
+function compareCornerPixels(entries, livePixels, referencePixels, label) {
   const actual = livePixels.get_pixels();
   const expected = referencePixels.get_pixels();
-  const artifacts = GLib.getenv('WALLSHADER_ARTIFACTS');
-  livePixels.savev(`${artifacts}/corner-tiles.png`, 'png', [], []);
-  referencePixels.savev(`${artifacts}/corner-reference.png`, 'png', [], []);
   let checked = 0;
   let worst = 0;
   let worstPixel;
@@ -729,19 +676,225 @@ async function checkCornerMaskPixels(extension) {
       }
     }
   }
-  assert(
-    checked > 100,
-    'Corner pixel comparison missed the workspace previews',
-  );
+  assert(checked > 100, `${label} missed the workspace previews`);
   assert(
     worst <= 6,
-    `Corner masks differ from the full native mask: maximum channel difference ${worst}; ${JSON.stringify(worstPixel)}`,
+    `${label}: maximum channel difference ${worst}; ${JSON.stringify(worstPixel)}`,
+  );
+  console.log(
+    `Verified ${checked} corner pixels against ${label} (maximum difference ${worst}).`,
+  );
+}
+
+// Compare live corners with BackgroundContent painted directly to the stage.
+// A solid green surface and matching native background isolate mask coverage.
+async function checkNativeCornerPixels(extension) {
+  const settings = new Gio.Settings({
+    schema_id: 'org.gnome.desktop.background',
+  });
+  const original = settings.get_string('primary-color');
+  settings.set_string('picture-options', 'none');
+  settings.set_string('primary-color', '#00FF00');
+  const preset = createPreset('paper-dithering');
+  preset.params.colorBack = '#00FF00';
+  preset.params.colorFront = '#00FF00';
+  await apply(preset);
+  await delay(800);
+  await rpc('SetPaused', new GLib.Variant('(b)', [true]));
+  Main.overview.show();
+  await delay(600);
+  const entries = [...extension._overview._backgrounds.values()].filter(
+    ({ live, thumbnail }) => !thumbnail && live.actor.mapped,
+  );
+  const originalActors = entries.map(({ live }) => ({
+    vignette: live.actor.content.vignette,
+    x: live.actor.translation_x,
+    y: live.actor.translation_y,
+  }));
+  try {
+    for (const offset of [0, 0.375]) {
+      for (const [i, { live }] of entries.entries()) {
+        live.actor.content.vignette = false;
+        live.actor.translation_x = originalActors[i].x + offset;
+        live.actor.translation_y = originalActors[i].y + offset;
+      }
+      await delay(150);
+      const livePixels = await capturePixels();
+      for (const { live } of entries) live.effect.enabled = false;
+      await delay(150);
+      const nativePixels = await capturePixels();
+      for (const { live } of entries) live.effect.enabled = true;
+      const artifacts = GLib.getenv('WALLSHADER_ARTIFACTS');
+      const suffix = offset ? '-fractional' : '';
+      livePixels.savev(`${artifacts}/corner-live${suffix}.png`, 'png', [], []);
+      nativePixels.savev(
+        `${artifacts}/corner-native${suffix}.png`,
+        'png',
+        [],
+        [],
+      );
+      compareCornerPixels(
+        entries,
+        livePixels,
+        nativePixels,
+        `direct native rendering${suffix}`,
+      );
+    }
+  } finally {
+    for (const [i, { live }] of entries.entries()) {
+      live.effect.enabled = true;
+      live.actor.content.vignette = originalActors[i].vignette;
+      live.actor.translation_x = originalActors[i].x;
+      live.actor.translation_y = originalActors[i].y;
+    }
+    settings.set_string('primary-color', original);
+  }
+  Main.overview.hide();
+  await rpc('SetPaused', new GLib.Variant('(b)', [false]));
+}
+
+// Compare tiled native content with a full-surface render on the same output
+// pixel grid, including a nonuniform live texture.
+const ReferenceMask = GObject.registerClass(
+  class WallshaderTestReferenceMask extends Clutter.Effect {
+    _init(frame) {
+      super._init();
+      this.frame = frame;
+    }
+
+    vfunc_paint(node, context, _flags) {
+      const actor = this.get_actor();
+      const frame = this.frame.get_texture();
+      const view = actor
+        .peek_stage_views()
+        .find(
+          (candidate) =>
+            candidate.get_framebuffer() === context.get_framebuffer(),
+        );
+      const scale = view?.get_scale() ?? actor.get_resource_scale();
+      const layout = view?.layout;
+      const [x, y] = actor.get_transformed_position();
+      const [width, height] = actor.get_transformed_size();
+      const left = (x - (layout?.x ?? 0)) * scale;
+      const top = (y - (layout?.y ?? 0)) * scale;
+      const pixelWidth = Math.ceil(left + width * scale) - Math.floor(left);
+      const pixelHeight = Math.ceil(top + height * scale) - Math.floor(top);
+      const bounds = new Clutter.ActorBox({
+        x1: ((Math.floor(left) - left) * actor.width) / (width * scale),
+        y1: ((Math.floor(top) - top) * actor.height) / (height * scale),
+        x2:
+          ((Math.ceil(left + width * scale) - left) * actor.width) /
+          (width * scale),
+        y2:
+          ((Math.ceil(top + height * scale) - top) * actor.height) /
+          (height * scale),
+      });
+      const texture = Cogl.Texture2D.new_with_size(
+        frame.get_context(),
+        pixelWidth,
+        pixelHeight,
+      );
+      const buffer = Cogl.Offscreen.new_with_texture(texture);
+      buffer.allocate();
+      const identity = new Graphene.Matrix();
+      identity.init_identity();
+      buffer.set_modelview_matrix(identity);
+      buffer.orthographic(bounds.x1, bounds.y1, bounds.x2, bounds.y2, -1, 1);
+      buffer.set_viewport(0, 0, texture.get_width(), texture.get_height());
+      const pipeline = Cogl.Pipeline.new(frame.get_context());
+      pipeline.set_layer_texture(0, texture);
+      pipeline.set_layer_filters(
+        0,
+        Cogl.PipelineFilter.LINEAR,
+        Cogl.PipelineFilter.LINEAR,
+      );
+      pipeline.set_layer_texture(1, frame);
+      pipeline.set_layer_combine(1, 'RGBA = MODULATE (TEXTURE, PREVIOUS[A])');
+      const coordinates = new Graphene.Matrix();
+      coordinates.init_from_2d(
+        (bounds.x2 - bounds.x1) / actor.width,
+        0,
+        0,
+        (bounds.y2 - bounds.y1) / actor.height,
+        bounds.x1 / actor.width,
+        bounds.y1 / actor.height,
+      );
+      pipeline.set_layer_matrix(1, coordinates);
+      const opacity = actor.get_paint_opacity() / 255;
+      const color = new Cogl.Color();
+      color.init_from_4f(opacity, opacity, opacity, opacity);
+      pipeline.set_color(color);
+      const layer = Clutter.LayerNode.new_to_framebuffer(buffer, pipeline);
+      layer.add_child(Clutter.ActorNode.new(actor, 255));
+      layer.add_texture_rectangle(
+        new Clutter.ActorBox({
+          x1: 0,
+          y1: 0,
+          x2: actor.width,
+          y2: actor.height,
+        }),
+        -bounds.x1 / (bounds.x2 - bounds.x1),
+        -bounds.y1 / (bounds.y2 - bounds.y1),
+        (actor.width - bounds.x1) / (bounds.x2 - bounds.x1),
+        (actor.height - bounds.y1) / (bounds.y2 - bounds.y1),
+      );
+      node.add_child(layer);
+    }
+  },
+);
+
+async function checkCornerMaskPixels(extension) {
+  await apply(createPreset('dusk'));
+  await delay(800);
+  await rpc('SetPaused', new GLib.Variant('(b)', [true]));
+  await delay(300);
+  Main.overview.show();
+  await delay(500);
+  const entries = [...extension._overview._backgrounds.values()].filter(
+    ({ live, thumbnail }) => !thumbnail && live.actor.mapped,
+  );
+  const references = [];
+  const livePixels = await capturePixels();
+  let referencePixels;
+  try {
+    for (const { live } of entries) {
+      assert(live.effect._masks.length === 4, 'Overview lost its corner masks');
+      const pixels = live.effect._masks.reduce(
+        (sum, mask) => sum + mask.width * mask.height,
+        0,
+      );
+      assert(
+        pixels <
+          live.actor.width *
+            live.actor.height *
+            live.actor.get_resource_scale() ** 2 *
+            0.05,
+        'Corner masks still allocate a full-size workspace buffer',
+      );
+      const reference = new ReferenceMask(live.capture.frame);
+      live.actor.remove_effect(live.effect);
+      live.actor.add_effect(reference);
+      references.push({ live, reference });
+    }
+    await delay(150);
+    referencePixels = await capturePixels();
+  } finally {
+    for (const { live, reference } of references) {
+      live.actor.remove_effect(reference);
+      live.actor.add_effect_with_name('wallshader-background', live.effect);
+    }
+  }
+  const artifacts = GLib.getenv('WALLSHADER_ARTIFACTS');
+  livePixels.savev(`${artifacts}/corner-tiles.png`, 'png', [], []);
+  referencePixels.savev(`${artifacts}/corner-reference.png`, 'png', [], []);
+  compareCornerPixels(
+    entries,
+    livePixels,
+    referencePixels,
+    'full native masks',
   );
   Main.overview.hide();
   await rpc('SetPaused', new GLib.Variant('(b)', [false]));
-  console.log(
-    `Verified ${checked} corner pixels against full native masks (maximum difference ${worst}).`,
-  );
 }
 
 async function checkOverviewCorners(extension) {
@@ -1038,6 +1191,7 @@ async function checkResize(extension, path) {
   preset.params.colorFront = '#FF80FF';
   await apply(preset, 60);
   await delay(1000);
+  await checkDesktopEdges();
   const process = startResizeClient(path);
   let resize = 0;
   try {
@@ -1204,6 +1358,11 @@ async function checkResize(extension, path) {
     if (resize) GLib.source_remove(resize);
     await stopClient(process);
   }
+  await delay(300);
+  await checkDesktopEdges();
+  console.log(
+    'Verified every visible desktop edge pixel during playback and pause.',
+  );
 }
 
 export default class ShellTest extends Extension {
@@ -1402,6 +1561,7 @@ export default class ShellTest extends Extension {
     await checkLockPlayback(extension, inspect);
     await checkOverviewTransition(extension);
     await checkMaskColors(extension);
+    await checkNativeCornerPixels(extension);
     await checkCornerMaskPixels(extension);
     await apply(preset);
     await delay(500);

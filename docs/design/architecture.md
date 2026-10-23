@@ -348,20 +348,25 @@ GApplication actions carry pause, reload, readiness and diagnostics. The extensi
 waits for the renderer's D-Bus owner before subscribing to its action group.
 
 `extension/background.js` captures each owned surface once through a Clutter
-clone's offscreen effect, preserving Mutter's handling of buffer transforms,
-subsurfaces and Wayland frame callbacks. Desktop, workspace and thumbnail
-backgrounds on the same monitor share this capture. Its fixed source aspect ratio
-and 1080p pixel budget include the monitor's resource scale; overview allocations
-cannot create a full-monitor capture for every preview. The clone paints before
+clone into an explicit offscreen framebuffer, preserving Mutter's handling of
+buffer transforms, subsurfaces and Wayland frame callbacks. Desktop, workspace and
+thumbnail backgrounds on the same monitor share this capture. Its fixed source
+aspect ratio and 1080p pixel budget include the monitor's resource scale;
+overview allocations cannot create a full-monitor capture for every preview. The clone paints before
 the Shell scene and follows the background's color space, drawing no pixels into
 the stage itself.
+The framebuffer's orthographic viewport covers exactly the clone's canvas at
+resource scale. It excludes `Clutter.OffscreenEffect`'s transparent paint-volume
+padding, so desktop edges and all overview consumers sample only wallpaper pixels.
 
 Backgrounds without rounded clipping draw the shared texture directly through a
 Clutter texture node. Rounded backgrounds draw their opaque center and side strips
 directly, and capture only the four corner rectangles of GNOME's original
 `Meta.BackgroundContent`. Each small RGBA framebuffer uses an orthographic view
-of its original actor coordinates at resource scale, preserving the native curve
-and antialiasing without a full-monitor mask allocation. The rectangles include
+of its original actor coordinates aligned to the stage view's physical pixel grid,
+including the workspace's scale and fractional position. This preserves the native
+curve and antialiasing without filtering the mask a second time or allocating a
+full-monitor mask. The rectangles include
 work-area insets and a filtering margin. A standard Cogl layer combiner multiplies
 the corresponding portion of the shared live frame by each corner's alpha.
 Unusually small allocations with overlapping corner rectangles retain the full
@@ -369,7 +374,7 @@ native mask path.
 
 The masks retain RGBA storage so their alpha is preserved by the framebuffer's
 channel mapping. Buffers and pipelines are reused, with native content repainted
-when dirty or when rounding changes. GNOME supplies the curve and animated clip
+when dirty, when rounding changes, or when their pixel-aligned bounds change. GNOME supplies the curve and animated clip
 bounds; no rounded-curve geometry or GLSL source is duplicated. Source damage
 invalidates the shared capture and repaints consumers while allowing unchanged
 masks to stay cached. There is no CPU frame readback, additional WebKit process,

@@ -8,6 +8,7 @@ src/images.js
 src/kitty.js
 src/kitty-config.js
 src/live.js
+src/extension-install.js
 src/main.js
 src/preset-grid.js
 src/preset-options.js

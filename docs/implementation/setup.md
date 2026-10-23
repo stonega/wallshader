@@ -6,6 +6,12 @@ Meson and Ninja are needed only for installation. Bun and GNU gettext are requir
 for build tools. See [Translations](translations.md) for catalog maintenance and
 adding languages.
 
+For sandboxed packages, see [Flatpak packaging](flatpak.md). The local Flatpak
+build downloads its own checksum-pinned build tools and shader dependency, so
+it does not require a host Bun installation. Run graphical native checks with
+`./scripts/with-test-desktop.sh bun run test:native` to create a private headless
+GNOME desktop automatically.
+
 Run `bun install --frozen-lockfile`, `bun run build`, then `./scripts/run.sh`.
 The build also packages the live wallpaper extension under `build/extension/`.
 The launch script resolves the source directory independently of the working
@@ -321,6 +327,10 @@ complete. Existing COPR users then receive the update through `sudo dnf upgrade`
 
 Before tagging a release, set the same numeric version in `package.json`,
 `meson.build`, `data/wallshader-copr.spec`, and the About dialog in `src/main.js`.
+Add the version and release date to `data/wallshader.metainfo.xml.in`. Tagged builds
+also produce x86_64 and aarch64 Flatpak bundles and include them in the release's
+checksums. Flathub submission remains a separate human-managed process; see the
+[Flatpak guide](flatpak.md#flathub-submission-status).
 The package script rejects tags that do not match the package and Meson versions.
 Commit the release changes,
 then push the version tag, for example:

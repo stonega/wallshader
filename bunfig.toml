@@ -1,0 +1,3 @@
+[test]
+# Flatpak's build cache contains copies of the source tree and its tests.
+root = "tests"

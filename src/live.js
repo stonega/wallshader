@@ -1,9 +1,10 @@
 import { _ } from './i18n.js';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
-import { ROOT } from './paths.js';
+import { ROOT, IS_FLATPAK } from './paths.js';
 import {
   EXTENSION_UUID,
+  LIVE_BUS,
   LIVE_INTERFACE,
   LIVE_PATH,
   normalizeLiveConfig,
@@ -78,12 +79,24 @@ export class LoginRequiredError extends Error {
   }
 }
 
+export class ExtensionRequiredError extends Error {
+  constructor() {
+    super(
+      _(
+        'Install Wallshader Live Wallpaper to animate your desktop. GNOME 50 or 51 on Wayland and Flatpak 1.18 or newer are required. You may need to log out and back in once after installation.',
+      ),
+    );
+    this.name = 'ExtensionRequiredError';
+  }
+}
+
 export class LiveWallpaper {
   constructor(onChange = () => {}) {
     this.status = { available: false, active: false };
     this._onChange = onChange;
+    this._destination = IS_FLATPAK ? LIVE_BUS : 'org.gnome.Shell';
     this._subscription = Gio.DBus.session.signal_subscribe(
-      'org.gnome.Shell',
+      this._destination,
       LIVE_INTERFACE,
       'Changed',
       LIVE_PATH,
@@ -99,7 +112,7 @@ export class LiveWallpaper {
   async refresh() {
     try {
       const [source] = await call(
-        'org.gnome.Shell',
+        this._destination,
         LIVE_PATH,
         LIVE_INTERFACE,
         'GetStatus',
@@ -113,18 +126,25 @@ export class LiveWallpaper {
   }
 
   async setUp() {
-    const [version] = await call(
-      'org.gnome.Shell.Extensions',
-      '/org/gnome/Shell/Extensions',
-      'org.freedesktop.DBus.Properties',
-      'Get',
-      new GLib.Variant('(ss)', ['org.gnome.Shell.Extensions', 'ShellVersion']),
-    );
-    const shellVersion = version.deepUnpack?.() ?? version;
-    if (!SUPPORTED_GNOME_MAJORS.includes(Number.parseInt(shellVersion, 10)))
-      throw new Error(
-        _('Animated wallpapers currently support GNOME 50 and 51 on Wayland.'),
+    if (IS_FLATPAK) {
+      const status = await this.refresh();
+      if (status.backends?.includes('flatpak')) return;
+      await this._checkShell();
+      const [info] = await call(
+        'org.gnome.Shell.Extensions',
+        '/org/gnome/Shell/Extensions',
+        'org.gnome.Shell.Extensions',
+        'GetExtensionInfo',
+        new GLib.Variant('(s)', [EXTENSION_UUID]),
       );
+      if (
+        (info.version?.deepUnpack() ?? 0) >= 2 &&
+        (await this._enableFlatpak())
+      )
+        return;
+      throw new ExtensionRequiredError();
+    }
+    await this._checkShell();
     const directory = Gio.File.new_for_path(
       GLib.build_filenamev([
         GLib.get_user_data_dir(),
@@ -170,15 +190,7 @@ export class LiveWallpaper {
         ]);
       throw new LoginRequiredError();
     }
-    for (let attempt = 0; attempt < 10; attempt++) {
-      if ((await this.refresh()).available) return;
-      await new Promise((resolve) =>
-        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 250, () => {
-          resolve();
-          return GLib.SOURCE_REMOVE;
-        }),
-      );
-    }
+    if (await this._waitForExtension()) return;
     throw new Error(
       _(
         'Enable Wallshader Live Wallpaper in GNOME Extensions, then try again.',
@@ -186,17 +198,81 @@ export class LiveWallpaper {
     );
   }
 
+  async _checkShell() {
+    const [version] = await call(
+      'org.gnome.Shell.Extensions',
+      '/org/gnome/Shell/Extensions',
+      'org.freedesktop.DBus.Properties',
+      'Get',
+      new GLib.Variant('(ss)', ['org.gnome.Shell.Extensions', 'ShellVersion']),
+    );
+    const shellVersion = version.deepUnpack?.() ?? version;
+    if (!SUPPORTED_GNOME_MAJORS.includes(Number.parseInt(shellVersion, 10)))
+      throw new Error(
+        _('Animated wallpapers currently support GNOME 50 and 51 on Wayland.'),
+      );
+  }
+
+  async _enableFlatpak() {
+    const [allowed] = await call(
+      'org.gnome.Shell.Extensions',
+      '/org/gnome/Shell/Extensions',
+      'org.freedesktop.DBus.Properties',
+      'Get',
+      new GLib.Variant('(ss)', [
+        'org.gnome.Shell.Extensions',
+        'UserExtensionsEnabled',
+      ]),
+    );
+    if (!(allowed.deepUnpack?.() ?? allowed))
+      throw new Error(
+        _('Turn on extensions in GNOME Extensions, then try again.'),
+      );
+    const [enabled] = await call(
+      'org.gnome.Shell.Extensions',
+      '/org/gnome/Shell/Extensions',
+      'org.gnome.Shell.Extensions',
+      'EnableExtension',
+      new GLib.Variant('(s)', [EXTENSION_UUID]),
+    );
+    return enabled && this._waitForExtension(true);
+  }
+
+  async install() {
+    if (!IS_FLATPAK) return this.setUp();
+    await this._checkShell();
+    const { installBundledExtension } = await import('./extension-install.js');
+    await installBundledExtension();
+    if (!(await this._enableFlatpak())) throw new LoginRequiredError();
+  }
+
+  async _waitForExtension(flatpak = false) {
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const status = await this.refresh();
+      if (flatpak ? status.backends?.includes('flatpak') : status.available)
+        return true;
+      await new Promise((resolve) =>
+        GLib.timeout_add(GLib.PRIORITY_DEFAULT, 250, () => {
+          resolve();
+          return GLib.SOURCE_REMOVE;
+        }),
+      );
+    }
+    return false;
+  }
+
   async apply(preset, fps = 30, rendering = 'compatibility') {
-    if (!(await this.refresh()).available) await this.setUp();
+    if (IS_FLATPAK || !(await this.refresh()).available) await this.setUp();
     const config = normalizeLiveConfig({
       preset,
       fps,
       rendering,
+      backend: IS_FLATPAK ? 'flatpak' : 'native',
       enabled: true,
       paused: false,
     });
     await call(
-      'org.gnome.Shell',
+      this._destination,
       LIVE_PATH,
       LIVE_INTERFACE,
       'Apply',
@@ -213,16 +289,16 @@ export class LiveWallpaper {
       'wallshader',
       'live-wallpaper.json',
     ]);
-    const saved = readJson(path);
+    const saved = !IS_FLATPAK && readJson(path);
     if (saved) writeJson(path, { ...saved, enabled: false });
     if ((await this.refresh()).available)
-      await call('org.gnome.Shell', LIVE_PATH, LIVE_INTERFACE, 'Stop');
+      await call(this._destination, LIVE_PATH, LIVE_INTERFACE, 'Stop');
     return this.refresh();
   }
 
   async pause(paused) {
     await call(
-      'org.gnome.Shell',
+      this._destination,
       LIVE_PATH,
       LIVE_INTERFACE,
       'SetPaused',
@@ -232,6 +308,7 @@ export class LiveWallpaper {
   }
 
   close() {
-    Gio.DBus.session.signal_unsubscribe(this._subscription);
+    if (this._subscription)
+      Gio.DBus.session.signal_unsubscribe(this._subscription);
   }
 }

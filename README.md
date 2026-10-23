@@ -43,6 +43,37 @@ and a GNOME desktop for wallpaper integration. Animated wallpapers require
 **GNOME 50 or 51 on Wayland**; still wallpapers and PNG export work on older desktops
 that meet the app's runtime requirements.
 
+### Flatpak
+
+Build a local Flatpak with Flatpak and flatpak-builder installed:
+
+```sh
+flatpak remote-add --user --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+./scripts/package-flatpak.sh
+flatpak install --user dist/flatpak/wallshader.flatpak
+flatpak run io.github.stonega.wallshader
+```
+
+The Flatpak supports shader editing, animated previews, image import, presets,
+PNG export, still wallpapers, and animated desktop wallpapers. Animation requires
+**GNOME 50 or 51 on Wayland**, **Flatpak 1.18+**, and the companion Shell extension.
+The editor and desktop renderer both use Flatpak's GNOME runtime; host Bun and
+WebKitGTK packages are unnecessary.
+
+Choose **Animated shader** and **Set Animated Wallpaper**. If support is missing,
+choose **Install Extension** in the app. Wallshader installs its bundled companion
+extension and asks GNOME to enable it. First installation or an update may need
+one logout/login; reopen the app and apply again to enable it automatically.
+No terminal commands or manual ZIP installation are needed. The app asks you to
+approve a still first frame through the wallpaper portal, then starts animation.
+Pause, resume, stop, 30/60 FPS, and rendering modes work after the editor closes.
+Previous-wallpaper restoration and Kitty integration require the native package. GitHub Actions
+builds x86_64/aarch64 bundles and the companion ZIP for future tagged releases.
+
+Flathub publication is pending. Its policy requires an independently human-authored
+submission manifest and human-managed submission. See the
+[Flatpak guide](docs/implementation/flatpak.md) for build verification and details.
+
 ### Fedora
 
 Enable the [Wallshader COPR repository](https://copr.fedorainfracloud.org/coprs/stonegate/wallshader/)

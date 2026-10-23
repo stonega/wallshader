@@ -13,4 +13,10 @@ export const CONFIG_DIR = GLib.build_filenamev([
   GLib.get_user_config_dir(),
   'wallshader',
 ]);
-export const APP_ID = 'io.github.wallshader.Wallshader';
+export const IS_FLATPAK = GLib.file_test(
+  '/.flatpak-info',
+  GLib.FileTest.EXISTS,
+);
+export const APP_ID = IS_FLATPAK
+  ? 'io.github.stonega.wallshader'
+  : 'io.github.wallshader.Wallshader';

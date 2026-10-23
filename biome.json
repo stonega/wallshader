@@ -5,6 +5,8 @@
       "**",
       "!!build",
       "!!build-native",
+      "!!build-flatpak",
+      "!!.flatpak-builder",
       "!!artifacts",
       "!!dist",
       "!!data/third-party",
@@ -20,6 +22,10 @@
   },
   "assist": { "actions": { "source": { "organizeImports": "off" } } },
   "overrides": [
+    {
+      "includes": ["packaging/flatpak/*.json"],
+      "formatter": { "indentWidth": 4 }
+    },
     {
       "includes": ["src/renderer/renderer.js", "scripts/sync-paper.js"],
       "linter": {

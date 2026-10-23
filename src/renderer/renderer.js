@@ -293,6 +293,15 @@ window.wallshader = {
           args.fps,
           kittyTextures(values, SHADERS[item.shader]),
         );
+      } else if (method === 'geometry') {
+        const canvas = mount.canvasElement;
+        result = {
+          viewport: [window.innerWidth, window.innerHeight],
+          scale: window.devicePixelRatio,
+          canvas: [canvas.width, canvas.height],
+          bounds: [canvas.clientWidth, canvas.clientHeight],
+          hidden: document.hidden,
+        };
       } else if (method === 'state')
         result = { ...preset, frame: mount.getCurrentFrame() };
       else throw new Error(`Unknown renderer operation: ${method}`);

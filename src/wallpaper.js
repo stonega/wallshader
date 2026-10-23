@@ -2,7 +2,7 @@ import { _ } from './i18n.js';
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import Gdk from 'gi://Gdk?version=4.0';
-import { CONFIG_DIR, DATA_DIR } from './paths.js';
+import { CONFIG_DIR, DATA_DIR, IS_FLATPAK } from './paths.js';
 import { readJson, writeJson } from './storage.js';
 
 Gio._promisify(
@@ -37,10 +37,12 @@ export async function savePng(file, dataUri) {
 
 export class Wallpaper {
   constructor() {
-    const schema = Gio.SettingsSchemaSource.get_default().lookup(
-      'org.gnome.desktop.background',
-      true,
-    );
+    const schema = IS_FLATPAK
+      ? null
+      : Gio.SettingsSchemaSource.get_default().lookup(
+          'org.gnome.desktop.background',
+          true,
+        );
     this.settings = schema
       ? new Gio.Settings({ settings_schema: schema })
       : null;
@@ -51,7 +53,9 @@ export class Wallpaper {
   }
 
   get canRestore() {
-    return Gio.File.new_for_path(this.backupPath).query_exists(null);
+    return (
+      !IS_FLATPAK && Gio.File.new_for_path(this.backupPath).query_exists(null)
+    );
   }
 
   _check() {
@@ -82,8 +86,8 @@ export class Wallpaper {
     this.settings.apply();
   }
 
-  async apply(dataUri, presetId) {
-    this._check();
+  async apply(dataUri, presetId, parent = null) {
+    if (!IS_FLATPAK) this._check();
     const directory = GLib.build_filenamev([DATA_DIR, 'wallpapers']);
     GLib.mkdir_with_parents(directory, 0o700);
     const safeId = presetId.replace(/[^a-z0-9-]/g, '');
@@ -94,6 +98,16 @@ export class Wallpaper {
       ]),
     );
     await savePng(file, dataUri);
+    if (IS_FLATPAK) {
+      try {
+        const { setPortalWallpaper } = await import('./wallpaper-portal.js');
+        await setPortalWallpaper(file, parent);
+      } catch (error) {
+        file.delete(null);
+        throw error;
+      }
+      return file;
+    }
     if (!this.canRestore)
       writeJson(
         this.backupPath,

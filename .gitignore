@@ -1,6 +1,8 @@
 node_modules/
 build/
 build-native/
+build-flatpak/
+.flatpak-builder/
 artifacts/
 dist/
 .codegraph/

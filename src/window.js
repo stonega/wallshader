@@ -18,10 +18,15 @@ import {
   validateDimensions,
 } from './catalog.js';
 import { Store } from './storage.js';
+import { IS_FLATPAK } from './paths.js';
 import { Wallpaper, pngBytes, savePng } from './wallpaper.js';
 import { KittyBackground } from './kitty.js';
 import { Preview } from './preview.js';
-import { LiveWallpaper, LoginRequiredError } from './live.js';
+import {
+  LiveWallpaper,
+  LoginRequiredError,
+  ExtensionRequiredError,
+} from './live.js';
 import { AspectBox } from './aspect.js';
 import { ShaderEditor } from './editor.js';
 import { PresetGrid } from './preset-grid.js';
@@ -59,6 +64,7 @@ export const WallshaderWindow = GObject.registerClass(
         height_request: 600,
       });
       this.store = new Store();
+      if (IS_FLATPAK) this.store.state.wallpaperTarget = 'desktop';
       this.wallpaper = new Wallpaper();
       this.kitty = new KittyBackground();
       this.live = new LiveWallpaper(() => this._updateLiveStatus());
@@ -101,6 +107,7 @@ export const WallshaderWindow = GObject.registerClass(
       this.wallpaperTargetAction.connect('change-state', (action, value) => {
         const target = value.deepUnpack();
         if (target !== 'desktop' && target !== 'kitty') return;
+        if (IS_FLATPAK && target !== 'desktop') return;
         action.set_state(value);
         this.store.state.wallpaperTarget = target;
         this._save();
@@ -179,7 +186,9 @@ export const WallshaderWindow = GObject.registerClass(
       menu.append(_('Copy Settings…'), 'app.copy-settings');
       menu.append(_('Copy Paper Code…'), 'app.copy-code');
       menu.append(_('Show Debug Info'), 'win.debug-info');
-      menu.append(_('Restore Previous Wallpaper'), 'app.restore');
+      if (!IS_FLATPAK) {
+        menu.append(_('Restore Previous Wallpaper'), 'app.restore');
+      }
       menu.append(_('Preferences'), 'app.preferences');
       menu.append(_('About Wallshader'), 'app.about');
       menu.append(_('Quit'), 'app.quit');
@@ -475,15 +484,21 @@ export const WallshaderWindow = GObject.registerClass(
       });
       const destinations = new Gio.Menu();
       destinations.append(_('Desktop'), 'win.wallpaper-target::desktop');
-      destinations.append('Kitty', 'win.wallpaper-target::kitty');
-      this.applyButton = new Adw.SplitButton({
+      if (!IS_FLATPAK)
+        destinations.append('Kitty', 'win.wallpaper-target::kitty');
+      const applyProperties = {
         label: _('Set as Wallpaper'),
         hexpand: true,
         css_classes: ['suggested-action', 'pill', 'wallpaper-apply'],
         tooltip_text: _('Apply this frame to your GNOME desktop'),
-        dropdown_tooltip: _('Choose wallpaper destination'),
-        menu_model: destinations,
-      });
+      };
+      this.applyButton = IS_FLATPAK
+        ? new Gtk.Button(applyProperties)
+        : new Adw.SplitButton({
+            ...applyProperties,
+            dropdown_tooltip: _('Choose wallpaper destination'),
+            menu_model: destinations,
+          });
       this.applyButton.connect('clicked', () => this.applyWallpaper());
       actions.append(this.applyButton);
       this.wallpaperSettingsButton = iconButton(
@@ -674,7 +689,11 @@ export const WallshaderWindow = GObject.registerClass(
             ? _(
                 'Animates on every display and sets its first frame as the still background. GNOME 50 or 51 on Wayland is required.',
               )
-            : _('Applies a still image to light and dark appearances.'),
+            : IS_FLATPAK
+              ? _(
+                  'Your desktop asks you to confirm the wallpaper. Animated wallpapers use the Wallshader Live Wallpaper extension.',
+                )
+              : _('Applies a still image to light and dark appearances.'),
       );
       this.liveStatus.set_label(
         status.error ||
@@ -1350,7 +1369,7 @@ export const WallshaderWindow = GObject.registerClass(
         return this.applyAnimatedWallpaper();
       return this._capture(async (data, preset) => {
         await this.live.stop();
-        await this.wallpaper.apply(data, preset.id);
+        await this.wallpaper.apply(data, preset.id, this);
         await this._saveAppliedPreset(preset);
         this._recordRecent('desktop');
         this.toasts.add_toast(
@@ -1358,8 +1377,8 @@ export const WallshaderWindow = GObject.registerClass(
             title: format(_('{name} set as wallpaper'), {
               name: _(this.preset.name),
             }),
-            button_label: _('Undo'),
-            action_name: 'app.restore',
+            button_label: this.wallpaper.canRestore ? _('Undo') : null,
+            action_name: this.wallpaper.canRestore ? 'app.restore' : null,
           }),
         );
       });
@@ -1412,6 +1431,7 @@ export const WallshaderWindow = GObject.registerClass(
       this._syncAvailability();
       this.applyButton.set_label(_('Starting…'));
       try {
+        if (IS_FLATPAK) await this.live.setUp();
         await this.preview.select(this.preset);
         const state = await this.preview.request('state');
         const preset = normalizePreset(this.preset.id, {
@@ -1423,7 +1443,7 @@ export const WallshaderWindow = GObject.registerClass(
           ...this._dimensions(),
           frame: preset.frame,
         });
-        await this.wallpaper.apply(data, preset.id);
+        await this.wallpaper.apply(data, preset.id, this);
         await this._saveAppliedPreset(preset);
         this._recordRecent('desktop');
         await this.live.apply(
@@ -1434,27 +1454,68 @@ export const WallshaderWindow = GObject.registerClass(
         this.toasts.add_toast(
           new Adw.Toast({
             title: _('Animated wallpaper requested'),
-            button_label: _('Undo'),
-            action_name: 'app.restore',
+            button_label: this.wallpaper.canRestore ? _('Undo') : null,
+            action_name: this.wallpaper.canRestore ? 'app.restore' : null,
           }),
         );
       } catch (error) {
-        if (error instanceof LoginRequiredError) {
-          if (!this._closed) {
-            const dialog = new Adw.AlertDialog({
-              heading: _('Log Out to Finish Setup'),
-              body: error.message,
-              default_response: 'ok',
-              close_response: 'ok',
-            });
-            dialog.add_response('ok', _('Got It'));
-            dialog.present(this);
-          }
+        if (error instanceof ExtensionRequiredError) {
+          if (!this._closed) this._showExtensionSetup(error.message);
+        } else if (error instanceof LoginRequiredError) {
+          if (!this._closed) this._showLoginRequired(error.message);
         } else this.showError(error);
       } finally {
         this._busy = false;
         this._syncAvailability();
       }
+    }
+
+    _showExtensionSetup(message) {
+      const dialog = new Adw.AlertDialog({
+        heading: _('Install Animation Support'),
+        body: message,
+        default_response: 'install',
+        close_response: 'cancel',
+      });
+      dialog.add_response('cancel', _('Cancel'));
+      dialog.add_response('install', _('Install Extension'));
+      dialog.connect('response', (_dialog, response) => {
+        if (response === 'install') this.installAnimationSupport();
+      });
+      dialog.present(this);
+    }
+
+    _showLoginRequired(message) {
+      const dialog = new Adw.AlertDialog({
+        heading: _('Log Out to Finish Setup'),
+        body: message,
+        default_response: 'ok',
+        close_response: 'ok',
+      });
+      dialog.add_response('ok', _('Got It'));
+      dialog.present(this);
+    }
+
+    async installAnimationSupport() {
+      if (this._busy || this._closed) return;
+      this._busy = true;
+      this._syncAvailability();
+      this.applyButton.set_label(_('Installing…'));
+      let installed = false;
+      try {
+        await this.live.install();
+        installed = true;
+      } catch (error) {
+        if (!this._closed) {
+          if (error instanceof LoginRequiredError)
+            this._showLoginRequired(error.message);
+          else this.showError(error);
+        }
+      } finally {
+        this._busy = false;
+        this._syncAvailability();
+      }
+      if (installed && !this._closed) await this.applyAnimatedWallpaper();
     }
 
     exportPng() {

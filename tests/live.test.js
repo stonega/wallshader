@@ -4,6 +4,7 @@ import {
   normalizeLiveConfig,
   parseLiveConfig,
   coversMonitor,
+  rendererIdentity,
 } from '../src/live-config.js';
 
 test('live settings preserve every shader and bound rendering options', () => {
@@ -19,6 +20,7 @@ test('live settings preserve every shader and bound rendering options', () => {
       paused: true,
       fps: 60,
       rendering: 'compatibility',
+      backend: 'native',
       preset,
     });
   }
@@ -32,6 +34,30 @@ test('live settings preserve every shader and bound rendering options', () => {
   expect(() => parseLiveConfig('{bad')).toThrow();
   expect(() => normalizeLiveConfig({ preset: { id: 'unknown' } })).toThrow();
   expect(() => parseLiveConfig('x'.repeat(128001))).toThrow();
+});
+
+test('renderer backend is restricted and has a sandbox-compatible identity', () => {
+  const preset = createPreset('aurora');
+  expect(normalizeLiveConfig({ preset, backend: 'flatpak' }).backend).toBe(
+    'flatpak',
+  );
+  for (const backend of [
+    undefined,
+    null,
+    'native',
+    'arbitrary-command',
+    {},
+    true,
+  ])
+    expect(normalizeLiveConfig({ preset, backend }).backend).toBe('native');
+  expect(rendererIdentity('native')).toEqual({
+    id: 'io.github.wallshader.Renderer',
+    path: '/io/github/wallshader/Renderer',
+  });
+  expect(rendererIdentity('flatpak')).toEqual({
+    id: 'io.github.stonega.wallshader.Renderer',
+    path: '/io/github/stonega/wallshader/Renderer',
+  });
 });
 
 test('live rendering survives persistence and older settings keep compatibility', () => {

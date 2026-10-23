@@ -1,0 +1,2 @@
+option('flatpak', type: 'boolean', value: false, description: 'Use the Flathub application ID in metadata')
+option('live_extension', type: 'boolean', value: true, description: 'Install the host GNOME Shell extension bundle')

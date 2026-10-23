@@ -95,6 +95,32 @@ The renderer uses a restrictive content security policy and rejects navigation
 away from its bundled page. Startup errors and terminated WebKit processes are
 visible in the preview. The application works offline after building.
 
+Flatpak uses the GNOME runtime and the repository-owned application ID
+`io.github.stonega.wallshader`; native packages retain their existing application
+ID. Sandbox detection uses `/.flatpak-info`. In Flatpak, `Wallpaper` delegates
+still-image apply to libportal, which passes a PNG file descriptor to the desktop
+wallpaper portal and waits for its response. It never reads or writes host
+background settings. Animation uses a companion extension installed on the host
+and a dedicated D-Bus connection exposing only Wallshader's control interface.
+The extension starts a Flatpak renderer with Mutter's inherited private Wayland
+socket, preserving `Meta.WaylandClient.owns_window` identification. Configuration
+travels as validated JSON at startup and through a typed action. Native clients
+retain their existing interface. Restoration, the desktop-shortcut preference,
+and Kitty controls remain unavailable in Flatpak. The setup dialog installs a
+bundled GResource payload only after the user chooses Install Extension. The
+manifest grants write access only to this UUID's host extension directory and
+access to GNOME's separate extension-management service. Installation replaces
+files atomically, commits metadata last and rolls back completed writes on
+failure. Host XDG paths come from Flatpak's HOST_XDG_DATA_HOME, with the standard
+home-relative fallback. New extensions may need login discovery; a subsequent
+animated apply enables only Wallshader's UUID through GNOME's service. Updates
+cannot reload cached Shell modules, so incompatible loaded versions require a
+logout/login too. No host command execution or general Shell API access is granted.
+The ZIP remains available as a release artifact for manual installation.
+File selection uses GTK's portals;
+settings and data stay in the sandbox's XDG directories. See
+[Flatpak packaging](../implementation/flatpak.md) for permissions and verification.
+
 The optional debug panel is a native GTK overlay on each live desktop wallpaper.
 The app preview stays unchanged. While enabled on the desktop, a separate rAF
 observer samples Paper's public frame time and posts diagnostics to GJS once per

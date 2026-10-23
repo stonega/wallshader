@@ -7,8 +7,13 @@ import System from 'system';
 import { Preview } from './preview.js';
 import { DebugInfo } from './debug-info.js';
 import { readJson, watchDebugInfo } from './storage.js';
-import { CONFIG_DIR, ROOT } from './paths.js';
-import { RENDERER_ID, normalizeLiveConfig } from './live-config.js';
+import { CONFIG_DIR, ROOT, IS_FLATPAK } from './paths.js';
+import {
+  LIVE_BUS,
+  rendererIdentity,
+  normalizeLiveConfig,
+  parseLiveConfig,
+} from './live-config.js';
 
 // Only the Shell extension launches this process, with an owned Wayland socket.
 const monitors = JSON.parse(ARGV[0] ?? '[]');
@@ -20,13 +25,17 @@ if (
 )
   throw new Error('The wallpaper renderer requires a monitor layout.');
 const configPath = GLib.build_filenamev([CONFIG_DIR, 'live-wallpaper.json']);
-let config = normalizeLiveConfig(readJson(configPath));
+let config = ARGV[1]
+  ? parseLiveConfig(ARGV[1])
+  : normalizeLiveConfig(readJson(configPath));
 let paused = true;
 let failed = false;
 const previews = [];
 let debugMonitor;
 let debugInfo = false;
-const app = new Gtk.Application({ application_id: RENDERER_ID });
+const app = new Gtk.Application({
+  application_id: rendererIdentity(IS_FLATPAK ? 'flatpak' : 'native').id,
+});
 const ready = new Gio.SimpleAction({
   name: 'ready',
   state: new GLib.Variant('b', false),
@@ -62,9 +71,9 @@ action('pause', 'b', (value) => {
   paused = value;
   for (const preview of previews) preview.pause(paused).catch(fail);
 });
-action('reload', null, () => {
+function configure(load) {
   try {
-    config = normalizeLiveConfig(readJson(configPath));
+    config = load();
     Promise.all(
       previews.map(async (preview) => {
         await preview.request('live', { fps: config.fps });
@@ -75,9 +84,18 @@ action('reload', null, () => {
   } catch (error) {
     fail(error);
   }
-});
+}
+action('reload', null, () =>
+  configure(() => normalizeLiveConfig(readJson(configPath))),
+);
+action('configure', 's', (source) => configure(() => parseLiveConfig(source)));
 action('inspect', null, () => {
-  Promise.all(previews.map((preview) => preview.request('state')))
+  Promise.all(
+    previews.map(async (preview) => ({
+      state: await preview.request('state'),
+      geometry: await preview.request('geometry'),
+    })),
+  )
     .then((states) =>
       diagnostic.set_state(
         new GLib.Variant(
@@ -86,8 +104,15 @@ action('inspect', null, () => {
             paused,
             fps: config.fps,
             rendering: config.rendering,
+            backend: IS_FLATPAK ? 'flatpak' : 'native',
             skiaCpuRendering: GLib.getenv('WEBKIT_SKIA_ENABLE_CPU_RENDERING'),
-            frames: states.map((state) => state.frame),
+            frames: states.map(({ state }) => state.frame),
+            geometry: states.map(({ geometry }) => geometry),
+            allocations: previews.map((preview) => ({
+              width: preview.widget.get_width(),
+              height: preview.widget.get_height(),
+              scale: preview.widget.get_scale_factor(),
+            })),
             preset: config.preset.id,
             monitors: previews.length,
             debugInfo: previews.map((preview) => preview.debug.panel.visible),
@@ -165,7 +190,7 @@ app.connect('shutdown', () => {
 // A renderer must not survive a disabled/crashed Shell extension.
 const shellWatch = Gio.bus_watch_name(
   Gio.BusType.SESSION,
-  'org.gnome.Shell',
+  IS_FLATPAK ? LIVE_BUS : 'org.gnome.Shell',
   Gio.BusNameWatcherFlags.NONE,
   () => {},
   () => app.quit(),

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>@APP_ID@</id>
+  <name>Wallshader</name>
+  <summary>Create colorful shader wallpapers</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <developer id="io.github.stonega">
+    <name>Wallshader contributors</name>
+  </developer>
+  <description>
+    <p>Create a colorful desktop with Paper Shaders in a native GNOME interface.
+    Browse 30 shaders, customize their colors and shapes, and save your favorites.</p>
+    <ul>
+      <li>Edit shader parameters and choose from 124 Paper presets.</li>
+      <li>Import local images and settings copied from Paper.</li>
+      <li>Apply a still wallpaper to your desktop.</li>
+      <li>Run animated wallpapers with Wallshader's GNOME Shell extension.</li>
+      <li>Export full-resolution PNG images and save custom presets.</li>
+    </ul>
+    <p>Animated desktop wallpapers require GNOME 50 or 51 on Wayland, Flatpak
+    1.18 or newer, and the companion Wallshader Live Wallpaper extension. The app
+    can install and enable this extension directly; a one-time logout and login
+    may be required. Still wallpapers
+    and PNG export work without the extension. Restoring the previous wallpaper
+    and Kitty integration require the native package.</p>
+  </description>
+  <launchable type="desktop-id">@APP_ID@.desktop</launchable>
+  <url type="homepage">https://github.com/stonega/wallshader</url>
+  <url type="bugtracker">https://github.com/stonega/wallshader/issues</url>
+  <url type="vcs-browser">https://github.com/stonega/wallshader</url>
+  <url type="help">https://github.com/stonega/wallshader/blob/main/docs/user/usage.md</url>
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/stonega/wallshader/v0.1.18/docs/images/wallshader-screenshot.png</image>
+      <caption>Shader preview, wallpaper collection, and native customization controls</caption>
+    </screenshot>
+  </screenshots>
+  <releases>
+    <release version="0.1.18" date="2026-10-21">
+      <url type="details">https://github.com/stonega/wallshader/releases/tag/v0.1.18</url>
+    </release>
+  </releases>
+  <content_rating type="oars-1.1"/>
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+</component>

@@ -2,6 +2,7 @@ import Adw from 'gi://Adw?version=1';
 import Gtk from 'gi://Gtk?version=4.0';
 import { _, availableLanguages } from './i18n.js';
 import { languageName } from './language.js';
+import { IS_FLATPAK } from './paths.js';
 
 export function showPreferences(window) {
   if (window.preferencesDialog) {
@@ -71,6 +72,7 @@ export function showPreferences(window) {
   });
   group.add(row);
   const desktopMenu = new Adw.SwitchRow({
+    visible: !IS_FLATPAK,
     title: _('Show Desktop Menu Shortcut'),
     subtitle: _('Show “Open Wallshader” in the desktop right-click menu.'),
     active: window.store.state.showDesktopMenu,

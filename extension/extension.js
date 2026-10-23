@@ -10,8 +10,9 @@ import { DesktopMenu } from './desktop-menu.js';
 import {
   LIVE_XML,
   LIVE_PATH,
-  RENDERER_ID,
-  RENDERER_PATH,
+  LIVE_BUS,
+  FLATPAK_ID,
+  rendererIdentity,
   parseLiveConfig,
   normalizeLiveConfig,
   coversMonitor,
@@ -44,6 +45,36 @@ export default class WallshaderExtension extends Extension {
     ]);
     this._dbus = Gio.DBusExportedObject.wrapJSObject(LIVE_XML, this);
     this._dbus.export(Gio.DBus.session, LIVE_PATH);
+    // Use a separate connection so this name exposes only Wallshader's control
+    // interface, without granting sandboxed editors access to Shell's APIs.
+    this._controlBus = Gio.DBusConnection.new_for_address_sync(
+      Gio.dbus_address_get_for_bus_sync(Gio.BusType.SESSION, null),
+      Gio.DBusConnectionFlags.AUTHENTICATION_CLIENT |
+        Gio.DBusConnectionFlags.MESSAGE_BUS_CONNECTION,
+      null,
+      null,
+    );
+    this._controlBus.set_exit_on_close(false);
+    this._controlDbus = Gio.DBusExportedObject.wrapJSObject(LIVE_XML, {
+      GetStatus: () => this.GetStatus(),
+      Apply: (source) => {
+        if (parseLiveConfig(source).backend !== 'flatpak')
+          throw new Error(
+            'The sandbox control service only accepts Flatpak renderers.',
+          );
+        this.Apply(source);
+      },
+      Stop: () => this.Stop(),
+      SetPaused: (paused) => this.SetPaused(paused),
+    });
+    this._controlDbus.export(this._controlBus, LIVE_PATH);
+    this._controlOwner = Gio.bus_own_name_on_connection(
+      this._controlBus,
+      LIVE_BUS,
+      Gio.BusNameOwnerFlags.NONE,
+      null,
+      null,
+    );
     this._connect(global.display, 'window-created', (_display, window) =>
       this._manage(window),
     );
@@ -82,6 +113,7 @@ export default class WallshaderExtension extends Extension {
     try {
       const saved = readJson(this._path);
       if (saved) this._config = normalizeLiveConfig(saved);
+      this._desktopMenu.backend = this._config?.backend;
       if (this._config?.enabled) this._start();
     } catch (error) {
       this._error = error.message;
@@ -96,6 +128,8 @@ export default class WallshaderExtension extends Extension {
   GetStatus() {
     return JSON.stringify({
       available: true,
+      backends: ['native', 'flatpak'],
+      backend: this._config?.backend ?? 'native',
       active: Boolean(this._process),
       ready: this._ready,
       paused: Boolean(this._reason),
@@ -119,13 +153,15 @@ export default class WallshaderExtension extends Extension {
   Apply(source) {
     const config = { ...parseLiveConfig(source), enabled: true };
     writeJson(this._path, config);
-    const renderingChanged = config.rendering !== this._config?.rendering;
+    const renderingChanged =
+      config.rendering !== this._config?.rendering ||
+      config.backend !== this._config?.backend;
     this._config = config;
+    this._desktopMenu.backend = config.backend;
     this._error = '';
     // WebKit reads the drawing backend at startup, before creating any views.
     if (this._process && renderingChanged) this._stop();
-    if (this._process && this._ready)
-      this._actions?.activate_action('reload', null);
+    if (this._process && this._ready) this._configureRenderer();
     else if (this._process) this._needsReload = true;
     else this._start();
     this._updatePause();
@@ -150,6 +186,10 @@ export default class WallshaderExtension extends Extension {
   }
 
   _notify() {
+    this._controlDbus?.emit_signal(
+      'Changed',
+      new GLib.Variant('(s)', [this.GetStatus()]),
+    );
     this._dbus?.emit_signal(
       'Changed',
       new GLib.Variant('(s)', [this.GetStatus()]),
@@ -177,28 +217,51 @@ export default class WallshaderExtension extends Extension {
     launcher.unsetenv('XDG_ACTIVATION_TOKEN');
     launcher.unsetenv('DESKTOP_STARTUP_ID');
     try {
+      const flatpak = this._config.backend === 'flatpak';
+      if (flatpak && !GLib.find_program_in_path('flatpak'))
+        throw new Error(
+          'Install Flatpak 1.18 or newer to run animated wallpapers.',
+        );
+      const script = flatpak
+        ? '/app/share/wallshader/src/desktop-renderer.js'
+        : GLib.build_filenamev([
+            this.path,
+            'app',
+            'src',
+            'desktop-renderer.js',
+          ]);
+      const command = flatpak
+        ? [
+            'flatpak',
+            'run',
+            // Also kill the sandbox if Stop interrupts its startup supervisor.
+            '--die-with-parent',
+            '--socket=inherit-wayland-socket',
+            '--command=gjs',
+            '--env=GDK_BACKEND=wayland',
+            `--env=WEBKIT_SKIA_ENABLE_CPU_RENDERING=${this._config.rendering === 'gpu' ? '0' : '1'}`,
+            FLATPAK_ID,
+          ]
+        : ['gjs'];
       this._setCompositing(true);
       this._client = Meta.WaylandClient.new_subprocess(
         global.context,
         launcher,
         [
-          'gjs',
+          ...command,
           '-m',
-          GLib.build_filenamev([
-            this.path,
-            'app',
-            'src',
-            'desktop-renderer.js',
-          ]),
+          script,
           JSON.stringify(monitors),
+          JSON.stringify(this._config),
         ],
       );
       const process = this._client.get_subprocess();
       this._process = process;
+      this._processBackend = this._config.backend;
       this._ready = false;
       this._rendererWatch = Gio.bus_watch_name(
         Gio.BusType.SESSION,
-        RENDERER_ID,
+        rendererIdentity(this._config.backend).id,
         Gio.BusNameWatcherFlags.NONE,
         (_connection, _name, owner) => {
           if (!this._enabled || this._process !== process || this._actions)
@@ -206,7 +269,7 @@ export default class WallshaderExtension extends Extension {
           this._actions = Gio.DBusActionGroup.get(
             Gio.DBus.session,
             owner,
-            RENDERER_PATH,
+            rendererIdentity(this._config.backend).path,
           );
           this._actionAdded = this._actions.connect('action-added', () =>
             this._checkReady(),
@@ -223,7 +286,7 @@ export default class WallshaderExtension extends Extension {
         if (this._ready) return;
         this._error =
           'The wallpaper renderer did not start. Check WebKitGTK and WebGL support.';
-        this._stop(false);
+        this._stop();
         this._notify();
       });
       process.wait_async(null, (child, result) => {
@@ -264,11 +327,18 @@ export default class WallshaderExtension extends Extension {
     this._ready = true;
     if (this._needsReload) {
       this._needsReload = false;
-      this._actions.activate_action('reload', null);
+      this._configureRenderer();
     }
     if (this._sources.delete(this._startup)) GLib.source_remove(this._startup);
     this._updatePause(true);
     this._notify();
+  }
+
+  _configureRenderer() {
+    this._actions?.activate_action(
+      'configure',
+      new GLib.Variant('s', JSON.stringify(this._config)),
+    );
   }
 
   _manage(window) {
@@ -399,6 +469,8 @@ export default class WallshaderExtension extends Extension {
   }
 
   _stop(terminate = true) {
+    const actions = this._actions;
+    const flatpak = this._processBackend === 'flatpak';
     for (const id of this._sources) GLib.source_remove(id);
     this._sources.clear();
     if (this._rendererWatch) Gio.bus_unwatch_name(this._rendererWatch);
@@ -410,6 +482,7 @@ export default class WallshaderExtension extends Extension {
     }
     const process = this._process;
     this._process = null;
+    this._processBackend = null;
     this._client = null;
     this._ready = false;
     this._reason = '';
@@ -420,7 +493,44 @@ export default class WallshaderExtension extends Extension {
     this._setCompositing(false);
     // This handle identifies only the renderer we own, never another application.
     if (process && terminate) {
-      process.send_signal(15);
+      // Ask the application to close before its Flatpak supervisor exits. This
+      // releases the renderer's bus name before starting a replacement sandbox.
+      let stopWatch = 0;
+      let stopActions;
+      let stopAdded = 0;
+      if (actions?.has_action('quit')) actions.activate_action('quit', null);
+      else if (flatpak) {
+        // Killing the supervisor while it forks can strand a starting sandbox.
+        // Let registration finish, then close the app before its first frame.
+        stopWatch = Gio.bus_watch_name(
+          Gio.BusType.SESSION,
+          rendererIdentity('flatpak').id,
+          Gio.BusNameWatcherFlags.NONE,
+          (_connection, _name, owner) => {
+            if (stopAdded) stopActions.disconnect(stopAdded);
+            stopActions = Gio.DBusActionGroup.get(
+              Gio.DBus.session,
+              owner,
+              rendererIdentity('flatpak').path,
+            );
+            const quit = () => {
+              if (stopActions.has_action('quit'))
+                stopActions.activate_action('quit', null);
+            };
+            stopAdded = stopActions.connect('action-added', quit);
+            quit();
+          },
+          () => {},
+        );
+      } else process.send_signal(15);
+      const terminateTimeout = GLib.timeout_add(
+        GLib.PRIORITY_DEFAULT,
+        2000,
+        () => {
+          process.send_signal(15);
+          return GLib.SOURCE_REMOVE;
+        },
+      );
       const stopped = new Promise((resolve) =>
         process.wait_async(null, (child, result) => {
           try {
@@ -429,6 +539,11 @@ export default class WallshaderExtension extends Extension {
             console.warn(error.message);
           }
           if (this._stopping === stopped) this._stopping = null;
+          if (stopWatch) Gio.bus_unwatch_name(stopWatch);
+          if (stopAdded) stopActions.disconnect(stopAdded);
+          // The timeout may already have fired when startup failed.
+          if (GLib.MainContext.default().find_source_by_id(terminateTimeout))
+            GLib.source_remove(terminateTimeout);
           resolve();
         }),
       );
@@ -447,6 +562,13 @@ export default class WallshaderExtension extends Extension {
     this._signals = [];
     this._dbus?.unexport();
     this._dbus = null;
+    this._controlDbus?.unexport();
+    this._controlDbus = null;
+    if (this._controlOwner) Gio.bus_unown_name(this._controlOwner);
+    this._controlOwner = 0;
+    if (this._controlBus && !this._controlBus.is_closed())
+      this._controlBus.close_sync(null);
+    this._controlBus = null;
     this._config = null;
   }
 }

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-21 14:23+0800\n"
+"POT-Creation-Date: 2026-10-23 14:18+0800\n"
 "PO-Revision-Date: 2026-10-20 00:00+0000\n"
 "Last-Translator: Wallshader translation draft\n"
 "Language-Team: ja\n"
@@ -32,7 +32,7 @@ msgstr "壁紙;背景;シェーダー;Paper;グラデーション;"
 msgid "Open Wallshader"
 msgstr ""
 
-#: extension/desktop-menu.js:84
+#: extension/desktop-menu.js:86
 msgid "Install Wallshader to open it from the desktop menu."
 msgstr ""
 
@@ -612,7 +612,7 @@ msgstr ""
 msgid "Edges"
 msgstr "エッジ"
 
-#: po/paper-catalog.js:142 src/window.js:295
+#: po/paper-catalog.js:142 src/window.js:304
 msgid "Effects"
 msgstr "効果"
 
@@ -952,7 +952,7 @@ msgstr ""
 msgid "Image Dithering"
 msgstr "画像ディザリング"
 
-#: po/paper-catalog.js:223 src/window.js:296
+#: po/paper-catalog.js:223 src/window.js:305
 msgid "Image Filters"
 msgstr "画像フィルター"
 
@@ -1082,7 +1082,7 @@ msgstr "動くインク"
 msgid "Lo-Fi"
 msgstr "ローファイ"
 
-#: po/paper-catalog.js:254 src/window.js:297
+#: po/paper-catalog.js:254 src/window.js:306
 msgid "Logo Animations"
 msgstr "ロゴアニメーション"
 
@@ -2651,13 +2651,13 @@ msgid ""
 "dollar signs."
 msgstr "Kitty の背景パスは絶対パスで、改行やドル記号を含めることはできません。"
 
-#: src/live.js:61
+#: src/live.js:62
 msgid "The extension bundle contains an unsupported file. Rebuild Wallshader."
 msgstr ""
 "拡張機能のバンドルに未対応のファイルがあります。Wallshader を再ビルドしてくだ"
 "さい。"
 
-#: src/live.js:74
+#: src/live.js:75
 msgid ""
 "Animation support is installed. Log out and back in once so GNOME can "
 "discover it. Then open Wallshader and choose “Set Animated Wallpaper” again."
@@ -2666,22 +2666,53 @@ msgstr ""
 "GNOME に拡張機能を認識させてください。その後 Wallshader を開き、再度「動く壁"
 "紙に設定」を選択してください。"
 
-#: src/live.js:126
-#, fuzzy
-msgid "Animated wallpapers currently support GNOME 50 and 51 on Wayland."
-msgstr "動く壁紙は現在、Wayland 上の GNOME 50 に対応しています。"
+#: src/live.js:86
+msgid ""
+"Install Wallshader Live Wallpaper to animate your desktop. GNOME 50 or 51 on "
+"Wayland and Flatpak 1.18 or newer are required. You may need to log out and "
+"back in once after installation."
+msgstr ""
 
-#: src/live.js:146
+#: src/live.js:166
 msgid ""
 "Build Wallshader with “bun run build” to include animated wallpaper support."
 msgstr ""
 "「bun run build」で Wallshader をビルドし、動く壁紙のサポートを含めてくださ"
 "い。"
 
-#: src/live.js:184
+#: src/live.js:196
 msgid "Enable Wallshader Live Wallpaper in GNOME Extensions, then try again."
 msgstr ""
 "GNOME 拡張機能で Wallshader Live Wallpaper を有効にして、再試行してください。"
+
+#: src/live.js:212
+#, fuzzy
+msgid "Animated wallpapers currently support GNOME 50 and 51 on Wayland."
+msgstr "動く壁紙は現在、Wayland 上の GNOME 50 に対応しています。"
+
+#: src/live.js:229
+#, fuzzy
+msgid "Turn on extensions in GNOME Extensions, then try again."
+msgstr ""
+"GNOME 拡張機能で Wallshader Live Wallpaper を有効にして、再試行してください。"
+
+#: src/extension-install.js:36
+msgid "The animation extension folder must be a regular directory."
+msgstr ""
+
+#: src/extension-install.js:71
+#, fuzzy
+msgid "The animation extension bundle is invalid. Reinstall Wallshader."
+msgstr ""
+"拡張機能のバンドルに未対応のファイルがあります。Wallshader を再ビルドしてくだ"
+"さい。"
+
+#: src/extension-install.js:78
+#, fuzzy
+msgid "The animation extension contains an unsupported file."
+msgstr ""
+"拡張機能のバンドルに未対応のファイルがあります。Wallshader を再ビルドしてくだ"
+"さい。"
 
 #: src/main.js:60
 msgid "Wallshader contributors"
@@ -2751,35 +2782,35 @@ msgstr ""
 "{name} のレンダリングに時間がかかりすぎています。画像サイズを小さくしてくださ"
 "い。"
 
-#: src/preferences.js:12 src/window.js:183
+#: src/preferences.js:13 src/window.js:192
 msgid "Preferences"
 msgstr "設定"
 
-#: src/preferences.js:17
+#: src/preferences.js:18
 msgid "General"
 msgstr "一般"
 
-#: src/preferences.js:21
+#: src/preferences.js:22
 msgid "Interface"
 msgstr "インターフェース"
 
-#: src/preferences.js:24
+#: src/preferences.js:25
 msgid "Language changes take effect the next time you open Wallshader."
 msgstr "言語の変更は、次回 Wallshader を開いたときに反映されます。"
 
-#: src/preferences.js:37
+#: src/preferences.js:38
 msgid "Language"
 msgstr "言語"
 
-#: src/preferences.js:40
+#: src/preferences.js:41
 msgid "System Default"
 msgstr "システムの既定値"
 
-#: src/preferences.js:74
+#: src/preferences.js:76
 msgid "Show Desktop Menu Shortcut"
 msgstr ""
 
-#: src/preferences.js:75
+#: src/preferences.js:77
 msgid "Show “Open Wallshader” in the desktop right-click menu."
 msgstr ""
 
@@ -2787,7 +2818,7 @@ msgstr ""
 msgid "Save Preset"
 msgstr "プリセットを保存"
 
-#: src/save-preset-dialog.js:24
+#: src/save-preset-dialog.js:24 src/window.js:1480
 msgid "Cancel"
 msgstr "キャンセル"
 
@@ -2886,193 +2917,193 @@ msgstr "保存した設定を読み込めませんでした: {error}"
 msgid "The renderer did not return a PNG image."
 msgstr "レンダラーから PNG 画像が返されませんでした。"
 
-#: src/wallpaper.js:61
+#: src/wallpaper.js:65
 msgid "GNOME wallpaper settings are unavailable. You can still export a PNG."
 msgstr "GNOME の壁紙設定を利用できません。PNG の書き出しは可能です。"
 
-#: src/wallpaper.js:68
+#: src/wallpaper.js:72
 msgid ""
 "Your desktop wallpaper is managed by an administrator. You can still export "
 "a PNG."
 msgstr "デスクトップの壁紙は管理者が管理しています。PNG の書き出しは可能です。"
 
-#: src/wallpaper.js:79
+#: src/wallpaper.js:83
 msgid "GNOME could not update the wallpaper."
 msgstr "GNOME で壁紙を更新できませんでした。"
 
-#: src/wallpaper.js:124
+#: src/wallpaper.js:138
 msgid "No valid previous wallpaper was found."
 msgstr "有効な以前の壁紙が見つかりませんでした。"
 
-#: src/window.js:157
+#: src/window.js:164
 msgid "Wallpapers made with Paper"
 msgstr "Paper で作った壁紙"
 
-#: src/window.js:162
+#: src/window.js:169
 msgid "Search wallpapers (Ctrl+F)"
 msgstr "壁紙を検索（Ctrl+F）"
 
-#: src/window.js:173
+#: src/window.js:180
 msgid "Customize wallpaper"
 msgstr "壁紙をカスタマイズ"
 
-#: src/window.js:178
+#: src/window.js:185
 msgid "Import Paper Settings…"
 msgstr "Paper 設定を読み込む…"
 
-#: src/window.js:179
+#: src/window.js:186
 msgid "Copy Settings…"
 msgstr "設定をコピー…"
 
-#: src/window.js:180
+#: src/window.js:187
 msgid "Copy Paper Code…"
 msgstr "Paper コードをコピー…"
 
-#: src/window.js:181
+#: src/window.js:188
 msgid "Show Debug Info"
 msgstr "デバッグ情報を表示"
 
-#: src/window.js:182
+#: src/window.js:190
 msgid "Restore Previous Wallpaper"
 msgstr "以前の壁紙に戻す"
 
-#: src/window.js:184
+#: src/window.js:193
 msgid "About Wallshader"
 msgstr "Wallshader について"
 
-#: src/window.js:185
+#: src/window.js:194
 msgid "Quit"
 msgstr "終了"
 
-#: src/window.js:199
+#: src/window.js:208
 msgid "Search wallpapers"
 msgstr "壁紙を検索"
 
-#: src/window.js:217
+#: src/window.js:226
 msgid "Export PNG…"
 msgstr "PNG を書き出す…"
 
-#: src/window.js:222
+#: src/window.js:231
 msgid "Save Preset…"
 msgstr "プリセットを保存…"
 
-#: src/window.js:227
+#: src/window.js:236
 msgid "Reset Changes"
 msgstr "変更をリセット"
 
-#: src/window.js:232 src/window.js:986
+#: src/window.js:241 src/window.js:1005
 msgid "Add to favorites"
 msgstr "お気に入りに追加"
 
-#: src/window.js:256
+#: src/window.js:265
 msgid "Preview unavailable"
 msgstr "プレビューを利用できません"
 
-#: src/window.js:266 src/window.js:1183
+#: src/window.js:275 src/window.js:1202
 msgid "Play preview"
 msgstr "プレビューを再生"
 
-#: src/window.js:266 src/window.js:1183
+#: src/window.js:275 src/window.js:1202
 msgid "Pause preview"
 msgstr "プレビューを一時停止"
 
-#: src/window.js:294 src/window.js:324
+#: src/window.js:303 src/window.js:333
 msgid "All"
 msgstr "すべて"
 
-#: src/window.js:330
+#: src/window.js:339
 msgid "Show all wallpapers"
 msgstr "すべての壁紙を表示"
 
-#: src/window.js:331
+#: src/window.js:340
 msgid "Choose a wallpaper category"
 msgstr "壁紙のカテゴリを選択"
 
-#: src/window.js:342
+#: src/window.js:351
 msgid "Favorites"
 msgstr "お気に入り"
 
-#: src/window.js:343
+#: src/window.js:352
 msgid "Recent"
 msgstr "最近使用した項目"
 
-#: src/window.js:429 src/window.js:1023
+#: src/window.js:438 src/window.js:1042
 msgid "No wallpapers found"
 msgstr "壁紙が見つかりません"
 
-#: src/window.js:434 src/window.js:1030
+#: src/window.js:443 src/window.js:1049
 msgid "Try a different search or collection."
 msgstr "別の検索語またはコレクションをお試しください。"
 
-#: src/window.js:443
+#: src/window.js:452
 msgid "Made with Paper Shaders"
 msgstr "Paper Shaders で作成"
 
-#: src/window.js:457
+#: src/window.js:466
 msgid "Customize"
 msgstr "カスタマイズ"
 
-#: src/window.js:477
+#: src/window.js:486
 msgid "Desktop"
 msgstr "デスクトップ"
 
-#: src/window.js:480 src/window.js:704 src/window.js:1292
+#: src/window.js:490 src/window.js:723 src/window.js:1311
 msgid "Set as Wallpaper"
 msgstr "壁紙に設定"
 
-#: src/window.js:483
+#: src/window.js:493
 msgid "Apply this frame to your GNOME desktop"
 msgstr "このフレームを GNOME デスクトップに適用"
 
-#: src/window.js:484
+#: src/window.js:499
 msgid "Choose wallpaper destination"
 msgstr "壁紙の適用先を選択"
 
-#: src/window.js:491 src/window.js:509 src/window.js:818
+#: src/window.js:506 src/window.js:524 src/window.js:837
 msgid "Wallpaper Settings"
 msgstr "壁紙設定"
 
-#: src/window.js:521 src/window.js:525
+#: src/window.js:536 src/window.js:540
 msgid "Wallpaper mode"
 msgstr "壁紙モード"
 
-#: src/window.js:523
+#: src/window.js:538
 msgid "Still image"
 msgstr "静止画像"
 
-#: src/window.js:523
+#: src/window.js:538
 msgid "Animated shader"
 msgstr "アニメーションシェーダー"
 
-#: src/window.js:534
+#: src/window.js:549
 msgid "Animation frame rate"
 msgstr "アニメーションのフレームレート"
 
-#: src/window.js:538
+#: src/window.js:553
 msgid "30 FPS · less power"
 msgstr "30 FPS · 省電力"
 
-#: src/window.js:539
+#: src/window.js:554
 msgid "60 FPS · smoother"
 msgstr "60 FPS · 滑らか"
 
-#: src/window.js:541
+#: src/window.js:556
 msgid "Wallpaper frame rate"
 msgstr "壁紙のフレームレート"
 
-#: src/window.js:546 src/window.js:554
+#: src/window.js:561 src/window.js:569
 msgid "Wallpaper rendering"
 msgstr "壁紙のレンダリング"
 
-#: src/window.js:550
+#: src/window.js:565
 msgid "Compatibility (default)"
 msgstr "互換性（既定）"
 
-#: src/window.js:551
+#: src/window.js:566
 msgid "GPU (experimental)"
 msgstr "GPU（実験的）"
 
-#: src/window.js:565
+#: src/window.js:580
 msgid ""
 "GPU mode may reduce CPU use but can cause flickering. Takes effect when you "
 "apply the wallpaper."
@@ -3080,19 +3111,19 @@ msgstr ""
 "GPU モードは CPU 使用率を下げられる場合がありますが、ちらつきが発生することが"
 "あります。壁紙の適用時に反映されます。"
 
-#: src/window.js:572
+#: src/window.js:587
 msgid "Runs on the desktop after closing this app."
 msgstr "このアプリを閉じた後もデスクトップで動作します。"
 
-#: src/window.js:579 src/window.js:694
+#: src/window.js:594 src/window.js:713
 msgid "Pause"
 msgstr "一時停止"
 
-#: src/window.js:587
+#: src/window.js:602
 msgid "Stop"
 msgstr "停止"
 
-#: src/window.js:602
+#: src/window.js:617
 msgid ""
 "Saves to {path}. Kitty reloads automatically; if disabled, reload its "
 "settings or open a new instance."
@@ -3100,27 +3131,27 @@ msgstr ""
 "{path} に保存します。Kitty は自動で再読み込みします。無効にしている場合は設定"
 "を再読み込みするか、新しく起動してください。"
 
-#: src/window.js:611
+#: src/window.js:626
 msgid "Restore Kitty Background"
 msgstr "Kitty の背景を元に戻す"
 
-#: src/window.js:618
+#: src/window.js:633
 msgid "Output resolution"
 msgstr "出力解像度"
 
-#: src/window.js:620
+#: src/window.js:635
 msgid "This display"
 msgstr "このディスプレイ"
 
-#: src/window.js:628
+#: src/window.js:643
 msgid "Wallpaper resolution"
 msgstr "壁紙の解像度"
 
-#: src/window.js:634 src/window.js:677
+#: src/window.js:649 src/window.js:696
 msgid "Applies a still image to light and dark appearances."
 msgstr "ライトとダークの外観に静止画像を適用します。"
 
-#: src/window.js:668
+#: src/window.js:683
 msgid ""
 "Animates behind terminal text with a dark tint. Requires Kitty 0.49 or newer "
 "with its shader compiler. Kitty controls animation timing and window size. "
@@ -3132,7 +3163,7 @@ msgstr ""
 "サイズは Kitty が管理します。画像は 128 ピクセル、256 色に最適化されます。初"
 "回のコンパイルには少し時間がかかる場合があります。"
 
-#: src/window.js:671
+#: src/window.js:686
 msgid ""
 "Uses the current frame as a tinted Kitty background. Your desktop is "
 "unchanged."
@@ -3140,7 +3171,7 @@ msgstr ""
 "現在のフレームを色調付きの Kitty 背景に使用します。デスクトップは変更しませ"
 "ん。"
 
-#: src/window.js:675
+#: src/window.js:690
 #, fuzzy
 msgid ""
 "Animates on every display and sets its first frame as the still background. "
@@ -3149,19 +3180,25 @@ msgstr ""
 "すべてのディスプレイでアニメーションを再生し、最初のフレームを静止背景に設定"
 "します。Wayland 上の GNOME 50 が必要です。"
 
-#: src/window.js:683
+#: src/window.js:694
+msgid ""
+"Your desktop asks you to confirm the wallpaper. Animated wallpapers use the "
+"Wallshader Live Wallpaper extension."
+msgstr ""
+
+#: src/window.js:702
 msgid "Starting desktop animation…"
 msgstr "デスクトップアニメーションを開始中…"
 
-#: src/window.js:684
+#: src/window.js:703
 msgid "Playing on desktop"
 msgstr "デスクトップで再生中"
 
-#: src/window.js:686
+#: src/window.js:705
 msgid "Ready. Keeps playing after closing this app."
 msgstr "準備完了。このアプリを閉じた後も再生を続けます。"
 
-#: src/window.js:688
+#: src/window.js:707
 msgid ""
 "First use installs animation support. GNOME may require one logout before it "
 "is available."
@@ -3169,139 +3206,153 @@ msgstr ""
 "初回使用時にアニメーション対応をインストールします。GNOME で利用可能になるま"
 "で、一度ログアウトが必要な場合があります。"
 
-#: src/window.js:694
+#: src/window.js:713
 msgid "Resume"
 msgstr "再開"
 
-#: src/window.js:700
+#: src/window.js:719
 msgid "Set Kitty Background"
 msgstr "Kitty の背景に設定"
 
-#: src/window.js:701
+#: src/window.js:720
 msgid "Set Kitty Background (Still)"
 msgstr "Kitty の背景に設定（静止）"
 
-#: src/window.js:703
+#: src/window.js:722
 msgid "Set Animated Wallpaper"
 msgstr "動く壁紙に設定"
 
-#: src/window.js:708
+#: src/window.js:727
 msgid "Apply this background to Kitty"
 msgstr "この背景を Kitty に適用"
 
-#: src/window.js:709
+#: src/window.js:728
 msgid "Apply this wallpaper to your GNOME desktop"
 msgstr "この壁紙を GNOME デスクトップに適用"
 
-#: src/window.js:746
+#: src/window.js:765
 msgid "Deleted “{name}”"
 msgstr "「{name}」を削除しました"
 
-#: src/window.js:782
+#: src/window.js:801
 msgid "Saved “{name}”"
 msgstr "「{name}」を保存しました"
 
-#: src/window.js:798
+#: src/window.js:817
 msgid "Wait for the current image to finish rendering."
 msgstr "現在の画像のレンダリングが完了するまでお待ちください。"
 
-#: src/window.js:815
+#: src/window.js:834
 msgid "Import Paper Settings"
 msgstr "Paper 設定を読み込む"
 
-#: src/window.js:817
+#: src/window.js:836
 msgid "Paper Code"
 msgstr "Paper コード"
 
-#: src/window.js:948
+#: src/window.js:967
 msgid "Custom"
 msgstr "カスタム"
 
-#: src/window.js:986
+#: src/window.js:1005
 msgid "Remove from favorites"
 msgstr "お気に入りから削除"
 
-#: src/window.js:1020
+#: src/window.js:1039
 msgid "No favorites yet"
 msgstr "お気に入りはまだありません"
 
-#: src/window.js:1022
+#: src/window.js:1041
 msgid "No recent presets yet"
 msgstr "最近使用したプリセットはありません"
 
-#: src/window.js:1027
+#: src/window.js:1046
 msgid "Star a preset to keep it here."
 msgstr "プリセットに星を付けると、ここに表示されます。"
 
-#: src/window.js:1029
+#: src/window.js:1048
 msgid "Applied desktop and Kitty presets appear here."
 msgstr "適用したデスクトップと Kitty のプリセットがここに表示されます。"
 
-#: src/window.js:1071
+#: src/window.js:1090
 msgid "Applied to Kitty"
 msgstr "Kitty に適用しました"
 
-#: src/window.js:1171
+#: src/window.js:1190
 msgid "Wallpaper changes reset"
 msgstr "壁紙の変更をリセットしました"
 
-#: src/window.js:1274
+#: src/window.js:1293
 msgid "Rendering…"
 msgstr "レンダリング中…"
 
-#: src/window.js:1324
+#: src/window.js:1343
 msgid "Wallpaper applied, but the preset could not be saved: {error}"
 msgstr "壁紙は適用されましたが、プリセットを保存できませんでした: {error}"
 
-#: src/window.js:1358
+#: src/window.js:1377
 msgid "{name} set as wallpaper"
 msgstr "{name} を壁紙に設定しました"
 
-#: src/window.js:1361 src/window.js:1437
+#: src/window.js:1380 src/window.js:1457
 msgid "Undo"
 msgstr "元に戻す"
 
-#: src/window.js:1385
+#: src/window.js:1404
 msgid "Kitty background saved. Reload Kitty settings if needed."
 msgstr ""
 "Kitty の背景を保存しました。必要に応じて Kitty の設定を再読み込みしてくださ"
 "い。"
 
-#: src/window.js:1400
+#: src/window.js:1419
 msgid "Kitty background restored. Reload Kitty settings if needed."
 msgstr ""
 "Kitty の背景を元に戻しました。必要に応じて Kitty の設定を再読み込みしてくださ"
 "い。"
 
-#: src/window.js:1413
+#: src/window.js:1432
 msgid "Starting…"
 msgstr "起動中…"
 
-#: src/window.js:1436
+#: src/window.js:1456
 msgid "Animated wallpaper requested"
 msgstr "動く壁紙を要求しました"
 
-#: src/window.js:1445
+#: src/window.js:1475
+msgid "Install Animation Support"
+msgstr ""
+
+#: src/window.js:1481
+#, fuzzy
+msgid "Install Extension"
+msgstr "プリセットを保存…"
+
+#: src/window.js:1490
 msgid "Log Out to Finish Setup"
 msgstr "ログアウトして設定を完了"
 
-#: src/window.js:1450
+#: src/window.js:1495
 msgid "Got It"
 msgstr "了解"
 
-#: src/window.js:1462
+#: src/window.js:1503
+#, fuzzy
+msgid "Installing…"
+msgstr "起動中…"
+
+#: src/window.js:1523
 msgid "Export Wallpaper"
 msgstr "壁紙を書き出す"
 
-#: src/window.js:1465
+#: src/window.js:1526
 msgid "PNG images"
 msgstr "PNG 画像"
 
-#: src/window.js:1476
+#: src/window.js:1537
 msgid "Wallpaper exported"
 msgstr "壁紙を書き出しました"
 
-#: src/window.js:1492
+#: src/window.js:1553
 msgid "Previous wallpaper restored"
 msgstr "以前の壁紙に戻しました"
 
@@ -3333,3 +3384,7 @@ msgstr ""
 #: src/renderer/kitty-texture.js:118
 msgid "Only one texture can be embedded in a Kitty shader."
 msgstr "Kitty シェーダーにはテクスチャを 1 つだけ埋め込めます。"
+
+#, fuzzy
+#~ msgid "Animated wallpapers require the native Wallshader package."
+#~ msgstr "動く壁紙を要求しました"

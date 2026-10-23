@@ -76,7 +76,9 @@ export class DesktopMenu {
   _open() {
     if (!Main.sessionMode.allowSettings || !this._showMenu) return;
     const app = Shell.AppSystem.get_default().lookup_app(
-      'io.github.wallshader.Wallshader.desktop',
+      this.backend === 'flatpak'
+        ? 'io.github.stonega.wallshader.desktop'
+        : 'io.github.wallshader.Wallshader.desktop',
     );
     if (!app) {
       Main.notifyError(

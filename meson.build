@@ -20,7 +20,26 @@ install_subdir('src', install_dir: appdir, exclude_directories: ['renderer'])
 install_data('data/style.css', install_dir: appdir / 'data')
 install_subdir('data/icons/hicolor', install_dir: appdir / 'data/icons')
 install_subdir('data/third-party', install_dir: appdir / 'data')
-install_subdir('build/extension', install_dir: appdir)
+if get_option('live_extension')
+  install_subdir('build/extension', install_dir: appdir)
+endif
+if get_option('flatpak')
+  find_program('python3')
+  find_program('glib-compile-resources')
+  custom_target('animation-extension',
+    input: renderer,
+    output: ['wallshader-extension.zip', 'wallshader-extension.gresource'],
+    command: [bun, files('scripts/package-extension.js'), '@OUTPUT0@', '@INPUT0@', '@OUTPUT1@'],
+    depend_files: files('scripts/build-extension.js', 'scripts/build-translations.js', 'po/LINGUAS',
+      'extension/extension.js', 'extension/desktop-menu.js', 'extension/background.js', 'extension/overview.js',
+      'extension/compositing.js', 'extension/metadata.json', 'src/desktop-renderer.js', 'src/live-config.js',
+      'src/paths.js', 'src/storage.js', 'src/preview.js', 'src/debug-info.js', 'src/images.js', 'src/i18n.js',
+      'po/de.po', 'po/es.po', 'po/fr.po', 'po/ja.po', 'po/ko.po', 'po/pt_BR.po', 'po/zh_CN.po', 'po/zh_TW.po'),
+    build_by_default: true,
+    install: true,
+    install_dir: appdir,
+  )
+endif
 install_data('COPYING', install_dir: appdir)
 install_data('data/icons/hicolor/scalable/apps/io.github.wallshader.Wallshader.svg',
   install_dir: get_option('datadir') / 'icons/hicolor/scalable/apps')
@@ -31,6 +50,16 @@ i18n.merge_file(
   po_dir: 'po',
   install: true,
   install_dir: get_option('datadir') / 'applications',
+)
+
+metadata = configuration_data()
+metadata.set('APP_ID', get_option('flatpak') ? 'io.github.stonega.wallshader' : 'io.github.wallshader.Wallshader')
+configure_file(
+  input: 'data/wallshader.metainfo.xml.in',
+  output: metadata.get('APP_ID') + '.metainfo.xml',
+  configuration: metadata,
+  install: true,
+  install_dir: get_option('datadir') / 'metainfo',
 )
 
 launcher = configuration_data()

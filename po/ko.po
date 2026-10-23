@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-21 14:23+0800\n"
+"POT-Creation-Date: 2026-10-23 14:18+0800\n"
 "PO-Revision-Date: 2026-10-20 00:00+0000\n"
 "Last-Translator: Wallshader translation draft\n"
 "Language-Team: ko\n"
@@ -32,7 +32,7 @@ msgstr "배경화면;배경;셰이더;Paper;그라데이션;"
 msgid "Open Wallshader"
 msgstr ""
 
-#: extension/desktop-menu.js:84
+#: extension/desktop-menu.js:86
 msgid "Install Wallshader to open it from the desktop menu."
 msgstr ""
 
@@ -612,7 +612,7 @@ msgstr ""
 msgid "Edges"
 msgstr "가장자리"
 
-#: po/paper-catalog.js:142 src/window.js:295
+#: po/paper-catalog.js:142 src/window.js:304
 msgid "Effects"
 msgstr "효과"
 
@@ -952,7 +952,7 @@ msgstr ""
 msgid "Image Dithering"
 msgstr "이미지 디더링"
 
-#: po/paper-catalog.js:223 src/window.js:296
+#: po/paper-catalog.js:223 src/window.js:305
 msgid "Image Filters"
 msgstr "이미지 필터"
 
@@ -1082,7 +1082,7 @@ msgstr "살아있는 잉크"
 msgid "Lo-Fi"
 msgstr "로파이"
 
-#: po/paper-catalog.js:254 src/window.js:297
+#: po/paper-catalog.js:254 src/window.js:306
 msgid "Logo Animations"
 msgstr "로고 애니메이션"
 
@@ -2655,12 +2655,12 @@ msgstr ""
 "Kitty 배경 경로는 절대 경로여야 하며 줄바꿈이나 달러 기호를 포함할 수 없습니"
 "다."
 
-#: src/live.js:61
+#: src/live.js:62
 msgid "The extension bundle contains an unsupported file. Rebuild Wallshader."
 msgstr ""
 "확장 번들에 지원되지 않는 파일이 있습니다. Wallshader를 다시 빌드하세요."
 
-#: src/live.js:74
+#: src/live.js:75
 msgid ""
 "Animation support is installed. Log out and back in once so GNOME can "
 "discover it. Then open Wallshader and choose “Set Animated Wallpaper” again."
@@ -2669,21 +2669,50 @@ msgstr ""
 "시 로그인하세요. 그런 다음 Wallshader를 열고 “움직이는 배경화면 설정”을 다시 "
 "선택하세요."
 
-#: src/live.js:126
-#, fuzzy
-msgid "Animated wallpapers currently support GNOME 50 and 51 on Wayland."
-msgstr "움직이는 배경화면은 현재 Wayland의 GNOME 50을 지원합니다."
+#: src/live.js:86
+msgid ""
+"Install Wallshader Live Wallpaper to animate your desktop. GNOME 50 or 51 on "
+"Wayland and Flatpak 1.18 or newer are required. You may need to log out and "
+"back in once after installation."
+msgstr ""
 
-#: src/live.js:146
+#: src/live.js:166
 msgid ""
 "Build Wallshader with “bun run build” to include animated wallpaper support."
 msgstr ""
 "“bun run build”로 Wallshader를 빌드하여 움직이는 배경화면 지원을 포함하세요."
 
-#: src/live.js:184
+#: src/live.js:196
 msgid "Enable Wallshader Live Wallpaper in GNOME Extensions, then try again."
 msgstr ""
 "GNOME 확장에서 Wallshader Live Wallpaper를 활성화한 후 다시 시도하세요."
+
+#: src/live.js:212
+#, fuzzy
+msgid "Animated wallpapers currently support GNOME 50 and 51 on Wayland."
+msgstr "움직이는 배경화면은 현재 Wayland의 GNOME 50을 지원합니다."
+
+#: src/live.js:229
+#, fuzzy
+msgid "Turn on extensions in GNOME Extensions, then try again."
+msgstr ""
+"GNOME 확장에서 Wallshader Live Wallpaper를 활성화한 후 다시 시도하세요."
+
+#: src/extension-install.js:36
+msgid "The animation extension folder must be a regular directory."
+msgstr ""
+
+#: src/extension-install.js:71
+#, fuzzy
+msgid "The animation extension bundle is invalid. Reinstall Wallshader."
+msgstr ""
+"확장 번들에 지원되지 않는 파일이 있습니다. Wallshader를 다시 빌드하세요."
+
+#: src/extension-install.js:78
+#, fuzzy
+msgid "The animation extension contains an unsupported file."
+msgstr ""
+"확장 번들에 지원되지 않는 파일이 있습니다. Wallshader를 다시 빌드하세요."
 
 #: src/main.js:60
 msgid "Wallshader contributors"
@@ -2751,35 +2780,35 @@ msgstr "미리 보기가 닫혔습니다."
 msgid "Rendering {name} took too long. Try a smaller image size."
 msgstr "{name} 렌더링에 너무 오래 걸렸습니다. 이미지 크기를 줄여 보세요."
 
-#: src/preferences.js:12 src/window.js:183
+#: src/preferences.js:13 src/window.js:192
 msgid "Preferences"
 msgstr "환경 설정"
 
-#: src/preferences.js:17
+#: src/preferences.js:18
 msgid "General"
 msgstr "일반"
 
-#: src/preferences.js:21
+#: src/preferences.js:22
 msgid "Interface"
 msgstr "인터페이스"
 
-#: src/preferences.js:24
+#: src/preferences.js:25
 msgid "Language changes take effect the next time you open Wallshader."
 msgstr "언어 변경은 다음에 Wallshader를 열 때 적용됩니다."
 
-#: src/preferences.js:37
+#: src/preferences.js:38
 msgid "Language"
 msgstr "언어"
 
-#: src/preferences.js:40
+#: src/preferences.js:41
 msgid "System Default"
 msgstr "시스템 기본값"
 
-#: src/preferences.js:74
+#: src/preferences.js:76
 msgid "Show Desktop Menu Shortcut"
 msgstr ""
 
-#: src/preferences.js:75
+#: src/preferences.js:77
 msgid "Show “Open Wallshader” in the desktop right-click menu."
 msgstr ""
 
@@ -2787,7 +2816,7 @@ msgstr ""
 msgid "Save Preset"
 msgstr "프리셋 저장"
 
-#: src/save-preset-dialog.js:24
+#: src/save-preset-dialog.js:24 src/window.js:1480
 msgid "Cancel"
 msgstr "취소"
 
@@ -2881,193 +2910,193 @@ msgstr "저장된 설정을 읽지 못했습니다: {error}"
 msgid "The renderer did not return a PNG image."
 msgstr "렌더러가 PNG 이미지를 반환하지 않았습니다."
 
-#: src/wallpaper.js:61
+#: src/wallpaper.js:65
 msgid "GNOME wallpaper settings are unavailable. You can still export a PNG."
 msgstr "GNOME 배경화면 설정을 사용할 수 없습니다. PNG로 내보내기는 가능합니다."
 
-#: src/wallpaper.js:68
+#: src/wallpaper.js:72
 msgid ""
 "Your desktop wallpaper is managed by an administrator. You can still export "
 "a PNG."
 msgstr "데스크톱 배경화면은 관리자가 관리합니다. PNG로 내보내기는 가능합니다."
 
-#: src/wallpaper.js:79
+#: src/wallpaper.js:83
 msgid "GNOME could not update the wallpaper."
 msgstr "GNOME이 배경화면을 업데이트하지 못했습니다."
 
-#: src/wallpaper.js:124
+#: src/wallpaper.js:138
 msgid "No valid previous wallpaper was found."
 msgstr "유효한 이전 배경화면을 찾지 못했습니다."
 
-#: src/window.js:157
+#: src/window.js:164
 msgid "Wallpapers made with Paper"
 msgstr "Paper로 만든 배경화면"
 
-#: src/window.js:162
+#: src/window.js:169
 msgid "Search wallpapers (Ctrl+F)"
 msgstr "배경화면 검색(Ctrl+F)"
 
-#: src/window.js:173
+#: src/window.js:180
 msgid "Customize wallpaper"
 msgstr "배경화면 사용자 지정"
 
-#: src/window.js:178
+#: src/window.js:185
 msgid "Import Paper Settings…"
 msgstr "Paper 설정 가져오기…"
 
-#: src/window.js:179
+#: src/window.js:186
 msgid "Copy Settings…"
 msgstr "설정 복사…"
 
-#: src/window.js:180
+#: src/window.js:187
 msgid "Copy Paper Code…"
 msgstr "Paper 코드 복사…"
 
-#: src/window.js:181
+#: src/window.js:188
 msgid "Show Debug Info"
 msgstr "디버그 정보 표시"
 
-#: src/window.js:182
+#: src/window.js:190
 msgid "Restore Previous Wallpaper"
 msgstr "이전 배경화면 복원"
 
-#: src/window.js:184
+#: src/window.js:193
 msgid "About Wallshader"
 msgstr "Wallshader 정보"
 
-#: src/window.js:185
+#: src/window.js:194
 msgid "Quit"
 msgstr "끝내기"
 
-#: src/window.js:199
+#: src/window.js:208
 msgid "Search wallpapers"
 msgstr "배경화면 검색"
 
-#: src/window.js:217
+#: src/window.js:226
 msgid "Export PNG…"
 msgstr "PNG 내보내기…"
 
-#: src/window.js:222
+#: src/window.js:231
 msgid "Save Preset…"
 msgstr "프리셋 저장…"
 
-#: src/window.js:227
+#: src/window.js:236
 msgid "Reset Changes"
 msgstr "변경 사항 초기화"
 
-#: src/window.js:232 src/window.js:986
+#: src/window.js:241 src/window.js:1005
 msgid "Add to favorites"
 msgstr "즐겨찾기에 추가"
 
-#: src/window.js:256
+#: src/window.js:265
 msgid "Preview unavailable"
 msgstr "미리 보기 사용 불가"
 
-#: src/window.js:266 src/window.js:1183
+#: src/window.js:275 src/window.js:1202
 msgid "Play preview"
 msgstr "미리 보기 재생"
 
-#: src/window.js:266 src/window.js:1183
+#: src/window.js:275 src/window.js:1202
 msgid "Pause preview"
 msgstr "미리 보기 일시 정지"
 
-#: src/window.js:294 src/window.js:324
+#: src/window.js:303 src/window.js:333
 msgid "All"
 msgstr "전체"
 
-#: src/window.js:330
+#: src/window.js:339
 msgid "Show all wallpapers"
 msgstr "모든 배경화면 표시"
 
-#: src/window.js:331
+#: src/window.js:340
 msgid "Choose a wallpaper category"
 msgstr "배경화면 카테고리 선택"
 
-#: src/window.js:342
+#: src/window.js:351
 msgid "Favorites"
 msgstr "즐겨찾기"
 
-#: src/window.js:343
+#: src/window.js:352
 msgid "Recent"
 msgstr "최근 사용"
 
-#: src/window.js:429 src/window.js:1023
+#: src/window.js:438 src/window.js:1042
 msgid "No wallpapers found"
 msgstr "배경화면을 찾지 못했습니다"
 
-#: src/window.js:434 src/window.js:1030
+#: src/window.js:443 src/window.js:1049
 msgid "Try a different search or collection."
 msgstr "다른 검색어나 모음을 시도하세요."
 
-#: src/window.js:443
+#: src/window.js:452
 msgid "Made with Paper Shaders"
 msgstr "Paper Shaders로 제작"
 
-#: src/window.js:457
+#: src/window.js:466
 msgid "Customize"
 msgstr "사용자 지정"
 
-#: src/window.js:477
+#: src/window.js:486
 msgid "Desktop"
 msgstr "데스크톱"
 
-#: src/window.js:480 src/window.js:704 src/window.js:1292
+#: src/window.js:490 src/window.js:723 src/window.js:1311
 msgid "Set as Wallpaper"
 msgstr "배경화면으로 설정"
 
-#: src/window.js:483
+#: src/window.js:493
 msgid "Apply this frame to your GNOME desktop"
 msgstr "이 프레임을 GNOME 데스크톱에 적용"
 
-#: src/window.js:484
+#: src/window.js:499
 msgid "Choose wallpaper destination"
 msgstr "배경화면 대상 선택"
 
-#: src/window.js:491 src/window.js:509 src/window.js:818
+#: src/window.js:506 src/window.js:524 src/window.js:837
 msgid "Wallpaper Settings"
 msgstr "배경화면 설정"
 
-#: src/window.js:521 src/window.js:525
+#: src/window.js:536 src/window.js:540
 msgid "Wallpaper mode"
 msgstr "배경화면 모드"
 
-#: src/window.js:523
+#: src/window.js:538
 msgid "Still image"
 msgstr "정지 이미지"
 
-#: src/window.js:523
+#: src/window.js:538
 msgid "Animated shader"
 msgstr "애니메이션 셰이더"
 
-#: src/window.js:534
+#: src/window.js:549
 msgid "Animation frame rate"
 msgstr "애니메이션 프레임 속도"
 
-#: src/window.js:538
+#: src/window.js:553
 msgid "30 FPS · less power"
 msgstr "30 FPS · 절전"
 
-#: src/window.js:539
+#: src/window.js:554
 msgid "60 FPS · smoother"
 msgstr "60 FPS · 부드럽게"
 
-#: src/window.js:541
+#: src/window.js:556
 msgid "Wallpaper frame rate"
 msgstr "배경화면 프레임 속도"
 
-#: src/window.js:546 src/window.js:554
+#: src/window.js:561 src/window.js:569
 msgid "Wallpaper rendering"
 msgstr "배경화면 렌더링"
 
-#: src/window.js:550
+#: src/window.js:565
 msgid "Compatibility (default)"
 msgstr "호환성(기본값)"
 
-#: src/window.js:551
+#: src/window.js:566
 msgid "GPU (experimental)"
 msgstr "GPU(실험적)"
 
-#: src/window.js:565
+#: src/window.js:580
 msgid ""
 "GPU mode may reduce CPU use but can cause flickering. Takes effect when you "
 "apply the wallpaper."
@@ -3075,19 +3104,19 @@ msgstr ""
 "GPU 모드는 CPU 사용량을 줄일 수 있지만 깜박임이 발생할 수 있습니다. 배경화면"
 "을 적용할 때 반영됩니다."
 
-#: src/window.js:572
+#: src/window.js:587
 msgid "Runs on the desktop after closing this app."
 msgstr "앱을 닫아도 데스크톱에서 계속 실행됩니다."
 
-#: src/window.js:579 src/window.js:694
+#: src/window.js:594 src/window.js:713
 msgid "Pause"
 msgstr "일시 정지"
 
-#: src/window.js:587
+#: src/window.js:602
 msgid "Stop"
 msgstr "중지"
 
-#: src/window.js:602
+#: src/window.js:617
 msgid ""
 "Saves to {path}. Kitty reloads automatically; if disabled, reload its "
 "settings or open a new instance."
@@ -3095,27 +3124,27 @@ msgstr ""
 "{path}에 저장합니다. Kitty가 자동으로 다시 불러옵니다. 비활성화된 경우 설정"
 "을 다시 불러오거나 새 인스턴스를 여세요."
 
-#: src/window.js:611
+#: src/window.js:626
 msgid "Restore Kitty Background"
 msgstr "Kitty 배경 복원"
 
-#: src/window.js:618
+#: src/window.js:633
 msgid "Output resolution"
 msgstr "출력 해상도"
 
-#: src/window.js:620
+#: src/window.js:635
 msgid "This display"
 msgstr "현재 디스플레이"
 
-#: src/window.js:628
+#: src/window.js:643
 msgid "Wallpaper resolution"
 msgstr "배경화면 해상도"
 
-#: src/window.js:634 src/window.js:677
+#: src/window.js:649 src/window.js:696
 msgid "Applies a still image to light and dark appearances."
 msgstr "밝은 테마와 어두운 테마에 정지 이미지를 적용합니다."
 
-#: src/window.js:668
+#: src/window.js:683
 msgid ""
 "Animates behind terminal text with a dark tint. Requires Kitty 0.49 or newer "
 "with its shader compiler. Kitty controls animation timing and window size. "
@@ -3127,7 +3156,7 @@ msgstr ""
 "합니다. 이미지는 128픽셀, 256색으로 최적화됩니다. 처음 사용할 때 컴파일에 시"
 "간이 걸릴 수 있습니다."
 
-#: src/window.js:671
+#: src/window.js:686
 msgid ""
 "Uses the current frame as a tinted Kitty background. Your desktop is "
 "unchanged."
@@ -3135,7 +3164,7 @@ msgstr ""
 "현재 프레임을 색조가 적용된 Kitty 배경으로 사용합니다. 데스크톱은 변경되지 않"
 "습니다."
 
-#: src/window.js:675
+#: src/window.js:690
 #, fuzzy
 msgid ""
 "Animates on every display and sets its first frame as the still background. "
@@ -3144,19 +3173,25 @@ msgstr ""
 "모든 디스플레이에서 애니메이션을 재생하고 첫 프레임을 정지 배경으로 설정합니"
 "다. Wayland의 GNOME 50이 필요합니다."
 
-#: src/window.js:683
+#: src/window.js:694
+msgid ""
+"Your desktop asks you to confirm the wallpaper. Animated wallpapers use the "
+"Wallshader Live Wallpaper extension."
+msgstr ""
+
+#: src/window.js:702
 msgid "Starting desktop animation…"
 msgstr "데스크톱 애니메이션 시작 중…"
 
-#: src/window.js:684
+#: src/window.js:703
 msgid "Playing on desktop"
 msgstr "데스크톱에서 재생 중"
 
-#: src/window.js:686
+#: src/window.js:705
 msgid "Ready. Keeps playing after closing this app."
 msgstr "준비되었습니다. 앱을 닫아도 계속 재생됩니다."
 
-#: src/window.js:688
+#: src/window.js:707
 msgid ""
 "First use installs animation support. GNOME may require one logout before it "
 "is available."
@@ -3164,135 +3199,149 @@ msgstr ""
 "처음 사용하면 애니메이션 지원이 설치됩니다. GNOME에서 사용하려면 한 번 로그아"
 "웃해야 할 수 있습니다."
 
-#: src/window.js:694
+#: src/window.js:713
 msgid "Resume"
 msgstr "계속"
 
-#: src/window.js:700
+#: src/window.js:719
 msgid "Set Kitty Background"
 msgstr "Kitty 배경 설정"
 
-#: src/window.js:701
+#: src/window.js:720
 msgid "Set Kitty Background (Still)"
 msgstr "Kitty 배경 설정(정지)"
 
-#: src/window.js:703
+#: src/window.js:722
 msgid "Set Animated Wallpaper"
 msgstr "움직이는 배경화면 설정"
 
-#: src/window.js:708
+#: src/window.js:727
 msgid "Apply this background to Kitty"
 msgstr "이 배경을 Kitty에 적용"
 
-#: src/window.js:709
+#: src/window.js:728
 msgid "Apply this wallpaper to your GNOME desktop"
 msgstr "이 배경화면을 GNOME 데스크톱에 적용"
 
-#: src/window.js:746
+#: src/window.js:765
 msgid "Deleted “{name}”"
 msgstr "“{name}” 삭제됨"
 
-#: src/window.js:782
+#: src/window.js:801
 msgid "Saved “{name}”"
 msgstr "“{name}” 저장됨"
 
-#: src/window.js:798
+#: src/window.js:817
 msgid "Wait for the current image to finish rendering."
 msgstr "현재 이미지 렌더링이 완료될 때까지 기다리세요."
 
-#: src/window.js:815
+#: src/window.js:834
 msgid "Import Paper Settings"
 msgstr "Paper 설정 가져오기"
 
-#: src/window.js:817
+#: src/window.js:836
 msgid "Paper Code"
 msgstr "Paper 코드"
 
-#: src/window.js:948
+#: src/window.js:967
 msgid "Custom"
 msgstr "사용자 지정"
 
-#: src/window.js:986
+#: src/window.js:1005
 msgid "Remove from favorites"
 msgstr "즐겨찾기에서 제거"
 
-#: src/window.js:1020
+#: src/window.js:1039
 msgid "No favorites yet"
 msgstr "아직 즐겨찾기가 없습니다"
 
-#: src/window.js:1022
+#: src/window.js:1041
 msgid "No recent presets yet"
 msgstr "최근 프리셋이 없습니다"
 
-#: src/window.js:1027
+#: src/window.js:1046
 msgid "Star a preset to keep it here."
 msgstr "프리셋에 별표를 추가하면 여기에 보관됩니다."
 
-#: src/window.js:1029
+#: src/window.js:1048
 msgid "Applied desktop and Kitty presets appear here."
 msgstr "적용한 데스크톱 및 Kitty 프리셋이 여기에 표시됩니다."
 
-#: src/window.js:1071
+#: src/window.js:1090
 msgid "Applied to Kitty"
 msgstr "Kitty에 적용됨"
 
-#: src/window.js:1171
+#: src/window.js:1190
 msgid "Wallpaper changes reset"
 msgstr "배경화면 변경 사항 초기화됨"
 
-#: src/window.js:1274
+#: src/window.js:1293
 msgid "Rendering…"
 msgstr "렌더링 중…"
 
-#: src/window.js:1324
+#: src/window.js:1343
 msgid "Wallpaper applied, but the preset could not be saved: {error}"
 msgstr "배경화면이 적용되었지만 프리셋을 저장하지 못했습니다: {error}"
 
-#: src/window.js:1358
+#: src/window.js:1377
 msgid "{name} set as wallpaper"
 msgstr "{name} 배경화면으로 설정됨"
 
-#: src/window.js:1361 src/window.js:1437
+#: src/window.js:1380 src/window.js:1457
 msgid "Undo"
 msgstr "실행 취소"
 
-#: src/window.js:1385
+#: src/window.js:1404
 msgid "Kitty background saved. Reload Kitty settings if needed."
 msgstr "Kitty 배경을 저장했습니다. 필요한 경우 Kitty 설정을 다시 불러오세요."
 
-#: src/window.js:1400
+#: src/window.js:1419
 msgid "Kitty background restored. Reload Kitty settings if needed."
 msgstr "Kitty 배경을 복원했습니다. 필요한 경우 Kitty 설정을 다시 불러오세요."
 
-#: src/window.js:1413
+#: src/window.js:1432
 msgid "Starting…"
 msgstr "시작 중…"
 
-#: src/window.js:1436
+#: src/window.js:1456
 msgid "Animated wallpaper requested"
 msgstr "움직이는 배경화면 요청됨"
 
-#: src/window.js:1445
+#: src/window.js:1475
+msgid "Install Animation Support"
+msgstr ""
+
+#: src/window.js:1481
+#, fuzzy
+msgid "Install Extension"
+msgstr "프리셋 저장…"
+
+#: src/window.js:1490
 msgid "Log Out to Finish Setup"
 msgstr "로그아웃하여 설정 완료"
 
-#: src/window.js:1450
+#: src/window.js:1495
 msgid "Got It"
 msgstr "확인"
 
-#: src/window.js:1462
+#: src/window.js:1503
+#, fuzzy
+msgid "Installing…"
+msgstr "시작 중…"
+
+#: src/window.js:1523
 msgid "Export Wallpaper"
 msgstr "배경화면 내보내기"
 
-#: src/window.js:1465
+#: src/window.js:1526
 msgid "PNG images"
 msgstr "PNG 이미지"
 
-#: src/window.js:1476
+#: src/window.js:1537
 msgid "Wallpaper exported"
 msgstr "배경화면 내보내기 완료"
 
-#: src/window.js:1492
+#: src/window.js:1553
 msgid "Previous wallpaper restored"
 msgstr "이전 배경화면 복원됨"
 
@@ -3323,3 +3372,7 @@ msgstr "Paper 셰이더가 변경되어 검토된 Kitty 포트가 필요합니�
 #: src/renderer/kitty-texture.js:118
 msgid "Only one texture can be embedded in a Kitty shader."
 msgstr "Kitty 셰이더에는 텍스처 하나만 삽입할 수 있습니다."
+
+#, fuzzy
+#~ msgid "Animated wallpapers require the native Wallshader package."
+#~ msgstr "움직이는 배경화면 요청됨"

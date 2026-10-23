@@ -1,0 +1,69 @@
+{
+    "id": "io.github.stonega.wallshader",
+    "runtime": "org.gnome.Platform",
+    "runtime-version": "51",
+    "sdk": "org.gnome.Sdk",
+    "command": "wallshader",
+    "separate-locales": false,
+    "rename-desktop-file": "io.github.wallshader.Wallshader.desktop",
+    "rename-icon": "io.github.wallshader.Wallshader",
+    "finish-args": [
+        "--share=ipc",
+        "--socket=fallback-x11",
+        "--socket=wayland",
+        "--device=dri",
+        "--talk-name=io.github.wallshader.Live",
+        "--talk-name=org.gnome.Shell.Extensions",
+        "--filesystem=xdg-data/gnome-shell/extensions/wallshader@wallshader.github.io:create"
+    ],
+    "modules": [
+        {
+            "name": "bun",
+            "buildsystem": "simple",
+            "build-commands": ["install -Dm755 bun /app/bin/bun"],
+            "cleanup": ["*"],
+            "sources": [
+                {
+                    "type": "archive",
+                    "url": "https://github.com/oven-sh/bun/releases/download/bun-v1.3.14/bun-linux-x64-baseline.zip",
+                    "sha256": "a063908ae08b7852ca10939bbdc6ceed3ddabce8fb9402dce83d65d73b36e6c7",
+                    "only-arches": ["x86_64"]
+                },
+                {
+                    "type": "archive",
+                    "url": "https://github.com/oven-sh/bun/releases/download/bun-v1.3.14/bun-linux-aarch64.zip",
+                    "sha256": "a27ffb63a8310375836e0d6f668ae17fa8d8d18b88c37c821c65331973a19a3b",
+                    "only-arches": ["aarch64"]
+                }
+            ]
+        },
+        {
+            "name": "wallshader",
+            "buildsystem": "meson",
+            "config-opts": ["-Dflatpak=true", "-Dlive_extension=false"],
+            "sources": [
+                {
+                    "type": "dir",
+                    "path": "../..",
+                    "skip": [
+                        ".git",
+                        ".codegraph",
+                        ".flatpak-builder",
+                        "node_modules",
+                        "build",
+                        "build-native",
+                        "build-flatpak",
+                        "dist",
+                        "artifacts"
+                    ]
+                },
+                {
+                    "type": "archive",
+                    "url": "https://registry.npmjs.org/@paper-design/shaders/-/shaders-0.0.81.tgz",
+                    "sha256": "65e31106239e9c2da8be52c4371d61efe625fa95fb9f2944977be9622c2aba88",
+                    "dest": "node_modules/@paper-design/shaders"
+                }
+            ]
+        }
+    ]
+}

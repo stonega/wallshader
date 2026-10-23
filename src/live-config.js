@@ -3,8 +3,14 @@ import { PRESETS, normalizePreset } from './catalog.js';
 export const EXTENSION_UUID = 'wallshader@wallshader.github.io';
 export const LIVE_PATH = '/io/github/wallshader/Live';
 export const LIVE_INTERFACE = 'io.github.wallshader.Live';
+export const LIVE_BUS = 'io.github.wallshader.Live';
+export const FLATPAK_ID = 'io.github.stonega.wallshader';
 export const RENDERER_ID = 'io.github.wallshader.Renderer';
 export const RENDERER_PATH = '/io/github/wallshader/Renderer';
+export function rendererIdentity(backend) {
+  const id = backend === 'flatpak' ? `${FLATPAK_ID}.Renderer` : RENDERER_ID;
+  return { id, path: `/${id.replaceAll('.', '/')}` };
+}
 export const LIVE_XML = `<node><interface name="${LIVE_INTERFACE}">
   <method name="GetStatus"><arg direction="out" type="s" name="status"/></method>
   <method name="Apply"><arg direction="in" type="s" name="configuration"/></method>
@@ -24,6 +30,7 @@ export function normalizeLiveConfig(input = {}) {
     paused: input.paused === true,
     fps: input.fps === 60 ? 60 : 30,
     rendering: input.rendering === 'gpu' ? 'gpu' : 'compatibility',
+    backend: input.backend === 'flatpak' ? 'flatpak' : 'native',
     preset: normalizePreset(input.preset.id, input.preset),
   };
 }

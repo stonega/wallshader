@@ -79,9 +79,49 @@ jobs:
           compression-level: 0
           if-no-files-found: error
 
+  flatpak:
+    name: Flatpak (${{ matrix.variant.arch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        variant:
+          - arch: x86_64
+            runner: ubuntu-24.04
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.variant.runner }}
+    timeout-minutes: 30
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-51
+      options: --privileged
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Build Flatpak bundle
+        uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          manifest-path: packaging/flatpak/io.github.stonega.wallshader.json
+          bundle: wallshader-${{ matrix.variant.arch }}.flatpak
+          arch: ${{ matrix.variant.arch }}
+          build-dir: build-flatpak
+          repo-dir: dist/flatpak/repo
+          mirror-screenshots-url: https://dl.flathub.org/media
+          artifact-name: wallshader-flatpak-${{ matrix.variant.arch }}
+
+      - name: Upload companion animation extension
+        if: matrix.variant.arch == 'x86_64'
+        uses: actions/upload-artifact@v4
+        with:
+          name: wallshader-extension
+          path: build-flatpak/files/share/wallshader/wallshader-extension.zip
+          if-no-files-found: error
+
   release:
     name: Publish GitHub Release
-    needs: build
+    needs: [build, flatpak]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-24.04
     timeout-minutes: 10
@@ -94,16 +134,31 @@ jobs:
           name: wallshader-packages
           path: dist
 
-      - name: Verify package checksums
+      - name: Download Flatpak bundles
+        uses: actions/download-artifact@v5
+        with:
+          pattern: wallshader-flatpak-*
+          merge-multiple: true
+          path: dist
+
+      - name: Download companion animation extension
+        uses: actions/download-artifact@v5
+        with:
+          name: wallshader-extension
+          path: dist
+
+      - name: Add Flatpak and extension checksums and verify packages
         working-directory: dist
-        run: sha256sum --check SHA256SUMS
+        run: |
+          sha256sum ./*.flatpak ./wallshader-extension.zip >> SHA256SUMS
+          sha256sum --check SHA256SUMS
 
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" \
-            dist/*.deb dist/*.rpm dist/*.tar.zst dist/SHA256SUMS \
+            dist/*.deb dist/*.rpm dist/*.tar.zst dist/*.flatpak dist/wallshader-extension.zip dist/SHA256SUMS \
             --repo "$GITHUB_REPOSITORY" \
             --verify-tag \
             --title "$GITHUB_REF_NAME" \

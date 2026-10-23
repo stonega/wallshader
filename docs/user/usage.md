@@ -59,6 +59,18 @@ not match a built-in or saved preset. The new tile uses a random hex color name
 such as **#A3F07C** and keeps the applied frame. Applying the same configuration
 again reuses the existing preset.
 
+For a Flatpak installation, desktop animation requires GNOME 50 or 51 on Wayland,
+Flatpak 1.18+, and the Wallshader Live Wallpaper extension. If needed, the app
+offers **Install Extension**. Click it to install the bundled extension directly.
+If the app requests a one-time logout/login, do so, reopen Wallshader and apply
+again. The app enables its installed extension automatically. Manual installation
+commands are unnecessary. The [Flatpak guide](../implementation/flatpak.md)
+describes the setup. Approve the captured first frame in the desktop's
+confirmation dialog; animation then keeps playing after the editor closes.
+Pause, Resume and Stop are in Wallpaper Settings. Still wallpapers and PNG export
+work without the extension. Kitty and previous-wallpaper restoration require a
+native installation.
+
 To keep a named configuration, click the **Save Preset…** bookmark icon immediately
 to the left of Export PNG. The dialog shows a still preview and a random hex color
 name; keep or edit the name, then click **Save**. Its thumbnail appears in the same preset grid with a delete icon

@@ -128,17 +128,6 @@ wallshader
 You can also enable **Wallshader Live Wallpaper** in GNOME Extensions and open
 Wallshader from the app grid.
 
-For declarative installation and **automatic extension enablement**, use the
-[NixOS configuration](docs/implementation/nixos.md#nixos-configuration) or
-[Home Manager](docs/implementation/nixos.md#home-manager) examples. These install
-the package and declare `wallshader@wallshader.github.io` in GNOME's enabled
-extensions. Keep your other extension UUIDs in that list too.
-
-Animation requires GNOME 50 or 51 on Wayland and working WebGL 2. In GNOME Boxes,
-enable **3D Acceleration** in the VM's preferences when available and restart the
-guest. Nix manages the extension files; the app does not copy or update them in
-your home directory. The [NixOS guide](docs/implementation/nixos.md) also covers
-migration, upgrades, rollback and verification. No manual source archive is needed.
 
 ### Development packages and archives
 

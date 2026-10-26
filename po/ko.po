@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-26 14:40+0800\n"
+"POT-Creation-Date: 2026-10-26 12:30+0800\n"
 "PO-Revision-Date: 2026-10-20 00:00+0000\n"
 "Last-Translator: Wallshader translation draft\n"
 "Language-Team: ko\n"
@@ -3285,7 +3285,7 @@ msgstr "배경화면이 적용되었지만 프리셋을 저장하지 못했습�
 msgid "{name} set as wallpaper"
 msgstr "{name} 배경화면으로 설정됨"
 
-#: src/window.js:1363 src/window.js:1440
+#: src/window.js:1363 src/window.js:1442
 msgid "Undo"
 msgstr "실행 취소"
 
@@ -3301,47 +3301,47 @@ msgstr "Kitty 배경을 복원했습니다. 필요한 경우 Kitty 설정을 다
 msgid "Starting…"
 msgstr "시작 중…"
 
-#: src/window.js:1439
+#: src/window.js:1441
 msgid "Animated wallpaper requested"
 msgstr "움직이는 배경화면 요청됨"
 
-#: src/window.js:1461
+#: src/window.js:1463
 msgid "Log Out to Finish Update"
 msgstr "로그아웃하여 업데이트 완료"
 
-#: src/window.js:1462
+#: src/window.js:1464
 msgid "Log Out to Finish Setup"
 msgstr "로그아웃하여 설정 완료"
 
-#: src/window.js:1471
+#: src/window.js:1473
 msgid "Got It"
 msgstr "확인"
 
-#: src/window.js:1477
+#: src/window.js:1479
 msgid "Export Wallpaper"
 msgstr "배경화면 내보내기"
 
-#: src/window.js:1480
+#: src/window.js:1482
 msgid "PNG images"
 msgstr "PNG 이미지"
 
-#: src/window.js:1491
+#: src/window.js:1493
 msgid "Wallpaper exported"
 msgstr "배경화면 내보내기 완료"
 
-#: src/window.js:1507
+#: src/window.js:1509
 msgid "Previous wallpaper restored"
 msgstr "이전 배경화면 복원됨"
 
-#: src/renderer/renderer.js:52
+#: src/renderer/renderer.js:53
 msgid "Unavailable"
 msgstr "사용 불가"
 
-#: src/renderer/renderer.js:121
+#: src/renderer/renderer.js:122
 msgid "Choose the image again to reload this effect."
 msgstr "이 효과를 다시 불러오려면 이미지를 다시 선택하세요."
 
-#: src/renderer/renderer.js:255
+#: src/renderer/renderer.js:256
 msgid "A render is already in progress."
 msgstr "이미 렌더링이 진행 중입니다."
 

@@ -66,7 +66,7 @@ JSON
 # Variables in this script are expanded by the child shell on the private bus.
 # shellcheck disable=SC2016
 dbus-run-session -- sh -c '
-  set -- --virtual-monitor=2560x1600
+  set -- --virtual-monitor="${WALLSHADER_TEST_MONITOR_SIZE:-2560x1600}"
   if [ "${WALLSHADER_PERFORMANCE_TEST:-0}" = 1 ]; then
     set -- --virtual-monitor=3840x2160
   fi

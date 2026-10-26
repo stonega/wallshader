@@ -4,7 +4,7 @@ import Meta from 'gi://Meta';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import { OverviewWallpapers } from './overview.js';
-import { DesktopWallpapers } from './background.js';
+import { DesktopWallpapers, setCaptureResolution } from './background.js';
 import { CompositingHold } from './compositing.js';
 import { DesktopMenu } from './desktop-menu.js';
 import { RENDERER_LAUNCHER, SHELL_BUILD_ID } from './build-info.js';
@@ -107,6 +107,7 @@ export default class WallshaderExtension extends Extension {
       name: this._config?.preset.name ?? '',
       fps: this._config?.fps ?? 30,
       rendering: this._config?.rendering ?? 'compatibility',
+      resolution: this._config?.resolution ?? { width: 1920, height: 1080 },
       monitors: this._windows.size,
       compositing: this._compositing.held,
       panelVisible: Main.layoutManager.panelBox.visible,
@@ -123,6 +124,7 @@ export default class WallshaderExtension extends Extension {
     writeJson(this._path, config);
     const renderingChanged = config.rendering !== this._config?.rendering;
     this._config = config;
+    setCaptureResolution(config.resolution);
     this._error = '';
     // WebKit reads the drawing backend at startup, before creating any views.
     if (this._process && renderingChanged) this._stop();
@@ -161,6 +163,7 @@ export default class WallshaderExtension extends Extension {
   async _start() {
     if (this._stopping) await this._stopping;
     if (!this._enabled || this._process || !this._config?.enabled) return;
+    setCaptureResolution(this._config.resolution);
     const monitors = Main.layoutManager.monitors.map(
       ({ index, x, y, width, height }) => ({ index, x, y, width, height }),
     );

@@ -18,6 +18,7 @@ let preset;
 let paused = false;
 let busy = false;
 let liveFps = 0;
+let maxPixelCount = 1920 * 1080;
 let liveFrame = null;
 let debugTimer = null;
 let debugFrame = null;
@@ -192,7 +193,7 @@ async function select(input) {
       0,
       next.frame,
       1,
-      1920 * 1080,
+      maxPixelCount,
       SHADERS[next.shader].mipmaps,
     );
   } else {
@@ -260,6 +261,12 @@ window.wallshader = {
     try {
       let result;
       if (method === 'live') {
+        const { width, height } = validateDimensions(
+          args.width ?? 1920,
+          args.height ?? 1080,
+        );
+        maxPixelCount = width * height;
+        mount?.setMaxPixelCount(maxPixelCount);
         liveFps = args.fps === 60 ? 60 : 30;
         updatePlayback();
         result = true;
@@ -294,7 +301,11 @@ window.wallshader = {
           kittyTextures(values, SHADERS[item.shader]),
         );
       } else if (method === 'state')
-        result = { ...preset, frame: mount.getCurrentFrame() };
+        result = {
+          ...preset,
+          frame: mount.getCurrentFrame(),
+          canvas: [mount.canvasElement.width, mount.canvasElement.height],
+        };
       else throw new Error(`Unknown renderer operation: ${method}`);
       send({ type: 'response', id, result });
     } catch (error) {

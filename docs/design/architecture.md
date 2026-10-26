@@ -336,8 +336,9 @@ check, so a late
 Wayland configure cannot leave a work-area-sized gap at the bottom. The check only
 resizes when bounds differ; pending checks are cancelled when windows are released.
 The renderer reuses the editor's original Paper shaders and image processing,
-caps rendering at 1080p per monitor, and advances shader time at 30 or 60 FPS with
-a monotonic clock. Negative
+uses the selected output resolution's pixel budget per monitor, and advances
+shader time at 30 or 60 FPS with a monotonic clock. Each monitor retains its aspect
+ratio and rendering does not exceed its native physical size. Negative
 speed works; speed 0 freezes. The application process can close independently.
 The editor saves the requested `liveRendering` preference in state.json and passes
 it as `rendering` when applying. The live configuration persists the applied mode;
@@ -346,6 +347,12 @@ change stops the owned renderer and waits for its exit before starting a process
 with the new environment. Same-mode applies reuse the renderer through reload.
 Renderer diagnostics expose the requested mode and the Skia environment value;
 these report configuration, not proof of physical GPU use.
+Animated apply resolves the output dimensions once for both the first-frame PNG
+and the live configuration's validated `resolution` object. Missing dimensions in
+older configurations default to 1920 × 1080. The desktop renderer passes this
+budget to Paper's `maxPixelCount` at startup and reload; the editor preview keeps
+its independent 1080p budget. The applied resolution persists across login and
+monitor-layout restarts.
 GApplication actions carry pause, reload, readiness and diagnostics. The extension
 waits for the renderer's D-Bus owner before subscribing to its action group.
 
@@ -353,10 +360,12 @@ waits for the renderer's D-Bus owner before subscribing to its action group.
 clone into an explicit offscreen framebuffer, preserving Mutter's handling of
 buffer transforms, subsurfaces and Wayland frame callbacks. Desktop, workspace and
 thumbnail backgrounds on the same monitor share this capture. Its fixed source
-aspect ratio and 1080p pixel budget include the monitor's resource scale;
+aspect ratio and selected pixel budget include the monitor's resource scale;
 overview allocations cannot create a full-monitor capture for every preview. The clone paints before
 the Shell scene and follows the background's color space, drawing no pixels into
 the stage itself.
+Applying a new resolution resizes existing shared captures as well as shader
+canvases, so Shell presentation does not downscale higher-resolution rendering.
 The framebuffer's orthographic viewport covers exactly the clone's canvas at
 resource scale. It excludes `Clutter.OffscreenEffect`'s transparent paint-volume
 padding, so desktop edges and all overview consumers sample only wallpaper pixels.

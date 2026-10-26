@@ -268,7 +268,7 @@ async function checkAnimatedWallpaper(window) {
   window.live = {
     status: { available: true, active: false },
     async initialize() {},
-    async apply(preset, fps, rendering) {
+    async apply(preset, fps, rendering, resolution) {
       assert(
         !window.liveRendering.sensitive,
         'Rendering control changed during apply',
@@ -277,6 +277,7 @@ async function checkAnimatedWallpaper(window) {
         preset,
         fps,
         rendering,
+        resolution,
         uri: settings.get_string('picture-uri'),
       });
     },
@@ -287,13 +288,15 @@ async function checkAnimatedWallpaper(window) {
   window._paused = true;
   await window.preview.pause(true);
   try {
-    for (const [frame, speed, fps, rendering] of [
-      [0, 0, 30, 'compatibility'],
-      [-8000, -2, 60, 'gpu'],
+    for (const [frame, speed, fps, rendering, selected] of [
+      [0, 0, 30, 'compatibility', 1],
+      [-8000, -2, 60, 'gpu', 3],
     ]) {
       window.preset = { ...window.preset, frame, speed };
       window.liveFps.selected = fps === 60 ? 1 : 0;
       window.liveRendering.selected = rendering === 'gpu' ? 1 : 0;
+      window.resolution.selected = selected;
+      const resolution = window._dimensions();
       await window.applyWallpaper();
       assert(errors.length === 0, `Animated apply failed: ${errors}`);
       const result = applied.at(-1);
@@ -301,8 +304,10 @@ async function checkAnimatedWallpaper(window) {
         result?.preset.frame === frame &&
           result.preset.speed === speed &&
           result.fps === fps &&
-          result.rendering === rendering,
-        'Animated apply lost the starting frame, speed, frame rate, or rendering mode',
+          result.rendering === rendering &&
+          result.resolution.width === resolution.width &&
+          result.resolution.height === resolution.height,
+        'Animated apply lost the starting frame, speed, frame rate, rendering mode, or resolution',
       );
       assert(
         result.uri.startsWith(
@@ -314,12 +319,11 @@ async function checkAnimatedWallpaper(window) {
       );
       const [, contents] = Gio.File.new_for_uri(result.uri).load_contents(null);
       const image = `data:image/png;base64,${GLib.base64_encode(contents)}`;
-      checkImage(image, 1920, 1080);
+      checkImage(image, resolution.width, resolution.height);
       // Move the preview ahead: an explicit capture must still use the first frame.
       await window.preview.select({ ...result.preset, frame: frame + 8000 });
       const expected = await window.preview.request('capture', {
-        width: 1920,
-        height: 1080,
+        ...resolution,
         frame,
       });
       assert(
@@ -342,11 +346,15 @@ async function checkAnimatedWallpaper(window) {
     }
     assert(applied.length === 2, 'Animated reapply did not start animation');
     const savedCount = window.store.state.savedPresets.length;
+    window.resolution.selected = 0;
     await window.applyWallpaper();
+    const display = window._dimensions();
     assert(
       applied.length === 3 &&
-        window.store.state.savedPresets.length === savedCount,
-      'Reapplying a saved animated configuration created a duplicate',
+        window.store.state.savedPresets.length === savedCount &&
+        applied.at(-1).resolution.width === display.width &&
+        applied.at(-1).resolution.height === display.height,
+      'Reapplying with This display lost its resolution or duplicated the preset',
     );
     window.preset = { ...window.preset, scale: 2.15 };
     const previous = settings.get_string('picture-uri');
@@ -426,6 +434,7 @@ async function checkAnimatedWallpaper(window) {
     window.wallpaper.apply = apply;
     window.wallpaperMode.selected = 0;
     window.liveRendering.selected = 0;
+    window.resolution.selected = 1;
     window._syncAvailability();
   }
   console.log(

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-26 14:40+0800\n"
+"POT-Creation-Date: 2026-10-26 12:30+0800\n"
 "PO-Revision-Date: 2026-10-20 00:00+0000\n"
 "Last-Translator: Wallshader translation draft\n"
 "Language-Team: pt_BR\n"
@@ -3305,7 +3305,7 @@ msgstr ""
 msgid "{name} set as wallpaper"
 msgstr "{name} definido como papel de parede"
 
-#: src/window.js:1363 src/window.js:1440
+#: src/window.js:1363 src/window.js:1442
 msgid "Undo"
 msgstr "Desfazer"
 
@@ -3324,47 +3324,47 @@ msgstr ""
 msgid "Starting…"
 msgstr "Iniciando…"
 
-#: src/window.js:1439
+#: src/window.js:1441
 msgid "Animated wallpaper requested"
 msgstr "Papel de parede animado solicitado"
 
-#: src/window.js:1461
+#: src/window.js:1463
 msgid "Log Out to Finish Update"
 msgstr "Encerrar sessão para concluir a atualização"
 
-#: src/window.js:1462
+#: src/window.js:1464
 msgid "Log Out to Finish Setup"
 msgstr "Sair da sessão para concluir a configuração"
 
-#: src/window.js:1471
+#: src/window.js:1473
 msgid "Got It"
 msgstr "Entendi"
 
-#: src/window.js:1477
+#: src/window.js:1479
 msgid "Export Wallpaper"
 msgstr "Exportar papel de parede"
 
-#: src/window.js:1480
+#: src/window.js:1482
 msgid "PNG images"
 msgstr "Imagens PNG"
 
-#: src/window.js:1491
+#: src/window.js:1493
 msgid "Wallpaper exported"
 msgstr "Papel de parede exportado"
 
-#: src/window.js:1507
+#: src/window.js:1509
 msgid "Previous wallpaper restored"
 msgstr "Papel de parede anterior restaurado"
 
-#: src/renderer/renderer.js:52
+#: src/renderer/renderer.js:53
 msgid "Unavailable"
 msgstr "Indisponível"
 
-#: src/renderer/renderer.js:121
+#: src/renderer/renderer.js:122
 msgid "Choose the image again to reload this effect."
 msgstr "Escolha a imagem novamente para recarregar este efeito."
 
-#: src/renderer/renderer.js:255
+#: src/renderer/renderer.js:256
 msgid "A render is already in progress."
 msgstr "Uma renderização já está em andamento."
 

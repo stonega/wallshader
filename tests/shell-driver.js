@@ -197,10 +197,12 @@ function rpc(method, parameters = null) {
     ),
   );
 }
-const apply = (preset, fps = 30, rendering = 'compatibility') =>
+const apply = (preset, fps = 30, rendering = 'compatibility', resolution) =>
   rpc(
     'Apply',
-    new GLib.Variant('(s)', [JSON.stringify({ preset, fps, rendering })]),
+    new GLib.Variant('(s)', [
+      JSON.stringify({ preset, fps, rendering, resolution }),
+    ]),
   );
 async function until(callback, message) {
   for (let attempt = 0; attempt < 150; attempt++) {
@@ -355,7 +357,10 @@ function checkOverview(extension) {
     const frame = live.capture.frame.get_texture();
     if (frame)
       assert(
-        frame.get_width() * frame.get_height() <= 1920 * 1080 * 1.01,
+        frame.get_width() * frame.get_height() <=
+          extension._config.resolution.width *
+            extension._config.resolution.height *
+            1.01,
         'Shared frame exceeds the renderer pixel budget',
       );
     assert(
@@ -375,6 +380,83 @@ function checkOverview(extension) {
         'Wallpaper covers thumbnail windows',
       );
   }
+}
+
+async function checkLiveResolution(extension, preset, inspect) {
+  for (const resolution of [
+    { width: 1920, height: 1080 },
+    { width: 2560, height: 1440 },
+    { width: 3840, height: 2160 },
+    { width: 3440, height: 1440 },
+    { width: 1920, height: 1080 },
+  ]) {
+    const process = extension._process;
+    // Also recreate ShaderMount at 4K, rather than only resizing an existing one.
+    const selected =
+      resolution.width === 3840 ? createPreset('ribbon') : preset;
+    await apply(selected, 30, 'compatibility', resolution);
+    await until(async () => {
+      const state = await inspect();
+      return (
+        state.resolution.width === resolution.width &&
+        state.resolution.height === resolution.height &&
+        state.preset === selected.id
+      );
+    }, 'Renderer did not reload the selected resolution');
+    assert(
+      extension._process === process,
+      'Resolution change restarted renderer',
+    );
+    const saved = JSON.parse(
+      new TextDecoder().decode(
+        Gio.File.new_for_path(extension._path).load_contents(null)[1],
+      ),
+    );
+    assert(
+      saved.resolution.width === resolution.width &&
+        saved.resolution.height === resolution.height,
+      'Applied resolution was not saved for the next login',
+    );
+    if (resolution.width === 3840) {
+      Main.layoutManager.emit('monitors-changed');
+      await until(
+        () => extension._process !== process && extension._ready,
+        'Monitor change did not restart the renderer',
+      );
+      await checkCoverage(extension);
+    }
+    const state = await inspect();
+    const budget = resolution.width * resolution.height;
+    for (const [index, monitor] of Main.layoutManager.monitors.entries()) {
+      const background = Main.layoutManager._bgManagers[index].backgroundActor;
+      const capture =
+        extension._desktop._backgrounds.get(background).live.capture;
+      const scale = Math.ceil(capture.driver.get_resource_scale());
+      const nativePixels = monitor.width * monitor.height * scale * scale;
+      const expectedPixels = Math.min(nativePixels, budget);
+      const [width, height] = state.canvases[index];
+      assert(
+        Math.abs((width * height) / expectedPixels - 1) < 0.01 &&
+          Math.abs(width / height - monitor.width / monitor.height) < 0.01,
+        `Canvas ignored resolution ${resolution.width}x${resolution.height}: ${width}x${height}`,
+      );
+      const texture = capture.frame.get_texture();
+      assert(
+        texture &&
+          Math.abs(texture.get_width() - width) <= 2 &&
+          Math.abs(texture.get_height() - height) <= 2,
+        'Shell capture downscaled the selected shader resolution',
+      );
+    }
+    Main.overview.show();
+    await delay(600);
+    checkOverview(extension);
+    Main.overview.hide();
+    await delay(300);
+  }
+  console.log(
+    'Verified live resolution changes, native display limits, shared overview captures and restart persistence.',
+  );
 }
 
 async function capturePixels() {
@@ -1556,6 +1638,7 @@ export default class ShellTest extends Extension {
       'Desktop shader did not animate',
     );
     await screenshot('live-desktop-second');
+    await checkLiveResolution(extension, preset, inspect);
     await checkResize(extension, this.path);
     await checkWorkspacePlayback(extension, this.path, inspect);
     await checkLockPlayback(extension, inspect);

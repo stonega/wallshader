@@ -48,7 +48,8 @@ controls; detailed Paper parameter tooltips currently fall back to English.
    and output resolution. **Animated shader**
    is selected by default when the app opens. “This display” uses
    the monitor containing the app window, including its scale. Explicit sizes include 1080p,
-   1440p, 4K and ultrawide. The preview follows the selected aspect ratio.
+   1440p, 4K and ultrawide. The resolution applies to still wallpapers, PNG exports,
+   and animated desktop wallpapers. The preview follows the selected aspect ratio.
 7. Click **Set Animated Wallpaper** to animate the shader on your desktop. For a
    still background, select **Still image** in Wallpaper Settings, then click
    **Set as Wallpaper**. Use the **Export PNG…** image icon above the preview to save
@@ -184,7 +185,12 @@ screen lock. The renderer stays running through locking and unlocking. The lock
 screen uses GNOME's static background with the captured first frame. The saved animated choice
 resumes next login while the extension is enabled. Disable **Wallshader Live
 Wallpaper** in GNOME Extensions to prevent this, or use **Stop** to clear the saved
-running state. Rendering is capped at 1080p per display to limit GPU use.
+running state. Animated desktop rendering uses the selected output resolution as
+a pixel budget for each display, preserves each monitor's aspect ratio, and does
+not exceed its native resolution. Choose **3840 × 2160** for a sharp 4K desktop,
+or a lower resolution to reduce GPU use, then apply again. The applied resolution
+is saved for playback at the next login. Older animated configurations retain
+their 1080p budget until reapplied.
 
 Image shaders show **Choose Image…**, **Use Sample**, and a remove button. Images
 are copied into the app's data directory and resized to at most 2048 × 2048 while

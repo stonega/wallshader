@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-26 14:40+0800\n"
+"POT-Creation-Date: 2026-10-26 12:30+0800\n"
 "PO-Revision-Date: 2026-10-20 00:00+0000\n"
 "Last-Translator: Wallshader translation draft\n"
 "Language-Team: de\n"
@@ -3311,7 +3311,7 @@ msgstr ""
 msgid "{name} set as wallpaper"
 msgstr "{name} als Hintergrundbild festgelegt"
 
-#: src/window.js:1363 src/window.js:1440
+#: src/window.js:1363 src/window.js:1442
 msgid "Undo"
 msgstr "Rückgängig"
 
@@ -3330,47 +3330,47 @@ msgstr ""
 msgid "Starting…"
 msgstr "Wird gestartet…"
 
-#: src/window.js:1439
+#: src/window.js:1441
 msgid "Animated wallpaper requested"
 msgstr "Animiertes Hintergrundbild angefordert"
 
-#: src/window.js:1461
+#: src/window.js:1463
 msgid "Log Out to Finish Update"
 msgstr "Abmelden, um die Aktualisierung abzuschließen"
 
-#: src/window.js:1462
+#: src/window.js:1464
 msgid "Log Out to Finish Setup"
 msgstr "Abmelden, um die Einrichtung abzuschließen"
 
-#: src/window.js:1471
+#: src/window.js:1473
 msgid "Got It"
 msgstr "Verstanden"
 
-#: src/window.js:1477
+#: src/window.js:1479
 msgid "Export Wallpaper"
 msgstr "Hintergrundbild exportieren"
 
-#: src/window.js:1480
+#: src/window.js:1482
 msgid "PNG images"
 msgstr "PNG-Bilder"
 
-#: src/window.js:1491
+#: src/window.js:1493
 msgid "Wallpaper exported"
 msgstr "Hintergrundbild exportiert"
 
-#: src/window.js:1507
+#: src/window.js:1509
 msgid "Previous wallpaper restored"
 msgstr "Vorheriges Hintergrundbild wiederhergestellt"
 
-#: src/renderer/renderer.js:52
+#: src/renderer/renderer.js:53
 msgid "Unavailable"
 msgstr "Nicht verfügbar"
 
-#: src/renderer/renderer.js:121
+#: src/renderer/renderer.js:122
 msgid "Choose the image again to reload this effect."
 msgstr "Wähle das Bild erneut, um diesen Effekt neu zu laden."
 
-#: src/renderer/renderer.js:255
+#: src/renderer/renderer.js:256
 msgid "A render is already in progress."
 msgstr "Es läuft bereits ein Rendervorgang."
 

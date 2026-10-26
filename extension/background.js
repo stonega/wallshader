@@ -247,6 +247,12 @@ const BackgroundTexture = GObject.registerClass(
 );
 
 const captures = new Map();
+let maxPixelCount = 1920 * 1080;
+
+export function setCaptureResolution({ width, height }) {
+  maxPixelCount = width * height;
+  for (const capture of captures.values()) capture.resize();
+}
 
 // Capture each monitor once, before any of its desktop or overview backgrounds.
 // Keep it at the renderer's pixel budget instead of allocating a full-size
@@ -268,14 +274,14 @@ class FrameCapture {
     this.driver.set_color_state(actor.get_color_state());
     this.driver.add_effect(this.frame);
     global.stage.insert_child_at_index(this.driver, 0);
-    const resize = () => {
+    this.resize = () => {
       const width = Math.max(1, source.width);
       const height = Math.max(1, source.height);
       this.driver.set_position(source.x, source.y);
       const scale = Math.max(1, Math.ceil(this.driver.get_resource_scale()));
       const factor = Math.min(
         1,
-        Math.sqrt((1920 * 1080) / (width * height)) / scale,
+        Math.sqrt(maxPixelCount / (width * height)) / scale,
       );
       this.driver.set_size(
         Math.max(1, Math.round(width * factor)),
@@ -283,10 +289,10 @@ class FrameCapture {
       );
       this.invalidate();
     };
-    this._allocation = source.connect('notify::allocation', resize);
-    this._scale = this.driver.connect('resource-scale-changed', resize);
+    this._allocation = source.connect('notify::allocation', this.resize);
+    this._scale = this.driver.connect('resource-scale-changed', this.resize);
     this._damaged = source.connect('damaged', () => this.invalidate());
-    resize();
+    this.resize();
   }
 
   invalidate() {

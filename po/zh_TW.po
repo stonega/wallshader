@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-26 14:40+0800\n"
+"POT-Creation-Date: 2026-10-26 12:30+0800\n"
 "PO-Revision-Date: 2026-10-20 00:00+0000\n"
 "Last-Translator: Wallshader translation draft\n"
 "Language-Team: zh_TW\n"
@@ -3254,7 +3254,7 @@ msgstr "桌布已套用，但無法儲存預設：{error}"
 msgid "{name} set as wallpaper"
 msgstr "已將 {name} 設為桌布"
 
-#: src/window.js:1363 src/window.js:1440
+#: src/window.js:1363 src/window.js:1442
 msgid "Undo"
 msgstr "復原"
 
@@ -3270,47 +3270,47 @@ msgstr "Kitty 背景已還原。必要時請重新載入 Kitty 設定。"
 msgid "Starting…"
 msgstr "正在啟動…"
 
-#: src/window.js:1439
+#: src/window.js:1441
 msgid "Animated wallpaper requested"
 msgstr "已請求動態桌布"
 
-#: src/window.js:1461
+#: src/window.js:1463
 msgid "Log Out to Finish Update"
 msgstr "登出以完成更新"
 
-#: src/window.js:1462
+#: src/window.js:1464
 msgid "Log Out to Finish Setup"
 msgstr "登出以完成設定"
 
-#: src/window.js:1471
+#: src/window.js:1473
 msgid "Got It"
 msgstr "知道了"
 
-#: src/window.js:1477
+#: src/window.js:1479
 msgid "Export Wallpaper"
 msgstr "匯出桌布"
 
-#: src/window.js:1480
+#: src/window.js:1482
 msgid "PNG images"
 msgstr "PNG 影像"
 
-#: src/window.js:1491
+#: src/window.js:1493
 msgid "Wallpaper exported"
 msgstr "桌布已匯出"
 
-#: src/window.js:1507
+#: src/window.js:1509
 msgid "Previous wallpaper restored"
 msgstr "已還原先前桌布"
 
-#: src/renderer/renderer.js:52
+#: src/renderer/renderer.js:53
 msgid "Unavailable"
 msgstr "無法使用"
 
-#: src/renderer/renderer.js:121
+#: src/renderer/renderer.js:122
 msgid "Choose the image again to reload this effect."
 msgstr "重新選擇影像以重新載入此效果。"
 
-#: src/renderer/renderer.js:255
+#: src/renderer/renderer.js:256
 msgid "A render is already in progress."
 msgstr "已有繪製正在進行。"
 

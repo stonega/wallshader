@@ -19,6 +19,7 @@ test('live settings preserve every shader and bound rendering options', () => {
       paused: true,
       fps: 60,
       rendering: 'compatibility',
+      resolution: { width: 1920, height: 1080 },
       preset,
     });
   }
@@ -32,6 +33,39 @@ test('live settings preserve every shader and bound rendering options', () => {
   expect(() => parseLiveConfig('{bad')).toThrow();
   expect(() => normalizeLiveConfig({ preset: { id: 'unknown' } })).toThrow();
   expect(() => parseLiveConfig('x'.repeat(128001))).toThrow();
+});
+
+test('live resolution survives persistence and older settings retain 1080p', () => {
+  const preset = createPreset('aurora');
+  expect(normalizeLiveConfig({ preset }).resolution).toEqual({
+    width: 1920,
+    height: 1080,
+  });
+  for (const [width, height] of [
+    [1920, 1080],
+    [2560, 1440],
+    [3840, 2160],
+    [3440, 1440],
+    [7680, 4320],
+    [2160, 3840],
+  ]) {
+    const resolution = { width, height };
+    const config = normalizeLiveConfig({ preset, resolution });
+    expect(parseLiveConfig(JSON.stringify(config)).resolution).toEqual(
+      resolution,
+    );
+    expect(config.resolution).not.toBe(resolution);
+  }
+  for (const resolution of [
+    null,
+    {},
+    { width: 0, height: 1080 },
+    { width: '3840', height: 2160 },
+    { width: 3840.5, height: 2160 },
+    { width: 8193, height: 1080 },
+    { width: 8192, height: 8192 },
+  ])
+    expect(() => normalizeLiveConfig({ preset, resolution })).toThrow();
 });
 
 test('live rendering survives persistence and older settings keep compatibility', () => {

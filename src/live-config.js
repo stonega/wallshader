@@ -1,4 +1,4 @@
-import { PRESETS, normalizePreset } from './catalog.js';
+import { PRESETS, normalizePreset, validateDimensions } from './catalog.js';
 
 export const EXTENSION_UUID = 'wallshader@wallshader.github.io';
 export const LIVE_PATH = '/io/github/wallshader/Live';
@@ -24,6 +24,10 @@ export function normalizeLiveConfig(input = {}) {
     paused: input.paused === true,
     fps: input.fps === 60 ? 60 : 30,
     rendering: input.rendering === 'gpu' ? 'gpu' : 'compatibility',
+    resolution:
+      input.resolution === undefined
+        ? { width: 1920, height: 1080 }
+        : validateDimensions(input.resolution?.width, input.resolution?.height),
     preset: normalizePreset(input.preset.id, input.preset),
   };
 }

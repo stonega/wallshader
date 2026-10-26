@@ -165,13 +165,14 @@ export class LiveWallpaper {
     );
   }
 
-  async apply(preset, fps = 30, rendering = 'compatibility') {
+  async apply(preset, fps = 30, rendering = 'compatibility', resolution) {
     await this.initialize();
     if (!(await this.refresh()).available) await this.setUp();
     const config = normalizeLiveConfig({
       preset,
       fps,
       rendering,
+      resolution,
       enabled: true,
       paused: false,
     });

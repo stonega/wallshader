@@ -1421,9 +1421,10 @@ export const WallshaderWindow = GObject.registerClass(
           ...this.preset,
           frame: state.frame,
         });
+        const resolution = this._dimensions();
         // Capture the exact starting frame even while the preview keeps playing.
         const data = await this.preview.request('capture', {
-          ...this._dimensions(),
+          ...resolution,
           frame: preset.frame,
         });
         await this.wallpaper.apply(data, preset.id);
@@ -1433,6 +1434,7 @@ export const WallshaderWindow = GObject.registerClass(
           preset,
           this.liveFps.selected === 1 ? 60 : 30,
           this.store.state.liveRendering,
+          resolution,
         );
         this.toasts.add_toast(
           new Adw.Toast({

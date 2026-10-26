@@ -67,7 +67,10 @@ action('reload', null, () => {
     config = normalizeLiveConfig(readJson(configPath));
     Promise.all(
       previews.map(async (preview) => {
-        await preview.request('live', { fps: config.fps });
+        await preview.request('live', {
+          fps: config.fps,
+          ...config.resolution,
+        });
         await preview.select(config.preset);
         await preview.pause(paused);
       }),
@@ -86,8 +89,10 @@ action('inspect', null, () => {
             paused,
             fps: config.fps,
             rendering: config.rendering,
+            resolution: config.resolution,
             skiaCpuRendering: GLib.getenv('WEBKIT_SKIA_ENABLE_CPU_RENDERING'),
             frames: states.map((state) => state.frame),
+            canvases: states.map((state) => state.canvas),
             preset: config.preset.id,
             monitors: previews.length,
             debugInfo: previews.map((preview) => preview.debug.panel.visible),
@@ -143,7 +148,7 @@ app.connect('activate', () => {
     );
     window.present();
     await preview.ready;
-    await preview.request('live', { fps: config.fps });
+    await preview.request('live', { fps: config.fps, ...config.resolution });
     await preview.select(config.preset);
     await preview.pause(paused);
     await setDebug(preview, debugInfo);

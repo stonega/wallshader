@@ -56,7 +56,12 @@ recreation, persistence across menu setup and monitor cleanup. The native suite
 checks the Preferences switch, saved state and recovery from failed saves;
 `artifacts/preferences-desktop-menu.png` shows the setting.
 Use `WALLSHADER_TEST_MONITORS=1 bun run test:shell` for the single-monitor case.
-The primary monitor is 2560 × 1600. Coverage checks compare both window frames
+The primary monitor is 2560 × 1600. Use
+`WALLSHADER_TEST_MONITOR_SIZE=3840x2160 bun run test:shell` to exercise a 4K display.
+Resolution checks switch between 1080p, 1440p, 4K and ultrawide budgets, compare
+shader canvas and shared capture dimensions, and verify saved resolution after a
+monitor-layout restart. Smaller monitors retain their native size, and overview
+previews share the selected capture budget. Coverage checks compare both window frames
 and Wayland buffers to their full monitor bounds, including after late resizes,
 moves, overview changes and renderer restarts.
 With a bright shader, pixel checks scan every visible desktop edge on every

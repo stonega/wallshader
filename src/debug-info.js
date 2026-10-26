@@ -74,7 +74,7 @@ export class DebugInfo {
     const values = {
       shader: `${_(info.shader)} / ${info.preset}`,
       viewport: `${info.viewport.join(' × ')} / ${info.scale}×`,
-      canvas: `${info.canvas.join(' × ')} / 2.07 MP`,
+      canvas: `${info.canvas.join(' × ')} / ${(info.maxPixelCount / 1e6).toFixed(2)} MP`,
       fps: format(_('{fps} / {target} target'), {
         fps: info.fps.toFixed(1),
         target: info.targetFps || _('display'),

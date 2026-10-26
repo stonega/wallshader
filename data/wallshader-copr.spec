@@ -1,5 +1,5 @@
 Name: wallshader
-Version: 0.1.20
+Version: 0.1.21
 Release: 1
 Summary: Native GNOME wallpapers made with Paper Shaders
 License: GPL-3.0-or-later AND Apache-2.0

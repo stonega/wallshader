@@ -102,6 +102,8 @@ The app preview stays unchanged. While enabled on the desktop, a separate rAF
 observer samples Paper's public frame time and posts diagnostics to GJS once per
 second. It does not alter the playback loop
 or capture canvas. Disabling it cancels both the observer and reporting timer.
+The canvas row shows its physical dimensions and the renderer's current pixel
+budget in megapixels, including changes to the applied output resolution.
 Observed FPS describes changes seen by WebKit, not GPU or compositor timing.
 The saved `debugInfo` preference defaults to false; the desktop watches the config
 directory for atomic state-file replacements so toggling it requires no wallpaper

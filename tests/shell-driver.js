@@ -425,8 +425,12 @@ async function checkLiveResolution(extension, preset, inspect) {
       );
       await checkCoverage(extension);
     }
-    const state = await inspect();
     const budget = resolution.width * resolution.height;
+    await until(async () => {
+      const state = await inspect();
+      return state.debugStats.every((info) => info?.maxPixelCount === budget);
+    }, 'Debug overlay did not report the applied pixel budget');
+    const state = await inspect();
     for (const [index, monitor] of Main.layoutManager.monitors.entries()) {
       const background = Main.layoutManager._bgManagers[index].backgroundActor;
       const capture =
@@ -448,6 +452,7 @@ async function checkLiveResolution(extension, preset, inspect) {
         'Shell capture downscaled the selected shader resolution',
       );
     }
+    if (resolution.width === 3840) await screenshot('live-desktop-debug-4k');
     Main.overview.show();
     await delay(600);
     checkOverview(extension);
@@ -1612,17 +1617,15 @@ export default class ShellTest extends Extension {
       'Desktop did not pick up the saved debug toggle',
     );
     assert(
-      debug.debugStats.every((info) => info?.fps > 0 && info.canvas[0] > 0),
+      debug.debugStats.every(
+        (info) =>
+          info?.fps > 0 &&
+          info.canvas[0] > 0 &&
+          info.maxPixelCount === 1920 * 1080,
+      ),
       'Desktop debug statistics did not update on all monitors',
     );
     await screenshot('live-desktop-debug');
-    debugStore.state.debugInfo = false;
-    debugStore.save();
-    await delay(300);
-    assert(
-      (await inspect()).debugInfo.every((enabled) => !enabled),
-      'Desktop debug overlay did not hide',
-    );
     const backend = GLib.getenv('GSK_RENDERER');
     if (backend === 'gl' || backend === 'vulkan') {
       const expected = backend === 'gl' ? 'GskGLRenderer' : 'GskVulkanRenderer';
@@ -1639,6 +1642,13 @@ export default class ShellTest extends Extension {
     );
     await screenshot('live-desktop-second');
     await checkLiveResolution(extension, preset, inspect);
+    debugStore.state.debugInfo = false;
+    debugStore.save();
+    await delay(300);
+    assert(
+      (await inspect()).debugInfo.every((enabled) => !enabled),
+      'Desktop debug overlay did not hide',
+    );
     await checkResize(extension, this.path);
     await checkWorkspacePlayback(extension, this.path, inspect);
     await checkLockPlayback(extension, inspect);

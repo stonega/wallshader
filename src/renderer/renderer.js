@@ -42,6 +42,7 @@ function reportDebugInfo() {
     viewport: [window.innerWidth, window.innerHeight],
     scale: window.devicePixelRatio,
     canvas: [canvas.width, canvas.height],
+    maxPixelCount,
     targetFps: liveFps,
     paused,
     busy,

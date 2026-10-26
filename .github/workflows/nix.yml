@@ -68,7 +68,7 @@ jobs:
           mkdir -p artifacts/nixos
           for directory in result/artifacts /nix/store/*-vm-test-run-wallshader/artifacts; do
             if [[ -d "$directory" ]]; then
-              cp -R "$directory"/. artifacts/nixos/
+              cp -R --no-preserve=mode "$directory"/. artifacts/nixos/
             fi
           done
       - uses: actions/upload-artifact@v4

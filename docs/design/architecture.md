@@ -72,10 +72,12 @@ WebGL 2 renderer preserves shader behavior and avoids a separate GLSL port.
 Before WebKit launches, `Preview` defaults `WEBKIT_SKIA_ENABLE_CPU_RENDERING` to
 `1`. WebKit's Skia GPU painting path reproduced triangle-shaped gaps in animated
 previews on the tested WebKitGTK 2.52 / GTK 4.22 stack. Skia rasterizes page content
-and 2D canvases on the CPU with this setting; WebGL shaders, WebKit compositing and
-GTK's renderer remain accelerated. The wallpaper page has a static background
-around the WebGL canvas. Image preprocessing that uses 2D canvas may cost more CPU
-time. The same initialization covers editor and desktop windows. An explicit
+on the CPU with this setting; WebGL shaders, WebKit compositing and GTK's renderer
+remain accelerated. WebKit controls 2D canvas acceleration separately and can
+still accelerate it with Skia CPU painting; frequent pixel reads can instead use
+an unaccelerated canvas. Image preprocessing retains Paper's JavaScript and
+2D canvas operations. The wallpaper page has a static background around the WebGL
+canvas. The same initialization covers editor and desktop windows. An explicit
 environment override is honored for editor comparisons. For desktop windows, the
 extension sets this variable explicitly to `1` for Compatibility (the default) or
 `0` for GPU (experimental), before launching GJS/WebKit. Both modes leave WebGL
@@ -434,3 +436,17 @@ An outdated loaded identifier
 shows **Log Out to Finish Update** and blocks animated apply before saving a still
 frame. Reopening the app keeps this notice until a fresh Shell loads the new code.
 Renderer-only changes refresh the files without requiring a new Shell session.
+
+Overview containers attach live backgrounds to newly added thumbnails immediately,
+before their first visible paint. A queued refresh still handles subsequent layout
+and container changes, including GNOME 50's secondary-monitor thumbnails.
+
+Packages can set `WALLSHADER_MANAGED_EXTENSION` to an immutable installed bundle.
+In this mode the editor validates the bundle and compares its Shell identifier
+without copying files or enabling the extension. A shadowing per-user copy produces
+an actionable error and is left untouched. Upgrades and rollbacks both require a
+fresh session when the loaded identifier differs. The build can set
+`WALLSHADER_RENDERER_LAUNCHER` to an absolute GJS wrapper; its path is hashed with
+the Shell code and exported from `build-info.js`. This lets Nix provide the
+renderer with its own GTK/WebKit runtime environment independently of the editor.
+See [NixOS packaging](../implementation/nixos.md).

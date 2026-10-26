@@ -1,6 +1,6 @@
 import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
-import { _ } from './i18n.js';
+import { _, format } from './i18n.js';
 import { ROOT } from './paths.js';
 import { EXTENSION_UUID } from './live-config.js';
 
@@ -87,11 +87,25 @@ function bundledExtension() {
     .find((file) => file.get_child('app').query_exists(null));
 }
 
+function bundleInfo(bundle) {
+  const info = bundle && metadata(bundle);
+  if (
+    info?.uuid !== EXTENSION_UUID ||
+    !/^[a-f0-9]{64}$/.test(info?.['wallshader-shell-id'] ?? '') ||
+    !bundle.get_child('build-info.js').query_exists(null) ||
+    !bundle.get_child('app/src/desktop-renderer.js').query_exists(null) ||
+    !bundle.get_child('app/build/renderer/renderer.js').query_exists(null)
+  )
+    return null;
+  return info;
+}
+
 // Startup refreshes only an existing installation. First installation remains
 // an explicit animated-apply action; no Shell calls or settings writes happen here.
 export function syncExtension({
   install = false,
   bundle = null,
+  managedPath = GLib.getenv('WALLSHADER_MANAGED_EXTENSION'),
   destination = Gio.File.new_for_path(
     GLib.build_filenamev([
       GLib.get_user_data_dir(),
@@ -103,18 +117,37 @@ export function syncExtension({
 } = {}) {
   const installed =
     destination.query_file_type(nofollow, null) !== Gio.FileType.UNKNOWN;
+  if (managedPath) {
+    const info = bundleInfo(Gio.File.new_for_path(managedPath));
+    if (!info)
+      throw new Error(
+        _(
+          'The packaged wallpaper extension is missing or damaged. Reinstall Wallshader.',
+        ),
+      );
+    if (installed)
+      throw new Error(
+        // Translators: {path} is the user's existing extension directory.
+        format(
+          _(
+            'A per-user Wallshader extension is hiding the packaged extension. Move “{path}” out of the extensions directory, then log out and back in.',
+          ),
+          { path: destination.get_path() },
+        ),
+      );
+    return {
+      updated: false,
+      shellChanged: false,
+      shellId: info['wallshader-shell-id'],
+      managed: true,
+    };
+  }
   if (!installed && !install)
     return { updated: false, shellChanged: false, shellId: null };
   bundle ??= bundledExtension();
-  const info = bundle && metadata(bundle);
+  const info = bundleInfo(bundle);
   const shellId = info?.['wallshader-shell-id'];
-  if (
-    info?.uuid !== EXTENSION_UUID ||
-    !/^[a-f0-9]{64}$/.test(shellId ?? '') ||
-    !bundle.get_child('build-info.js').query_exists(null) ||
-    !bundle.get_child('app/src/desktop-renderer.js').query_exists(null) ||
-    !bundle.get_child('app/build/renderer/renderer.js').query_exists(null)
-  )
+  if (!info)
     throw new Error(
       _(
         'Build Wallshader with “bun run build” to include animated wallpaper support.',

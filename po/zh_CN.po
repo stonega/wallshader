@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-23 17:45+0800\n"
+"POT-Creation-Date: 2026-10-26 14:40+0800\n"
 "PO-Revision-Date: 2026-10-20 00:00+0000\n"
 "Last-Translator: Wallshader translation draft\n"
 "Language-Team: zh_CN\n"
@@ -2613,12 +2613,23 @@ msgstr "移除图像"
 msgid "Use Sample"
 msgstr "使用示例"
 
-#: src/extension-install.js:120
+#: src/extension-install.js:125
+msgid ""
+"The packaged wallpaper extension is missing or damaged. Reinstall Wallshader."
+msgstr ""
+
+#: src/extension-install.js:133
+msgid ""
+"A per-user Wallshader extension is hiding the packaged extension. Move "
+"“{path}” out of the extensions directory, then log out and back in."
+msgstr ""
+
+#: src/extension-install.js:153
 msgid ""
 "Build Wallshader with “bun run build” to include animated wallpaper support."
 msgstr "使用“bun run build”构建 Wallshader 以包含动态壁纸支持。"
 
-#: src/extension-install.js:127
+#: src/extension-install.js:160
 msgid "The extension bundle contains an unsupported file. Rebuild Wallshader."
 msgstr "扩展包包含不受支持的文件。请重新构建 Wallshader。"
 
@@ -2673,12 +2684,19 @@ msgstr ""
 "已安装动画支持。请注销并重新登录，以便 GNOME 发现扩展。然后打开 Wallshader，"
 "再次选择“设置动态壁纸”。"
 
-#: src/live.js:119
+#: src/live.js:113
+#, fuzzy
+msgid ""
+"Enable Wallshader Live Wallpaper in your NixOS or Home Manager "
+"configuration, or in GNOME Extensions, then log out and back in."
+msgstr "请在 GNOME 扩展中启用 Wallshader Live Wallpaper，然后重试。"
+
+#: src/live.js:126
 #, fuzzy
 msgid "Animated wallpapers currently support GNOME 50 and 51 on Wayland."
 msgstr "动态壁纸目前支持 Wayland 上的 GNOME 50。"
 
-#: src/live.js:156
+#: src/live.js:163
 msgid "Enable Wallshader Live Wallpaper in GNOME Extensions, then try again."
 msgstr "请在 GNOME 扩展中启用 Wallshader Live Wallpaper，然后重试。"
 

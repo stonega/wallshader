@@ -58,6 +58,8 @@ function run(directory, options, dbus = false) {
         XDG_CACHE_HOME: join(directory, 'cache'),
         XDG_RUNTIME_DIR: join(directory, 'runtime'),
         GSETTINGS_BACKEND: 'memory',
+        GIO_USE_VFS: 'local',
+        WALLSHADER_MANAGED_EXTENSION: '',
         DBUS_SESSION_BUS_ADDRESS: `unix:path=${directory}/no-bus`,
         DISPLAY: '',
         WAYLAND_DISPLAY: '',
@@ -265,11 +267,12 @@ test('the loaded-code identifier tracks shared Shell modules and ignores rendere
     await mkdir(join(directory, 'build/locale'), { recursive: true });
     const renderer = join(directory, 'build/renderer/renderer.js');
     await write(renderer, '// renderer one');
-    const build = async () => {
+    const build = async (launcher = 'gjs') => {
       const result = spawnSync('bun', ['scripts/build-extension.js'], {
         cwd: directory,
         encoding: 'utf8',
         timeout: 30000,
+        env: { ...process.env, WALLSHADER_RENDERER_LAUNCHER: launcher },
       });
       expect(result.status, result.stderr).toBe(0);
       return JSON.parse(
@@ -302,6 +305,130 @@ test('the loaded-code identifier tracks shared Shell modules and ignores rendere
       join(directory, 'src/storage.js'),
       '// shared Shell code update',
     );
-    expect(await build()).not.toBe(original);
+    const shared = await build();
+    expect(shared).not.toBe(original);
+    const launcher = '/nix/store/example/libexec/wallshader-gjs';
+    expect(await build(launcher)).not.toBe(shared);
+    expect(
+      await readFile(join(directory, 'build/extension/build-info.js'), 'utf8'),
+    ).toContain(`RENDERER_LAUNCHER = "${launcher}"`);
+    expect(await build()).toBe(shared);
+  });
+});
+
+test('a managed extension is read without creating or updating a per-user copy', async () => {
+  await fixture(async (directory) => {
+    const managedPath = join(directory, 'package');
+    const destination = join(directory, 'extensions', EXTENSION_UUID);
+    await bundle(managedPath);
+    const before = await stat(join(managedPath, 'metadata.json'));
+    for (const install of [false, true]) {
+      const result = run(directory, { managedPath, destination, install });
+      expect(result.status, result.stderr).toBe(0);
+      expect(result.value).toEqual({
+        updated: false,
+        shellChanged: false,
+        shellId,
+        managed: true,
+      });
+      expect(await stat(destination).catch(() => null)).toBeNull();
+    }
+    expect((await stat(join(managedPath, 'metadata.json'))).mtimeMs).toBe(
+      before.mtimeMs,
+    );
+  });
+});
+
+test('missing or damaged managed extensions fail without falling back to installation', async () => {
+  await fixture(async (directory) => {
+    const managedPath = join(directory, 'package');
+    const destination = join(directory, 'extensions', EXTENSION_UUID);
+    for (const damaged of [false, true]) {
+      if (damaged) {
+        await bundle(managedPath);
+        await rm(join(managedPath, 'build-info.js'));
+      }
+      const result = run(directory, {
+        managedPath,
+        destination,
+        install: true,
+      });
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('missing or damaged');
+      expect(await stat(destination).catch(() => null)).toBeNull();
+    }
+  });
+});
+
+test('managed mode preserves shadowing per-user extensions and symlink targets', async () => {
+  await fixture(async (directory) => {
+    const managedPath = join(directory, 'package');
+    const destination = join(directory, 'extensions', EXTENSION_UUID);
+    const old = join(directory, 'old');
+    await bundle(managedPath);
+    await bundle(destination, 'b'.repeat(64));
+    await bundle(old, 'c'.repeat(64));
+    for (const linked of [false, true]) {
+      if (linked) {
+        await rm(destination, { recursive: true });
+        await symlink(old, destination);
+      }
+      const before = await readFile(join(destination, 'metadata.json'), 'utf8');
+      const result = run(directory, { managedPath, destination });
+      expect(result.status).toBe(1);
+      expect(result.stderr).toContain('hiding the packaged extension');
+      expect(result.stderr).toContain(destination);
+      expect(await readFile(join(destination, 'metadata.json'), 'utf8')).toBe(
+        before,
+      );
+    }
+  });
+});
+
+test('managed upgrades and rollbacks compare the packaged ID to the loaded Shell code', async () => {
+  await fixture(async (directory) => {
+    const managedPath = join(directory, 'package');
+    await bundle(managedPath);
+    const result = run(
+      directory,
+      {
+        controller: true,
+        managedPath,
+        runningIds: ['b'.repeat(64), shellId, 'b'.repeat(64)],
+      },
+      true,
+    );
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.value.map(({ loginRequired }) => loginRequired)).toEqual([
+      true,
+      false,
+      true,
+    ]);
+    expect(
+      await stat(join(directory, 'data/gnome-shell')).catch(() => null),
+    ).toBeNull();
+  });
+});
+
+test('a disabled managed extension reports configuration guidance without contacting the enable API', async () => {
+  await fixture(async (directory) => {
+    const managedPath = join(directory, 'package');
+    await bundle(managedPath);
+    const result = run(
+      directory,
+      {
+        controller: true,
+        managedPath,
+        available: false,
+        setup: true,
+        runningIds: [shellId],
+      },
+      true,
+    );
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.value[0].setupError).toContain('Home Manager');
+    expect(
+      await stat(join(directory, 'data/gnome-shell')).catch(() => null),
+    ).toBeNull();
   });
 });

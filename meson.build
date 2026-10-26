@@ -3,7 +3,7 @@ project('wallshader', version: '0.1.20', meson_version: '>=1.0.0', license: 'GPL
 gnome = import('gnome')
 i18n = import('i18n')
 bun = find_program('bun')
-find_program('gjs')
+gjs = find_program('gjs')
 appdir = get_option('prefix') / get_option('datadir') / 'wallshader'
 subdir('po')
 
@@ -36,6 +36,7 @@ i18n.merge_file(
 launcher = configuration_data()
 launcher.set('APPDIR', appdir)
 launcher.set('LOCALEDIR', get_option('prefix') / get_option('localedir'))
+launcher.set('GJS', gjs.full_path())
 configure_file(input: 'data/wallshader.in', output: 'wallshader', configuration: launcher,
   install: true, install_dir: get_option('bindir'), install_mode: 'rwxr-xr-x')
 gnome.post_install(gtk_update_icon_cache: true, update_desktop_database: true)

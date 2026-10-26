@@ -1112,11 +1112,15 @@ export async function run(window) {
         width: 640,
         height: 360,
       });
-      checkImage(result, 640, 360);
       await savePng(
         Gio.File.new_for_path(`${artifacts}/custom-${shader}.png`),
         result,
       );
+      try {
+        checkImage(result, 640, 360);
+      } catch (error) {
+        throw new Error(`Custom ${shader}: ${error.message}`);
+      }
     }
     console.log(
       'Verified local image import and all three logo preprocessors.',

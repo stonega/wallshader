@@ -7,7 +7,7 @@ import { OverviewWallpapers } from './overview.js';
 import { DesktopWallpapers } from './background.js';
 import { CompositingHold } from './compositing.js';
 import { DesktopMenu } from './desktop-menu.js';
-import { SHELL_BUILD_ID } from './build-info.js';
+import { RENDERER_LAUNCHER, SHELL_BUILD_ID } from './build-info.js';
 import {
   LIVE_XML,
   LIVE_PATH,
@@ -184,7 +184,7 @@ export default class WallshaderExtension extends Extension {
         global.context,
         launcher,
         [
-          'gjs',
+          RENDERER_LAUNCHER,
           '-m',
           GLib.build_filenamev([
             this.path,

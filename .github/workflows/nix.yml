@@ -1,0 +1,79 @@
+name: Nix
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build and check (${{ matrix.system }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - system: x86_64-linux
+            runner: ubuntu-24.04
+          - system: aarch64-linux
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@d9186cbdca7adedf113a159fa91f725a27866771 # v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            sandbox = true
+      - name: Check Nix formatting
+        run: nix fmt -- --check flake.nix nix/package.nix nix/integration.nix
+      - name: Build package and verify installed runtime
+        run: |
+          nix flake check --no-update-lock-file --no-build --all-systems
+          nix build --no-update-lock-file --print-build-logs .#checks.${{ matrix.system }}.installed
+      - name: Verify offline reproducibility
+        run: nix build --no-update-lock-file --offline --rebuild --no-link .#wallshader
+
+  integration:
+    name: Installed package in a NixOS VM
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@d9186cbdca7adedf113a159fa91f725a27866771 # v31
+        with:
+          extra_nix_config: |
+            experimental-features = nix-command flakes
+            sandbox = true
+      - name: Test native UI and GNOME integration
+        run: nix build --keep-failed --no-update-lock-file --print-build-logs .#checks.x86_64-linux.integration
+      - name: Collect test screenshots and logs
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p artifacts/nixos
+          for directory in result/artifacts /nix/store/*-vm-test-run-wallshader/artifacts; do
+            if [[ -d "$directory" ]]; then
+              cp -R "$directory"/. artifacts/nixos/
+            fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nixos-integration
+          path: artifacts/nixos/
+          if-no-files-found: ignore

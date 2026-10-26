@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-23 17:45+0800\n"
+"POT-Creation-Date: 2026-10-26 14:40+0800\n"
 "PO-Revision-Date: 2026-10-20 00:00+0000\n"
 "Last-Translator: Wallshader translation draft\n"
 "Language-Team: fr\n"
@@ -2616,14 +2616,25 @@ msgstr "Retirer l’image"
 msgid "Use Sample"
 msgstr "Utiliser l’exemple"
 
-#: src/extension-install.js:120
+#: src/extension-install.js:125
+msgid ""
+"The packaged wallpaper extension is missing or damaged. Reinstall Wallshader."
+msgstr ""
+
+#: src/extension-install.js:133
+msgid ""
+"A per-user Wallshader extension is hiding the packaged extension. Move "
+"“{path}” out of the extensions directory, then log out and back in."
+msgstr ""
+
+#: src/extension-install.js:153
 msgid ""
 "Build Wallshader with “bun run build” to include animated wallpaper support."
 msgstr ""
 "Compilez Wallshader avec « bun run build » pour inclure les fonds d’écran "
 "animés."
 
-#: src/extension-install.js:127
+#: src/extension-install.js:160
 msgid "The extension bundle contains an unsupported file. Rebuild Wallshader."
 msgstr ""
 "Le paquet de l’extension contient un fichier non pris en charge. Recompilez "
@@ -2690,14 +2701,22 @@ msgstr ""
 "reconnectez-vous pour que GNOME la détecte. Rouvrez ensuite Wallshader et "
 "choisissez à nouveau « Définir un fond d’écran animé »."
 
-#: src/live.js:119
+#: src/live.js:113
+#, fuzzy
+msgid ""
+"Enable Wallshader Live Wallpaper in your NixOS or Home Manager "
+"configuration, or in GNOME Extensions, then log out and back in."
+msgstr ""
+"Activez Wallshader Live Wallpaper dans Extensions GNOME, puis réessayez."
+
+#: src/live.js:126
 #, fuzzy
 msgid "Animated wallpapers currently support GNOME 50 and 51 on Wayland."
 msgstr ""
 "Les fonds d’écran animés prennent actuellement en charge GNOME 50 sous "
 "Wayland."
 
-#: src/live.js:156
+#: src/live.js:163
 msgid "Enable Wallshader Live Wallpaper in GNOME Extensions, then try again."
 msgstr ""
 "Activez Wallshader Live Wallpaper dans Extensions GNOME, puis réessayez."

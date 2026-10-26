@@ -1,12 +1,16 @@
 import { mkdir, copyFile, cp, rm, readFile, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
-import { resolve } from 'node:path';
+import { isAbsolute, resolve } from 'node:path';
 
 const root = resolve(import.meta.dir, '..');
 const output = resolve(Bun.argv[2] ?? `${root}/build/extension`);
+const rendererLauncher = process.env.WALLSHADER_RENDERER_LAUNCHER || 'gjs';
+if (rendererLauncher !== 'gjs' && !isAbsolute(rendererLauncher))
+  throw new Error('WALLSHADER_RENDERER_LAUNCHER must be an absolute path.');
 await rm(output, { recursive: true, force: true });
 await mkdir(`${output}/app/src`, { recursive: true });
 const shellHash = createHash('sha256');
+shellHash.update('renderer-launcher\0').update(rendererLauncher).update('\0');
 for (const file of [
   'extension.js',
   'overview.js',
@@ -58,7 +62,7 @@ const metadata = JSON.parse(await readFile(`${output}/metadata.json`, 'utf8'));
 metadata['wallshader-shell-id'] = shellHash.digest('hex');
 await writeFile(
   `${output}/build-info.js`,
-  `export const SHELL_BUILD_ID = '${metadata['wallshader-shell-id']}';\n`,
+  `export const SHELL_BUILD_ID = '${metadata['wallshader-shell-id']}';\nexport const RENDERER_LAUNCHER = ${JSON.stringify(rendererLauncher)};\n`,
 );
 await writeFile(
   `${output}/metadata.json`,

@@ -4,3 +4,6 @@ build-native/
 artifacts/
 dist/
 .codegraph/
+.flatpak-builder/
+result
+result-*

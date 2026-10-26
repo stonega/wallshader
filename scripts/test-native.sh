@@ -21,7 +21,7 @@ directory.mkdir(parents=True, exist_ok=True)
 (directory / 'state.json').write_text(json.dumps({'language': os.environ['WALLSHADER_TEST_LANGUAGE']}))
 PY
 fi
-export WALLSHADER_ARTIFACTS="$app_dir/artifacts"
+export WALLSHADER_ARTIFACTS="${WALLSHADER_ARTIFACTS:-$app_dir/artifacts}"
 if [ "$#" -eq 0 ]; then set -- --smoke-test; fi
 export GTK_A11Y=none
 dbus-run-session -- timeout "${WALLSHADER_TEST_TIMEOUT:-240}" gjs -m "$app_dir/src/main.js" "$@"

@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-23 17:45+0800\n"
+"POT-Creation-Date: 2026-10-26 14:40+0800\n"
 "PO-Revision-Date: 2026-10-20 00:00+0000\n"
 "Last-Translator: Wallshader translation draft\n"
 "Language-Team: ko\n"
@@ -2615,13 +2615,24 @@ msgstr "이미지 제거"
 msgid "Use Sample"
 msgstr "샘플 사용"
 
-#: src/extension-install.js:120
+#: src/extension-install.js:125
+msgid ""
+"The packaged wallpaper extension is missing or damaged. Reinstall Wallshader."
+msgstr ""
+
+#: src/extension-install.js:133
+msgid ""
+"A per-user Wallshader extension is hiding the packaged extension. Move "
+"“{path}” out of the extensions directory, then log out and back in."
+msgstr ""
+
+#: src/extension-install.js:153
 msgid ""
 "Build Wallshader with “bun run build” to include animated wallpaper support."
 msgstr ""
 "“bun run build”로 Wallshader를 빌드하여 움직이는 배경화면 지원을 포함하세요."
 
-#: src/extension-install.js:127
+#: src/extension-install.js:160
 msgid "The extension bundle contains an unsupported file. Rebuild Wallshader."
 msgstr ""
 "확장 번들에 지원되지 않는 파일이 있습니다. Wallshader를 다시 빌드하세요."
@@ -2685,12 +2696,20 @@ msgstr ""
 "시 로그인하세요. 그런 다음 Wallshader를 열고 “움직이는 배경화면 설정”을 다시 "
 "선택하세요."
 
-#: src/live.js:119
+#: src/live.js:113
+#, fuzzy
+msgid ""
+"Enable Wallshader Live Wallpaper in your NixOS or Home Manager "
+"configuration, or in GNOME Extensions, then log out and back in."
+msgstr ""
+"GNOME 확장에서 Wallshader Live Wallpaper를 활성화한 후 다시 시도하세요."
+
+#: src/live.js:126
 #, fuzzy
 msgid "Animated wallpapers currently support GNOME 50 and 51 on Wayland."
 msgstr "움직이는 배경화면은 현재 Wayland의 GNOME 50을 지원합니다."
 
-#: src/live.js:156
+#: src/live.js:163
 msgid "Enable Wallshader Live Wallpaper in GNOME Extensions, then try again."
 msgstr ""
 "GNOME 확장에서 Wallshader Live Wallpaper를 활성화한 후 다시 시도하세요."

@@ -279,6 +279,11 @@ after changes so this bundle is current.
 The application has no runtime dependency on Bun or the source checkout after
 installation.
 
+The [NixOS packaging guide](nixos.md) covers the source-built flake, package-managed
+extension, isolated installed-package tests, dependency updates and Nixpkgs submission.
+Use `./scripts/test-native-isolated.sh` to start a private virtual GNOME desktop
+before running the native suite.
+
 ## Packages and releases
 
 Ubuntu 26.04 PPA packaging and the GitHub Actions publishing workflow are described

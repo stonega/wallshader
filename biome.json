@@ -1,5 +1,6 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.4.6/schema.json",
+  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
   "files": {
     "includes": [
       "**",
@@ -7,6 +8,7 @@
       "!!build-native",
       "!!artifacts",
       "!!dist",
+      "!!.flatpak-builder",
       "!!data/third-party",
       "!!data/style.css",
       "!!po/paper-catalog.js"

@@ -83,6 +83,7 @@ export class LiveWallpaper {
   async initialize() {
     const result = syncExtension();
     this._shellId = result.shellId;
+    this._managedExtension = result.managed === true;
     this._shellChanged ||= result.shellChanged;
     await this.refresh();
     if (this.status.loginRequired) throw new LoginRequiredError(true);
@@ -106,6 +107,12 @@ export class LiveWallpaper {
   }
 
   async setUp() {
+    if (this._managedExtension || GLib.getenv('WALLSHADER_MANAGED_EXTENSION'))
+      throw new Error(
+        _(
+          'Enable Wallshader Live Wallpaper in your NixOS or Home Manager configuration, or in GNOME Extensions, then log out and back in.',
+        ),
+      );
     const [version] = await call(
       'org.gnome.Shell.Extensions',
       '/org/gnome/Shell/Extensions',

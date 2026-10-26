@@ -27,13 +27,14 @@ Applying animation also sets its first frame as the static background for both
 light and dark appearances. Stop reveals that still image; Restore Previous
 Wallpaper returns to the background saved before the first apply.
 
-On first use, **Set Animated Wallpaper** installs the bundled extension. A newly
-installed extension requires one logout/login for GNOME to discover it. The app
+For RPM, DEB and source installations, **Set Animated Wallpaper** installs the
+bundled extension on first use. A newly installed extension requires one
+logout/login for GNOME to discover it. The app
 explains this when needed. Still wallpapers and PNG export work without an extension.
 
 ## Install
 
-Install from Fedora COPR or the Ubuntu PPA below, or download a package from
+Install from Fedora COPR, the Ubuntu PPA or the [Nix flake](#nixos) below, or download a package from
 [GitHub Releases](https://github.com/stonega/wallshader/releases).
 Packages contain the app, renderer, icon, and live wallpaper extension. **Bun,
 Meson, and a source checkout are not needed to run a packaged installation.**
@@ -104,6 +105,33 @@ After an upgrade, opening Wallshader automatically refreshes an existing
 animation extension. If GNOME still has older extension code loaded, the app
 asks you to log out and back in. Dismiss the notice and log out when ready.
 The update does not change your wallpaper or playback state on startup.
+
+### NixOS
+
+The repository provides a flake for `x86_64-linux` and `aarch64-linux`, with
+dependencies pinned to NixOS 26.05. Install directly from GitHub as your normal
+user:
+
+```sh
+nix --extra-experimental-features 'nix-command flakes' \
+  profile install github:stonega/wallshader#wallshader
+```
+
+Log out and back in once so GNOME discovers the app and its bundled extension.
+Enable **Wallshader Live Wallpaper** in GNOME Extensions, then open Wallshader
+from the app grid or run `wallshader`.
+
+For declarative installation and **automatic extension enablement**, use the
+[NixOS configuration](docs/implementation/nixos.md#nixos-configuration) or
+[Home Manager](docs/implementation/nixos.md#home-manager) examples. These install
+the package and declare `wallshader@wallshader.github.io` in GNOME's enabled
+extensions. Keep your other extension UUIDs in that list too.
+
+Animation requires GNOME 50 or 51 on Wayland and working WebGL 2. In GNOME Boxes,
+enable **3D Acceleration** in the VM's preferences when available and restart the
+guest. Nix manages the extension files; the app does not copy or update them in
+your home directory. The [NixOS guide](docs/implementation/nixos.md) also covers
+migration, upgrades, rollback and verification. No manual source archive is needed.
 
 ### Development packages and archives
 

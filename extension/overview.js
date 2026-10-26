@@ -44,7 +44,12 @@ export class OverviewWallpapers {
     if (!actor) return;
     if (!this._watched.has(actor)) {
       this._watched.set(actor, [
-        actor.connect('child-added', () => this._queueSync()),
+        actor.connect('child-added', (_parent, child) => {
+          // Secondary-monitor thumbnails can arrive after this frame's later.
+          // Attach their background before their first visible paint.
+          this._visit(child);
+          this._queueSync();
+        }),
         actor.connect('destroy', () => {
           this._removeBackground(actor, true);
           this._unwatch(actor);

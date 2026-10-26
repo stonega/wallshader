@@ -6,6 +6,8 @@ import { LiveWallpaper, LoginRequiredError } from '../src/live.js';
 import { LIVE_INTERFACE, LIVE_PATH } from '../src/live-config.js';
 
 const options = JSON.parse(ARGV[0]);
+if (options.managedPath)
+  GLib.setenv('WALLSHADER_MANAGED_EXTENSION', options.managedPath, true);
 if (options.controller) {
   const loop = new GLib.MainLoop(null, false);
   let runningId = '';
@@ -14,8 +16,8 @@ if (options.controller) {
     {
       GetStatus: () =>
         JSON.stringify({
-          available: true,
-          active: true,
+          available: options.available !== false,
+          active: options.available !== false,
           shellBuildId: runningId,
         }),
     },
@@ -29,18 +31,25 @@ if (options.controller) {
     async () => {
       try {
         const results = [];
-        for (const id of ['', '', options.shellId]) {
+        for (const id of options.runningIds ?? ['', '', options.shellId]) {
           runningId = id;
           const live = new LiveWallpaper();
           let loginRequired = false;
+          let setupError = '';
           try {
             await live.initialize();
+            if (options.setup) await live.setUp();
           } catch (error) {
-            if (!(error instanceof LoginRequiredError) || !error.updated)
-              throw error;
-            loginRequired = true;
+            if (error instanceof LoginRequiredError && error.updated)
+              loginRequired = true;
+            else if (options.setup) setupError = error.message;
+            else throw error;
           }
-          results.push({ loginRequired, status: live.status });
+          results.push({
+            loginRequired,
+            status: live.status,
+            ...(options.setup ? { setupError } : {}),
+          });
           live.close();
         }
         print(JSON.stringify(results));

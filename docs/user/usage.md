@@ -141,6 +141,12 @@ ready, then reopen Wallshader and apply the animation. Your wallpaper and playba
 stay unchanged while the app updates the installed files. Renderer-only updates
 do not need logout; stop and reapply the animation to load their new files.
 
+Nix installations use the extension installed by the package. Enable it through
+your NixOS/Home Manager configuration or GNOME Extensions, then log out and back
+in. The app preserves the packaged files and reports an older per-user copy if
+one shadows them. See the [NixOS guide](../implementation/nixos.md) for migration,
+upgrade and rollback instructions.
+
 While the extension is enabled, right-click the desktop and choose **Open
 Wallshader**, directly below **Change Background…**, to open the app or bring its
 existing window forward. This shortcut also works when animation is stopped.
@@ -241,5 +247,7 @@ are independent of the app. Removing the app does not remove these files.
 Kitty PNGs, shader pipelines, and their Paper license/notice files are kept under
 `~/.local/share/wallshader/kitty/`. Restore Kitty's background before deleting
 these files.
-Animation settings are in `~/.config/wallshader/live-wallpaper.json`; its extension
-is in `~/.local/share/gnome-shell/extensions/wallshader@wallshader.github.io/`.
+Animation settings are in `~/.config/wallshader/live-wallpaper.json`.
+RPM, DEB and source installations keep the extension in
+`~/.local/share/gnome-shell/extensions/wallshader@wallshader.github.io/`.
+Nix installations keep it in the package's Nix store path.

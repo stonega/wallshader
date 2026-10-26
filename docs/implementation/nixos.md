@@ -1,9 +1,10 @@
 # NixOS packaging
 
-The repository flake builds Wallshader from source for `x86_64-linux` and
-`aarch64-linux`. `flake.lock` pins Nixpkgs from the NixOS 26.05 branch. The app
-still requires a GNOME session; animated wallpapers require GNOME 50 or 51 on
-Wayland and working WebGL 2 graphics support.
+Wallshader is distributed for NixOS through this repository's GitHub flake.
+It builds from source for `x86_64-linux` and `aarch64-linux`. `flake.lock` pins
+Nixpkgs from the NixOS 26.05 branch. The app still requires a GNOME session;
+animated wallpapers require GNOME 50 or 51 on Wayland and working WebGL 2
+graphics support.
 
 ## Install from GitHub
 
@@ -15,12 +16,16 @@ nix --extra-experimental-features 'nix-command flakes' \
 ```
 
 Log out and back in once to make the desktop entry and extension visible to GNOME.
-Enable **Wallshader Live Wallpaper** in GNOME Extensions, or run as your normal user:
+Then enable the extension and start the app from a terminal in your GNOME session,
+as your normal user:
 
 ```sh
 gnome-extensions enable wallshader@wallshader.github.io
 wallshader
 ```
+
+You can also enable **Wallshader Live Wallpaper** in GNOME Extensions and open
+Wallshader from the app grid.
 
 The declarative examples below install the package and enable the extension
 automatically. Applying a wallpaper remains an explicit action in the app.
@@ -207,7 +212,7 @@ per-user extension directory empty. `scripts/test-native-isolated.sh` starts a
 private virtual GNOME desktop before running `bun run test:native`; it also
 accepts an explicit test command for the NixOS VM.
 
-## Dependency updates and Nixpkgs submission
+## Dependency updates
 
 Update Nixpkgs with `nix flake update nixpkgs`, review the lock diff, and rerun
 formatting, evaluation, both native builds and the VM integration test. Changing
@@ -218,16 +223,6 @@ dependencies, fetch and hash those explicitly or adopt a lockfile-based dependen
 fetcher before building.
 Recheck the Liquid Metal compatibility patch whenever changing Paper; a successful
 patch application alone does not establish that it is still needed or correct.
-
-For a Nixpkgs submission, first publish a source tag containing these integration
-changes. The older v0.1.20 source tag does not contain them. Put the derivation
-under `pkgs/by-name/wa/wallshader/package.nix`, replace the repository-local
-fileset and manifest reads with that tag's `fetchFromGitHub` source and explicit
-versions/hashes, and bring the installed check along. Copy the compatibility patch
-alongside the derivation while it is still needed. Add a consenting registered
-maintainer (or a maintainer-list entry), an update script, release notes and the
-verified platform results. Build against the target Nixpkgs revision before
-opening the submission. This repository flake does not imply Nixpkgs acceptance.
 
 References: [Nixpkgs GNOME packaging](https://nixos.org/manual/nixpkgs/stable/#sec-language-gnome),
 [NixOS GNOME extensions](https://wiki.nixos.org/wiki/GNOME#Extensions).

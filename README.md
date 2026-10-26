@@ -108,9 +108,8 @@ The update does not change your wallpaper or playback state on startup.
 
 ### NixOS
 
-The repository provides a flake for `x86_64-linux` and `aarch64-linux`, with
-dependencies pinned to NixOS 26.05. Install directly from GitHub as your normal
-user:
+Install Wallshader from the GitHub flake as your normal user. It supports
+`x86_64-linux` and `aarch64-linux`, with dependencies pinned to NixOS 26.05:
 
 ```sh
 nix --extra-experimental-features 'nix-command flakes' \
@@ -118,8 +117,16 @@ nix --extra-experimental-features 'nix-command flakes' \
 ```
 
 Log out and back in once so GNOME discovers the app and its bundled extension.
-Enable **Wallshader Live Wallpaper** in GNOME Extensions, then open Wallshader
-from the app grid or run `wallshader`.
+Then enable the extension and start the app from a terminal in your GNOME session,
+as your normal user:
+
+```sh
+gnome-extensions enable wallshader@wallshader.github.io
+wallshader
+```
+
+You can also enable **Wallshader Live Wallpaper** in GNOME Extensions and open
+Wallshader from the app grid.
 
 For declarative installation and **automatic extension enablement**, use the
 [NixOS configuration](docs/implementation/nixos.md#nixos-configuration) or

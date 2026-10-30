@@ -2,6 +2,7 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GdkPixbuf from 'gi://GdkPixbuf';
 import Gtk from 'gi://Gtk?version=4.0';
+import Gdk from 'gi://Gdk?version=4.0';
 import Adw from 'gi://Adw?version=1';
 import {
   PRESETS,
@@ -11,7 +12,7 @@ import {
   presetIdForShader,
   normalizePreset,
 } from '../src/catalog.js';
-import { importImage } from '../src/images.js';
+import { importImage, rendererPreset } from '../src/images.js';
 import { exportSettings } from '../src/sharing.js';
 import { showSharingDialog } from '../src/sharing-dialog.js';
 import { ROOT } from '../src/paths.js';
@@ -26,6 +27,8 @@ import { presetFingerprint } from '../src/preset-options.js';
 import { _ } from '../src/i18n.js';
 import { LoginRequiredError } from '../src/live.js';
 import { checkKittyBackground } from './kitty-native.js';
+
+Gio._promisify(Gdk.Clipboard.prototype, 'read_text_async');
 
 async function checkDesktopMenuPreference(window, artifacts) {
   const background = window.wallpaper.settings.get_string('picture-uri');
@@ -101,6 +104,22 @@ function assert(condition, message) {
 }
 
 function checkWallpaperTarget(window) {
+  const restore = window.desktopRestoreButton.get_parent();
+  const checkRestoreButtons = () =>
+    assert(
+      restore === window.kittyRestoreButton.get_parent() &&
+        restore !== window.kittyOptions &&
+        restore.visible &&
+        window.desktopRestoreButton.visible &&
+        window.kittyRestoreButton.visible,
+      'Both restore buttons must be available together in Wallpaper Settings',
+    );
+  checkRestoreButtons();
+  assert(
+    !window.desktopRestoreButton.sensitive &&
+      !window.kittyRestoreButton.sensitive,
+    'Restore must be disabled before a wallpaper has been applied',
+  );
   const menu = window.applyButton.get_menu_model();
   assert(
     window.applyButton instanceof Adw.SplitButton && menu.get_n_items() === 2,
@@ -117,6 +136,7 @@ function checkWallpaperTarget(window) {
   }
   const wallpaperBefore = window.wallpaper.settings.get_string('picture-uri');
   window.wallpaperTargetAction.activate(new GLib.Variant('s', 'kitty'));
+  checkRestoreButtons();
   assert(
     window.applyButton.label === _('Set Kitty Background') &&
       new Store().state.wallpaperTarget === 'kitty' &&
@@ -125,6 +145,7 @@ function checkWallpaperTarget(window) {
     'Kitty destination was not applied to the UI or saved',
   );
   window.wallpaperTargetAction.activate(new GLib.Variant('s', 'desktop'));
+  checkRestoreButtons();
   assert(
     window.applyButton.label === _('Set Animated Wallpaper') &&
       new Store().state.wallpaperTarget === 'desktop' &&
@@ -865,6 +886,136 @@ async function checkSavedPresets(window, artifacts) {
   );
 }
 
+async function checkPortableSettings(window, artifacts) {
+  const initial = normalizePreset(window.preset.id, window.preset);
+  const background = window.wallpaper.settings.get_string('picture-uri');
+  const originalShow = window.showSettings;
+  const originalImport = window.importSettings;
+  let shareTask;
+  let importTask;
+  let dialog;
+  let importDialog;
+  window.showSettings = function (mode) {
+    shareTask = originalShow.call(this, mode);
+    return shareTask;
+  };
+  window.importSettings = function (source) {
+    importTask = originalImport.call(this, source);
+    return importTask;
+  };
+  try {
+    await window.selectPreset('paper-image-dithering');
+    const image = await importImage(
+      Gio.File.new_for_path(`${ROOT}/src/renderer/sample.webp`),
+    );
+    window.preset = fromPaperParams('paper-image-dithering', {
+      image,
+      speed: -0.75,
+      frame: 321,
+      offsetX: -0.4,
+      originalColors: true,
+    });
+    window._refreshSelection();
+    window._changed();
+    await window.preview.select(window.preset);
+    assert(
+      window.exportButton.get_next_sibling() === window.shareButton &&
+        window.shareButton.get_next_sibling() === window.resetButton &&
+        window.shareButton.icon_name === 'send-to-symbolic',
+      'Copy Settings must use a share icon between export and reset',
+    );
+    window.shareButton.emit('clicked');
+    dialog = await shareTask;
+    assert(dialog, 'Share button did not open portable settings');
+    if (artifacts) {
+      await settle();
+      await screenshot(window, `${artifacts}/share-settings-dialog.png`);
+    }
+    dialog.get_child().get_content().get_last_child().emit('clicked');
+    const shared = await window.get_clipboard().read_text_async(null);
+    const data = JSON.parse(shared);
+    assert(
+      data.params.image.startsWith('data:image/png;base64,') &&
+        !shared.includes('file:///') &&
+        shared.length > 128_000,
+      'Copied settings must contain image bytes and support images over 128 KB',
+    );
+    Gio.File.new_for_uri(image).delete(null);
+    const before = presetFingerprint(window.preset);
+    importDialog = await window.showSettings('import');
+    const box = importDialog.get_child().get_content();
+    const buffer = box
+      .get_first_child()
+      .get_next_sibling()
+      .get_child()
+      .get_buffer();
+    const apply = box.get_last_child();
+    const invalid = {
+      ...data,
+      params: { ...data.params, image: 'data:image/png;base64,iVBORw0KGgo=' },
+    };
+    buffer.set_text(JSON.stringify(invalid), -1);
+    apply.emit('clicked');
+    assert(
+      !apply.sensitive,
+      'Import must wait for asynchronous image decoding',
+    );
+    let failed = false;
+    try {
+      await importTask;
+    } catch {
+      failed = true;
+    }
+    await settle();
+    assert(
+      failed &&
+        !window._busy &&
+        apply.sensitive &&
+        apply.get_prev_sibling().visible &&
+        presetFingerprint(window.preset) === before,
+      'A damaged image must leave the settings intact and allow another import',
+    );
+    buffer.set_text(shared, -1);
+    apply.emit('clicked');
+    await importTask;
+    assert(
+      window.preset.image !== image &&
+        Gio.File.new_for_uri(window.preset.image).query_exists(null),
+      'Import must recreate the image without the sender’s local file',
+    );
+    assert(
+      exportSettings(await rendererPreset(window.preset)) === shared,
+      'Portable import lost image data or shader parameters',
+    );
+    window._save();
+    assert(
+      new Store().state.presets[window.preset.id].image === window.preset.image,
+      'The imported image did not survive settings persistence',
+    );
+    await window.preview.select(window.preset);
+    checkImage(
+      await window.preview.request('capture', { width: 640, height: 360 }),
+      640,
+      360,
+    );
+    assert(
+      window.wallpaper.settings.get_string('picture-uri') === background,
+      'Sharing or importing settings changed the wallpaper',
+    );
+    console.log(
+      'Verified portable clipboard settings, image recovery and failed import retry.',
+    );
+  } finally {
+    if (dialog?.get_root()) dialog.close();
+    if (importDialog?.get_root()) importDialog.close();
+    window.showSettings = originalShow;
+    window.importSettings = originalImport;
+    window.preset = initial;
+    window._refreshSelection();
+    window._changed();
+  }
+}
+
 export async function run(window) {
   assert(
     GLib.getenv('GSETTINGS_BACKEND') === 'memory',
@@ -876,6 +1027,10 @@ export async function run(window) {
   );
   await window.ready;
   assert(window._ready, 'Preview did not initialize');
+  if (GLib.getenv('WALLSHADER_SHARING_ONLY') === '1') {
+    await checkPortableSettings(window, GLib.getenv('WALLSHADER_ARTIFACTS'));
+    return;
+  }
   if (GLib.getenv('WALLSHADER_COLLECTION_ONLY') === '1') {
     await checkCollections(window);
     return;
@@ -902,6 +1057,7 @@ export async function run(window) {
   await checkDebugInfo(window);
   await checkDesktopMenuPreference(window, artifacts);
   await checkSavedPresets(window, artifacts);
+  await checkPortableSettings(window, artifacts);
   for (const id of ['paper-paper-texture', 'paper-water']) {
     await window.selectPreset(id);
     window.preset.image = '';
@@ -1051,7 +1207,7 @@ export async function run(window) {
   );
   const shared = exportSettings(window.preset);
   window.selectPreset('moss');
-  window.importSettings(shared);
+  await window.importSettings(shared);
   assert(
     window.preset.colors.length === 2 && window.preset.rotation === 90,
     'Settings import lost Paper properties',
@@ -1152,7 +1308,50 @@ export async function run(window) {
     'Dark wallpaper URI was not set',
   );
   await window.wallpaper.apply(still, 'aurora');
-  window.wallpaper.restore();
+  const appliedUri = settings.get_string('picture-uri');
+  window.wallpaperTargetAction.activate(new GLib.Variant('s', 'kitty'));
+  assert(
+    window.desktopRestoreButton.sensitive,
+    'Desktop restore must be enabled even when Kitty is selected',
+  );
+  if (artifacts) {
+    window.wallpaperSettings.present(window);
+    window.desktopRestoreButton.grab_focus();
+    await screenshot(window, `${artifacts}/wallpaper-settings-restore.png`);
+  }
+  const kittyBefore = window.kitty.config.load_contents(null)[1];
+  const live = window.live;
+  let finishStop;
+  const stopping = new Promise((resolve) => {
+    finishStop = resolve;
+  });
+  window.live = { status: { active: true }, stop: () => stopping };
+  try {
+    window.desktopRestoreButton.emit('clicked');
+    assert(
+      window._busy &&
+        !window.desktopRestoreButton.sensitive &&
+        !window.kittyRestoreButton.sensitive &&
+        settings.get_string('picture-uri') === appliedUri,
+      'Desktop restore must wait for animation to stop and disable both buttons',
+    );
+    finishStop();
+    await settle();
+    assert(
+      !window._busy && !window.desktopRestoreButton.sensitive,
+      'Desktop restore must clear its busy state and disable the used backup',
+    );
+    assert(
+      new TextDecoder().decode(window.kitty.config.load_contents(null)[1]) ===
+        new TextDecoder().decode(kittyBefore),
+      'Desktop restore changed the Kitty configuration',
+    );
+  } finally {
+    finishStop();
+    window.live = live;
+    window.wallpaperTargetAction.activate(new GLib.Variant('s', 'desktop'));
+    window.wallpaperSettings.close();
+  }
   assert(
     settings.get_string('picture-uri') === 'file:///tmp/original-light.png',
     'Original light wallpaper was not restored',

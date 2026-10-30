@@ -121,11 +121,15 @@ include this file, or point Wallshader at their directory using
 still background options; move those conflicting options out of the theme files
 if needed.
 
-Use **Restore Kitty Background** in Wallpaper Settings to remove Wallshader's
+Wallpaper Settings always offers **Restore Desktop Wallpaper** and
+**Restore Kitty Background**, regardless of the selected destination. Each button
+is enabled when that destination has a background to restore.
+Use **Restore Kitty Background** to remove Wallshader's
 block while preserving your other settings and later edits. Symlinked config
 files stay symlinked. Applying to Kitty, restoring it, and switching destinations
-leave the desktop wallpaper and its playback unchanged. Desktop restoration
-remains available through the app menu.
+leave the desktop wallpaper and its playback unchanged. **Restore Desktop
+Wallpaper** stops desktop animation and restores the original desktop background
+without changing Kitty.
 
 For an animated desktop, open **Wallpaper Settings**, keep **Wallpaper mode**
 on **Animated shader**, and choose 30 or 60 FPS. Close the dialog, then click
@@ -209,8 +213,14 @@ Open the menu's **Import Paper Settings…** and paste a complete component from
 Paper's **Code** section, or settings copied from Wallshader. Literal numbers,
 strings, arrays, and booleans are supported; JavaScript expressions are not.
 For a snippet containing an external image URL, remove its `image` property and
-choose the image locally after import. **Copy Settings…** preserves all properties;
-**Copy Paper Code…** produces a component snippet for a web project. Replace
+choose the image locally after import. The **Copy Settings…** share icon beside
+**Export PNG…** opens settings you can copy to another device. Custom images are
+included as PNG data, so the original image file is not needed there. Paste these
+settings into **Import Paper Settings…** on the other device; the image is saved
+locally with its shader settings. Imports support settings up to 45 MB with an
+embedded PNG up to 32 MB. The sample image and removed-image choice also transfer.
+**Copy Paper Code…** in the app menu produces a component snippet for a web project.
+Replace
 `image={"sample"}` or local file URIs with an image URL available to that project.
 An importable example is included in `examples/paper-ink.json`.
 
@@ -223,8 +233,8 @@ review the preview before applying. Hex colors are mixed for the new paper layer
 including opacity; RGB/HSL colors retain the old background as the paper color.
 
 Use the **Reset Changes** icon immediately left of the favorite star to restore
-the selected wallpaper's original palette and composition. Open the menu and
-choose **Restore Previous Wallpaper** to return
+the selected wallpaper's original palette and composition. Open **Wallpaper
+Settings** and choose **Restore Desktop Wallpaper** to return
 to the background you had before the first apply. Multiple applies preserve that
 original background until you restore it.
 

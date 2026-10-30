@@ -19,8 +19,14 @@ D-Bus session, runtime directory, displays and settings. Do not use the user's
 active graphical session. `test:native` isolates its application settings and
 data but uses the selected display, so start the virtual desktop before running it.
 `bun test` exercises state validation, every upstream preset's parameter values,
-settings/code round trips, search and capture limits. Frame-clock tests cover
-30/60 fps pacing across display refresh rates, timestamp jitter and stalls.
+settings/code round trips, search and capture limits. Sharing tests cover
+portable embedded-image settings, base64 validation, and import size limits.
+Native sharing checks use the toolbar's share button, copy its JSON, delete the
+source image, and import the settings into a new local image. They check complete
+parameter and image preservation, persistence, rendering, and recovery from a
+failed asynchronous image import. `artifacts/share-settings-dialog.png` shows the
+portable settings dialog. Frame-clock tests cover 30/60 fps pacing across display
+refresh rates, timestamp jitter and stalls.
 `bun run test:native` uses actual GTK/WebKit rendering and GSettings with a private
 D-Bus session and isolated
 XDG directories and `GSETTINGS_BACKEND=memory`. Do not remove those safeguards.
@@ -148,8 +154,13 @@ Native checks exercise the saved rendering selection and its apply payload;
 The native suite also isolates `KITTY_CONFIG_DIRECTORY`, exercises the Desktop /
 Kitty selector, still and animated Kitty apply, restoration, symlink preservation,
 all 30 shader types, processed imported images, preservation of the selected mode,
-version errors, damaged configs, and desktop independence.
-`artifacts/wallpaper-settings-kitty.png` shows the Kitty settings.
+version errors, damaged configs, and desktop independence. Both restore buttons
+remain together in Wallpaper Settings for either destination. Native checks
+activate each button with the other destination selected, verify independent
+restoration, and ensure desktop restoration waits for animation to stop while
+disabling both buttons.
+`artifacts/wallpaper-settings-kitty.png` shows the Kitty settings, and
+`artifacts/wallpaper-settings-restore.png` shows the restoration controls.
 Use `bun run test:kitty` with Kitty 0.49+ and its Slang compiler to compile every
 supported original/Paper preset and representative positioning/alpha/reverse-speed
 variants through Kitty's actual pipeline compiler to GLSL. It uses temporary

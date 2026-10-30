@@ -35,7 +35,8 @@ Recent show its logo beside the shader title. The tab row scrolls horizontally
 when needed, and switching views
 retains the current search. Selected gallery and
 preset tiles use accent-colored label text as their selection indicator.
-The preview header shows the wallpaper name followed by Save Preset, Export PNG (an image icon), Reset Changes,
+The preview header shows the wallpaper name followed by Save Preset, Export PNG (an image icon),
+Copy Settings (a share icon), Reset Changes,
 and favorite icon buttons, without a subtitle. Play/pause sits inside the preview's
 bottom-left corner on a circular black background at 60% opacity. The presets and
 saved configurations sit directly below the preview in the main pane, above the
@@ -49,7 +50,11 @@ destination persists across app restarts. The Wallpaper Settings icon sits in a
 circular 44 × 44 px button, vertically centered to the right of the apply button.
 It opens an adaptive native dialog for wallpaper mode, animation frame rate,
 rendering mode, desktop playback controls, and output resolution. Desktop controls
-are hidden for Kitty; Kitty has its own restore control. The dialog retains
+are hidden for Kitty. A shared restoration section always offers separate
+**Restore Desktop Wallpaper** and **Restore Kitty Background** buttons, regardless
+of the selected destination. Each is enabled only when its previous background
+is available; desktop restoration stops animation before restoring GNOME settings.
+The dialog retains
 its selections when closed and reopened during the same app session. Wallpaper mode
 defaults to Animated shader when the app opens.
 
@@ -200,10 +205,17 @@ other optional procedural inputs stay empty. The same
 sample is available through **Use Sample** for every image input, including logo
 effects. Saved local images and explicitly removed images retain their selection.
 
-`sharing.js` copies settings JSON or Paper component code. Import parses literal
-values without evaluating JavaScript. Remote image URLs require the user to choose
-a local source. The app's UI is native even when exporting a React code snippet for
-use elsewhere.
+The preview header's share button opens Copy Settings. `sharing.js` exports settings
+JSON with custom images embedded as base64 PNG data, so configurations work on other
+devices without the original file. The sample and removed-image markers remain
+portable. Import accepts up to 45 MB of settings, validates embedded PNG data up to
+32 MB, and decodes it through the same size-limited image importer into the receiving
+device's private image directory before updating the preset. The import dialog
+waits for decoding and shows failures without replacing the current configuration.
+Existing settings with local file URIs remain importable on their original device.
+Paper component import parses literal values without evaluating JavaScript. Remote
+image URLs require the user to choose a local source. Copy Paper Code remains in
+the app menu and produces component code for use elsewhere.
 
 ## State and desktop integration
 
@@ -424,7 +436,7 @@ Monitor changes restart the renderer after the old process exits.
 All signals, timers, D-Bus objects and owned
 windows are released on disable. A renderer failure is reported to the app and
 requires an explicit apply to retry. Stop reveals the static first frame installed
-by the editor. Restore Previous Wallpaper stops animation and restores the
+by the editor. Restore Desktop Wallpaper stops animation and restores the
 original GNOME background. The extension itself does not write background settings.
 
 `scripts/build-extension.js` produces a self-contained bundle with the renderer,

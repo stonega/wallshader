@@ -210,7 +210,8 @@ export async function checkKittyBackground(window) {
       assert(vectors && Number(vectors[1]) > 1, `Missing ${shader} texels`);
     }
     write(config, `${read(config)}# User edit after apply\n`);
-    window.restoreKittyBackground();
+    selectTarget(window, 'desktop');
+    window.kittyRestoreButton.emit('clicked');
     assert(
       read(config) === `${original}# User edit after apply\n`,
       'Kitty restore lost later user edits',
@@ -223,6 +224,7 @@ export async function checkKittyBackground(window) {
       window.wallpaper.settings.get_string('picture-uri') === desktop,
       'Kitty changed the GNOME wallpaper',
     );
+    selectTarget(window, 'kitty');
     // Symlinked dotfiles must stay symlinked across apply and restore.
     const target = config.get_parent().get_child('dotfiles.conf');
     config.move(target, Gio.FileCopyFlags.NONE, null, null);

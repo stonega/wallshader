@@ -1,13 +1,20 @@
 import { _, format } from './translation.js';
 import { SHADERS, paperParams } from './catalog.js';
+import { embeddedImagePayload, MAX_SETTINGS_LENGTH } from './image-data.js';
 
 export function exportSettings(preset) {
+  const params = paperParams(preset);
+  if (params.image && params.image !== 'sample') {
+    const image = preset.imageData ?? params.image;
+    embeddedImagePayload(image);
+    params.image = image;
+  }
   return JSON.stringify(
     {
       format: 'wallshader-paper',
       version: 1,
       shader: preset.shader,
-      params: paperParams(preset),
+      params,
     },
     null,
     2,
@@ -24,10 +31,10 @@ export function paperCode(preset, { width, height }) {
 }
 
 export function parseSettings(input) {
-  if (typeof input !== 'string' || input.length > 128_000)
+  if (typeof input !== 'string' || input.length > MAX_SETTINGS_LENGTH)
     throw new Error(
       _(
-        'Paste a Paper code snippet or a Wallshader settings file smaller than 128 KB.',
+        'Paste a Paper code snippet or a Wallshader settings file smaller than 45 MB.',
       ),
     );
   const source = input.trim();
@@ -108,15 +115,19 @@ export function parseSettings(input) {
     throw new Error(
       _('The settings do not identify a supported Paper shader.'),
     );
-  if (
-    params.image &&
-    !['sample', ''].includes(params.image) &&
-    !params.image.startsWith?.('file:///')
-  )
-    throw new Error(
-      _(
-        'This snippet uses an external image. Remove its image property, then choose a local image in Wallshader.',
-      ),
-    );
+  if (params.image !== undefined) {
+    if (typeof params.image !== 'string')
+      throw new Error(_('The image property must be a string.'));
+    if (params.image.startsWith('data:')) embeddedImagePayload(params.image);
+    else if (
+      !['sample', ''].includes(params.image) &&
+      !params.image.startsWith('file:///')
+    )
+      throw new Error(
+        _(
+          'This snippet uses an external image. Remove its image property, then choose a local image in Wallshader.',
+        ),
+      );
+  }
   return { shader, params };
 }

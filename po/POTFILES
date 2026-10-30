@@ -6,6 +6,7 @@ src/debug-info.js
 src/editor.js
 src/extension-install.js
 src/images.js
+src/image-data.js
 src/kitty.js
 src/kitty-config.js
 src/live.js

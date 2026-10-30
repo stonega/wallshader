@@ -28,6 +28,7 @@ import { PresetGrid } from './preset-grid.js';
 import { fromPaperParams, presetIdForShader } from './catalog.js';
 import { exportSettings, paperCode, parseSettings } from './sharing.js';
 import { showSharingDialog } from './sharing-dialog.js';
+import { importEmbeddedImage, rendererPreset } from './images.js';
 import { SavePresetDialog } from './save-preset-dialog.js';
 import { deleteNamedPreset, saveNamedPreset } from './saved-presets.js';
 import {
@@ -176,10 +177,8 @@ export const WallshaderWindow = GObject.registerClass(
       );
       const menu = new Gio.Menu();
       menu.append(_('Import Paper Settings…'), 'app.import-settings');
-      menu.append(_('Copy Settings…'), 'app.copy-settings');
       menu.append(_('Copy Paper Code…'), 'app.copy-code');
       menu.append(_('Show Debug Info'), 'win.debug-info');
-      menu.append(_('Restore Previous Wallpaper'), 'app.restore');
       menu.append(_('Preferences'), 'app.preferences');
       menu.append(_('About Wallshader'), 'app.about');
       menu.append(_('Quit'), 'app.quit');
@@ -222,6 +221,11 @@ export const WallshaderWindow = GObject.registerClass(
         _('Save Preset…'),
         () => this.showSavePreset(),
       );
+      this.shareButton = iconButton(
+        'send-to-symbolic',
+        _('Copy Settings…'),
+        () => this.showSettings('settings'),
+      );
       this.resetButton = iconButton(
         'edit-undo-symbolic',
         _('Reset Changes'),
@@ -235,6 +239,7 @@ export const WallshaderWindow = GObject.registerClass(
       for (const button of [
         this.savePresetButton,
         this.exportButton,
+        this.shareButton,
         this.resetButton,
         this.favoriteButton,
       ]) {
@@ -489,7 +494,10 @@ export const WallshaderWindow = GObject.registerClass(
       this.wallpaperSettingsButton = iconButton(
         'emblem-system-symbolic',
         _('Wallpaper Settings'),
-        () => this.wallpaperSettings.present(this),
+        () => {
+          this._syncAvailability();
+          this.wallpaperSettings.present(this);
+        },
       );
       this.wallpaperSettingsButton.add_css_class('circular');
       this.wallpaperSettingsButton.add_css_class('wallpaper-settings');
@@ -508,7 +516,7 @@ export const WallshaderWindow = GObject.registerClass(
       const dialog = new Adw.Dialog({
         title: _('Wallpaper Settings'),
         content_width: 400,
-        content_height: 560,
+        content_height: 700,
       });
       const toolbar = new Adw.ToolbarView();
       toolbar.add_top_bar(new Adw.HeaderBar());
@@ -607,13 +615,6 @@ export const WallshaderWindow = GObject.registerClass(
           { wrap: true },
         ),
       );
-      this.kittyRestoreButton = new Gtk.Button({
-        label: _('Restore Kitty Background'),
-      });
-      this.kittyRestoreButton.connect('clicked', () =>
-        this.restoreKittyBackground(),
-      );
-      this.kittyOptions.append(this.kittyRestoreButton);
       content.append(this.kittyOptions);
       content.append(label(_('Output resolution'), ['section-label']));
       const resolutions = Gtk.StringList.new([
@@ -636,6 +637,23 @@ export const WallshaderWindow = GObject.registerClass(
         { wrap: true, margin_top: 10 },
       );
       content.append(this.wallpaperHint);
+      const restore = vertical(8);
+      restore.append(label(_('Restore Previous Wallpaper'), ['section-label']));
+      this.desktopRestoreButton = new Gtk.Button({
+        label: _('Restore Desktop Wallpaper'),
+      });
+      this.desktopRestoreButton.connect('clicked', () =>
+        this.restoreWallpaper(),
+      );
+      restore.append(this.desktopRestoreButton);
+      this.kittyRestoreButton = new Gtk.Button({
+        label: _('Restore Kitty Background'),
+      });
+      this.kittyRestoreButton.connect('clicked', () =>
+        this.restoreKittyBackground(),
+      );
+      restore.append(this.kittyRestoreButton);
+      content.append(restore);
       const scroll = new Gtk.ScrolledWindow({
         hscrollbar_policy: Gtk.PolicyType.NEVER,
         child: content,
@@ -795,37 +813,55 @@ export const WallshaderWindow = GObject.registerClass(
       return dialog;
     }
 
-    importSettings(source) {
+    async importSettings(source) {
       if (this._busy)
         throw new Error(_('Wait for the current image to finish rendering.'));
       const { shader, params } = parseSettings(source);
-      const id =
-        this.preset.shader === shader
-          ? this.preset.id
-          : presetIdForShader(shader);
-      this._remember();
-      this.preset = fromPaperParams(id, params);
-      this.store.state.selected = id;
-      this._refreshSelection();
-      this._changed();
+      this._busy = true;
+      this._syncAvailability();
+      try {
+        if (params.image?.startsWith('data:'))
+          params.image = await importEmbeddedImage(params.image);
+        if (this._closed) return;
+        const id =
+          this.preset.shader === shader
+            ? this.preset.id
+            : presetIdForShader(shader);
+        this._remember();
+        this.preset = fromPaperParams(id, params);
+        this.store.state.selected = id;
+        this._refreshSelection();
+        this._changed();
+      } finally {
+        this._busy = false;
+        this._syncAvailability();
+      }
     }
 
-    showSettings(mode) {
-      const editable = mode === 'import';
-      showSharingDialog(this, {
-        title: editable
-          ? _('Import Paper Settings')
-          : mode === 'code'
-            ? _('Paper Code')
-            : _('Wallpaper Settings'),
-        content: editable
+    async showSettings(mode) {
+      try {
+        const editable = mode === 'import';
+        const preset = normalizePreset(this.preset.id, this.preset);
+        const content = editable
           ? ''
           : mode === 'code'
-            ? paperCode(this.preset, this._dimensions())
-            : exportSettings(this.preset),
-        editable,
-        onApply: (source) => this.importSettings(source),
-      });
+            ? paperCode(preset, this._dimensions())
+            : exportSettings(await rendererPreset(preset));
+        if (this._closed) return null;
+        return showSharingDialog(this, {
+          title: editable
+            ? _('Import Paper Settings')
+            : mode === 'code'
+              ? _('Paper Code')
+              : _('Wallpaper Settings'),
+          content,
+          editable,
+          onApply: (source) => this.importSettings(source),
+        });
+      } catch (error) {
+        this.showError(error);
+        return null;
+      }
     }
 
     async _startPreview() {
@@ -1213,6 +1249,7 @@ export const WallshaderWindow = GObject.registerClass(
         this.applyButton,
         this.exportButton,
         this.savePresetButton,
+        this.shareButton,
         this.pauseButton,
       ])
         widget.set_sensitive(available);
@@ -1224,9 +1261,9 @@ export const WallshaderWindow = GObject.registerClass(
         this.gallery,
       ])
         widget.set_sensitive(!this._busy);
-      this.application
-        .lookup_action('restore')
-        ?.set_enabled(this.wallpaper.canRestore && !this._busy);
+      const canRestore = this.wallpaper.canRestore && !this._busy;
+      this.desktopRestoreButton.set_sensitive(canRestore);
+      this.application.lookup_action('restore')?.set_enabled(canRestore);
       this.wallpaperMode.set_sensitive(!this._busy);
       this.wallpaperTargetAction.set_enabled(!this._busy);
       this.liveFps.set_sensitive(!this._busy);
@@ -1501,15 +1538,20 @@ export const WallshaderWindow = GObject.registerClass(
     }
 
     async restoreWallpaper() {
+      if (this._busy) return;
+      this._busy = true;
+      this._syncAvailability();
       try {
         await this.live.stop();
         this.wallpaper.restore();
-        this._syncAvailability();
         this.toasts.add_toast(
           new Adw.Toast({ title: _('Previous wallpaper restored') }),
         );
       } catch (error) {
         this.showError(error);
+      } finally {
+        this._busy = false;
+        this._syncAvailability();
       }
     }
 

@@ -31,6 +31,7 @@ for (const file of [
   'preview.js',
   'debug-info.js',
   'images.js',
+  'image-data.js',
   'paths.js',
   'i18n.js',
   'translation.js',
@@ -50,6 +51,7 @@ for (const file of [
       'preview.js',
       'debug-info.js',
       'images.js',
+      'image-data.js',
     ].includes(file)
   )
     shellHash

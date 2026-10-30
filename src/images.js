@@ -3,6 +3,7 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import GdkPixbuf from 'gi://GdkPixbuf';
 import { DATA_DIR } from './paths.js';
+import { embeddedImagePayload, MAX_IMAGE_BYTES } from './image-data.js';
 
 Gio._promisify(Gio.File.prototype, 'load_contents_async');
 Gio._promisify(Gio.File.prototype, 'read_async');
@@ -18,9 +19,20 @@ export async function importImage(file) {
     Gio.FileQueryInfoFlags.NONE,
     null,
   );
-  if (info.get_size() > 32 * 1024 * 1024)
+  if (info.get_size() > MAX_IMAGE_BYTES)
     throw new Error(_('Choose an image smaller than 32 MB.'));
   const stream = await file.read_async(GLib.PRIORITY_DEFAULT, null);
+  return saveImage(stream);
+}
+
+export async function importEmbeddedImage(source) {
+  const bytes = GLib.base64_decode(embeddedImagePayload(source));
+  if (![137, 80, 78, 71, 13, 10, 26, 10].every((byte, i) => bytes[i] === byte))
+    throw new Error(_('Use an embedded PNG image smaller than 32 MB.'));
+  return saveImage(Gio.MemoryInputStream.new_from_bytes(new GLib.Bytes(bytes)));
+}
+
+async function saveImage(stream) {
   let image;
   try {
     image = await GdkPixbuf.Pixbuf.new_from_stream_at_scale_async(
@@ -52,7 +64,7 @@ export async function rendererPreset(preset) {
       Gio.FileQueryInfoFlags.NONE,
       null,
     );
-    if (info.get_size() > 32 * 1024 * 1024)
+    if (info.get_size() > MAX_IMAGE_BYTES)
       throw new Error(_('The saved image is too large. Choose another image.'));
     const [bytes] = await file.load_contents_async(null);
     const loader = new GdkPixbuf.PixbufLoader();

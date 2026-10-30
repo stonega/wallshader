@@ -61,7 +61,10 @@ export function showSharingDialog(
     label: editable ? _('Apply Settings') : _('Copy to Clipboard'),
     css_classes: ['suggested-action', 'pill'],
   });
-  apply.connect('clicked', () => {
+  apply.connect('clicked', async () => {
+    if (!apply.sensitive) return;
+    apply.set_sensitive(false);
+    message.set_visible(false);
     try {
       const buffer = view.get_buffer();
       const value = buffer.get_text(
@@ -69,7 +72,7 @@ export function showSharingDialog(
         buffer.get_end_iter(),
         false,
       );
-      if (editable) onApply(value);
+      if (editable) await onApply(value);
       else
         window
           .get_clipboard()
@@ -78,6 +81,8 @@ export function showSharingDialog(
     } catch (error) {
       message.set_label(error.message);
       message.set_visible(true);
+    } finally {
+      apply.set_sensitive(true);
     }
   });
   box.append(apply);

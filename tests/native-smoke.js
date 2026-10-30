@@ -905,9 +905,15 @@ async function checkPortableSettings(window, artifacts) {
   };
   try {
     await window.selectPreset('paper-image-dithering');
-    const image = await importImage(
-      Gio.File.new_for_path(`${ROOT}/src/renderer/sample.webp`),
+    const source = Gio.File.new_for_path(
+      GLib.build_filenamev([GLib.get_user_cache_dir(), 'sharing-source.png']),
     );
+    await savePng(
+      source,
+      await window.preview.request('capture', { width: 1024, height: 1024 }),
+    );
+    const image = await importImage(source);
+    source.delete(null);
     window.preset = fromPaperParams('paper-image-dithering', {
       image,
       speed: -0.75,

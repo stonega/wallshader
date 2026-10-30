@@ -198,8 +198,9 @@ nix build --print-build-logs .#checks.x86_64-linux.integration
 Build each architecture on a matching native runner or a configured builder.
 `.github/workflows/nix.yml` builds both architectures and runs the installed
 package's native and Shell suites in an x86_64 NixOS VM. The VM is separate from
-the active desktop. Its tests also create private D-Bus sessions, XDG/runtime
-directories, displays and in-memory settings. Screenshots and logs are copied
+the active desktop. Its native test fixtures include the sample logo and photograph
+for local-image and portable-settings checks. Its tests also create private D-Bus
+sessions, XDG/runtime directories, displays and in-memory settings. Screenshots and logs are copied
 into the VM test output's `artifacts` directory. ARM graphical verification is
 separate from the ARM package/runtime check.
 The workflow also uploads these screenshots and logs as `nixos-integration`,

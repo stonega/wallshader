@@ -13,7 +13,10 @@ let
   };
   testImages = lib.fileset.toSource {
     root = ./..;
-    fileset = ../src/renderer/sample-logo.svg;
+    fileset = lib.fileset.unions [
+      ../src/renderer/sample-logo.svg
+      ../src/renderer/sample.webp
+    ];
   };
   # Exercise the installed modules and resources with the existing native suite.
   nativeTests = pkgs.runCommand "wallshader-installed-native-tests" { } ''

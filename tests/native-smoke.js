@@ -26,6 +26,7 @@ import {
 import { presetFingerprint } from '../src/preset-options.js';
 import { _ } from '../src/i18n.js';
 import { LoginRequiredError } from '../src/live.js';
+import { WallshaderWindow } from '../src/window.js';
 import { checkKittyBackground } from './kitty-native.js';
 
 Gio._promisify(Gdk.Clipboard.prototype, 'read_text_async');
@@ -886,6 +887,75 @@ async function checkSavedPresets(window, artifacts) {
   );
 }
 
+async function checkImportDuringStartup(parent, shared) {
+  const window = new WallshaderWindow(parent.application);
+  const pause = window.preview.pause.bind(window.preview);
+  let starting;
+  const started = new Promise((resolve) => {
+    starting = resolve;
+  });
+  let resume;
+  const paused = new Promise((resolve) => {
+    resume = resolve;
+  });
+  window.preview.pause = async (value) => {
+    await pause(value);
+    if (!window._ready) {
+      starting();
+      await paused;
+    }
+  };
+  window.present();
+  let importing;
+  try {
+    await started;
+    const previous = presetFingerprint(window.preset);
+    const { image } = JSON.parse(shared).params;
+    let completed = false;
+    importing = window
+      .importSettings(
+        JSON.stringify({
+          format: 'wallshader-paper',
+          version: 1,
+          shader: 'liquid-metal',
+          params: { image, colorBack: '#241f31', frame: 62779 },
+        }),
+      )
+      .then(() => {
+        completed = true;
+      });
+    importing.catch(() => {});
+    await settle();
+    assert(
+      !completed && presetFingerprint(window.preset) === previous,
+      'An import during startup must wait until the preview can render it',
+    );
+    resume();
+    await importing;
+    const rendered = await window.preview.request('state');
+    assert(
+      rendered.shader === 'liquid-metal' &&
+        rendered.image === window.preset.image &&
+        rendered.image.startsWith('file:///') &&
+        Gio.File.new_for_uri(rendered.image).query_exists(null),
+      'The startup import did not load its embedded logo into the renderer',
+    );
+    checkImage(
+      await window.preview.request('capture', { width: 640, height: 360 }),
+      640,
+      360,
+    );
+    console.log('Verified embedded logo import while the preview is starting.');
+  } finally {
+    resume();
+    await window.ready.catch(() => {});
+    await importing?.catch(() => {});
+    window.close();
+    parent._save();
+    parent.present();
+  }
+}
+
 async function checkPortableSettings(window, artifacts) {
   const initial = normalizePreset(window.preset.id, window.preset);
   const background = window.wallpaper.settings.get_string('picture-uri');
@@ -946,6 +1016,7 @@ async function checkPortableSettings(window, artifacts) {
         shared.length > 128_000,
       'Copied settings must contain image bytes and support images over 128 KB',
     );
+    await checkImportDuringStartup(window, shared);
     Gio.File.new_for_uri(image).delete(null);
     const before = presetFingerprint(window.preset);
     importDialog = await window.showSettings('import');

@@ -13,6 +13,20 @@ import {
   validateDimensions,
 } from '../catalog.js';
 const { ShaderMount } = Paper;
+// Paper 0.0.81 uses smoothstep with equal edges for this hard image frame.
+// GLSL leaves that undefined; Mesa can make the entire image transparent.
+const liquidMetalFragmentShader = Paper.liquidMetalFragmentShader.replace(
+  'float frame = getImgFrame(v_imageUV, 0.);',
+  `vec2 inside = step(vec2(0.), v_imageUV) * (1. - step(vec2(1.), v_imageUV));
+    float frame = inside.x * inside.y;`,
+);
+
+function fragmentShader(shader) {
+  return shader === 'liquid-metal'
+    ? liquidMetalFragmentShader
+    : Paper[SHADERS[shader].fragment];
+}
+
 let mount;
 let preset;
 let paused = false;
@@ -181,7 +195,7 @@ async function select(input) {
     document.getElementById('preview').replaceChildren();
     mount = new ShaderMount(
       document.getElementById('preview'),
-      Paper[SHADERS[next.shader].fragment],
+      fragmentShader(next.shader),
       nextUniforms,
       // Every frame replaces the full canvas. Only the separate PNG capture
       // needs a preserved buffer; the fullscreen quad needs no MSAA or depth.
@@ -218,7 +232,7 @@ async function capture(input, width, height, frame, imageData) {
       input === preset ? currentUniforms : await uniforms(input, imageData);
     still = new ShaderMount(
       container,
-      Paper[SHADERS[input.shader].fragment],
+      fragmentShader(input.shader),
       captureUniforms,
       { preserveDrawingBuffer: true, alpha: true },
       0,
@@ -296,7 +310,7 @@ window.wallshader = {
         const values = await uniforms(item, args.preset.imageData);
         result = kittyShader(
           item,
-          Paper[SHADERS[item.shader].fragment],
+          fragmentShader(item.shader),
           values,
           args.fps,
           kittyTextures(values, SHADERS[item.shader]),

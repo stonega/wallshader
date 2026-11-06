@@ -820,6 +820,9 @@ export const WallshaderWindow = GObject.registerClass(
       this._busy = true;
       this._syncAvailability();
       try {
+        // Edits made before startup finishes do not schedule a preview render.
+        await this.ready;
+        if (this._closed) return;
         if (params.image?.startsWith('data:'))
           params.image = await importEmbeddedImage(params.image);
         if (this._closed) return;

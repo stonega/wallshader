@@ -205,13 +205,22 @@ other optional procedural inputs stay empty. The same
 sample is available through **Use Sample** for every image input, including logo
 effects. Saved local images and explicitly removed images retain their selection.
 
+Liquid Metal's fragment source has one compatibility correction after import:
+its zero-width image frame uses `step` instead of `smoothstep` with equal edges.
+GLSL leaves the latter undefined; Mesa on Ubuntu can make the entire image mask
+transparent even when image decoding and texture upload succeed. The same
+corrected source serves preview, capture, desktop playback and Kitty export.
+The pinned Paper package and its preprocessing remain unchanged.
+
 The preview header's share button opens Copy Settings. `sharing.js` exports settings
 JSON with custom images embedded as base64 PNG data, so configurations work on other
 devices without the original file. The sample and removed-image markers remain
 portable. Import accepts up to 45 MB of settings, validates embedded PNG data up to
 32 MB, and decodes it through the same size-limited image importer into the receiving
 device's private image directory before updating the preset. The import dialog
-waits for decoding and shows failures without replacing the current configuration.
+waits for preview startup and decoding, so an early import cannot save an image
+without scheduling its render. It shows failures without replacing the current
+configuration.
 Existing settings with local file URIs remain importable on their original device.
 Paper component import parses literal values without evaluating JavaScript. Remote
 image URLs require the user to choose a local source. Copy Paper Code remains in

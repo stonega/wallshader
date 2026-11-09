@@ -177,7 +177,6 @@ export const WallshaderWindow = GObject.registerClass(
       );
       const menu = new Gio.Menu();
       menu.append(_('Import Paper Settings…'), 'app.import-settings');
-      menu.append(_('Copy Paper Code…'), 'app.copy-code');
       menu.append(_('Show Debug Info'), 'win.debug-info');
       menu.append(_('Preferences'), 'app.preferences');
       menu.append(_('About Wallshader'), 'app.about');

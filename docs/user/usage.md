@@ -219,9 +219,6 @@ included as PNG data, so the original image file is not needed there. Paste thes
 settings into **Import Paper Settings…** on the other device; the image is saved
 locally with its shader settings. Imports support settings up to 45 MB with an
 embedded PNG up to 32 MB. The sample image and removed-image choice also transfer.
-**Copy Paper Code…** in the app menu produces a component snippet for a web project.
-Replace
-`image={"sample"}` or local file URIs with an image URL available to that project.
 An importable example is included in `examples/paper-ink.json`.
 
 Paper 0.0.81 rebuilds **Paper Texture** with paper, shadow, and background colors,

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-30 14:30+0800\n"
+"POT-Creation-Date: 2026-11-07 15:49+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -614,7 +614,7 @@ msgstr ""
 msgid "Edges"
 msgstr ""
 
-#: po/paper-catalog.js:142 src/window.js:300
+#: po/paper-catalog.js:142 src/window.js:299
 msgid "Effects"
 msgstr ""
 
@@ -954,7 +954,7 @@ msgstr ""
 msgid "Image Dithering"
 msgstr ""
 
-#: po/paper-catalog.js:223 src/window.js:301
+#: po/paper-catalog.js:223 src/window.js:300
 msgid "Image Filters"
 msgstr ""
 
@@ -1084,7 +1084,7 @@ msgstr ""
 msgid "Lo-Fi"
 msgstr ""
 
-#: po/paper-catalog.js:254 src/window.js:302
+#: po/paper-catalog.js:254 src/window.js:301
 msgid "Logo Animations"
 msgstr ""
 
@@ -2762,7 +2762,7 @@ msgstr ""
 msgid "Rendering {name} took too long. Try a smaller image size."
 msgstr ""
 
-#: src/preferences.js:12 src/window.js:182
+#: src/preferences.js:12 src/window.js:181
 msgid "Preferences"
 msgstr ""
 
@@ -2925,206 +2925,202 @@ msgid "Import Paper Settings…"
 msgstr ""
 
 #: src/window.js:180
-msgid "Copy Paper Code…"
-msgstr ""
-
-#: src/window.js:181
 msgid "Show Debug Info"
 msgstr ""
 
-#: src/window.js:183
+#: src/window.js:182
 msgid "About Wallshader"
 msgstr ""
 
-#: src/window.js:184
+#: src/window.js:183
 msgid "Quit"
 msgstr ""
 
-#: src/window.js:198
+#: src/window.js:197
 msgid "Search wallpapers"
 msgstr ""
 
-#: src/window.js:216
+#: src/window.js:215
 msgid "Export PNG…"
 msgstr ""
 
-#: src/window.js:221
+#: src/window.js:220
 msgid "Save Preset…"
 msgstr ""
 
-#: src/window.js:226
+#: src/window.js:225
 msgid "Copy Settings…"
 msgstr ""
 
-#: src/window.js:231
+#: src/window.js:230
 msgid "Reset Changes"
 msgstr ""
 
-#: src/window.js:236 src/window.js:1024
+#: src/window.js:235 src/window.js:1026
 msgid "Add to favorites"
 msgstr ""
 
-#: src/window.js:261
+#: src/window.js:260
 msgid "Preview unavailable"
 msgstr ""
 
-#: src/window.js:271 src/window.js:1221
+#: src/window.js:270 src/window.js:1223
 msgid "Play preview"
 msgstr ""
 
-#: src/window.js:271 src/window.js:1221
+#: src/window.js:270 src/window.js:1223
 msgid "Pause preview"
 msgstr ""
 
-#: src/window.js:299 src/window.js:329
+#: src/window.js:298 src/window.js:328
 msgid "All"
 msgstr ""
 
-#: src/window.js:335
+#: src/window.js:334
 msgid "Show all wallpapers"
 msgstr ""
 
-#: src/window.js:336
+#: src/window.js:335
 msgid "Choose a wallpaper category"
 msgstr ""
 
-#: src/window.js:347
+#: src/window.js:346
 msgid "Favorites"
 msgstr ""
 
-#: src/window.js:348
+#: src/window.js:347
 msgid "Recent"
 msgstr ""
 
-#: src/window.js:434 src/window.js:1061
+#: src/window.js:433 src/window.js:1063
 msgid "No wallpapers found"
 msgstr ""
 
-#: src/window.js:439 src/window.js:1068
+#: src/window.js:438 src/window.js:1070
 msgid "Try a different search or collection."
 msgstr ""
 
-#: src/window.js:448
+#: src/window.js:447
 msgid "Made with Paper Shaders"
 msgstr ""
 
-#: src/window.js:462
+#: src/window.js:461
 msgid "Customize"
 msgstr ""
 
-#: src/window.js:482
+#: src/window.js:481
 msgid "Desktop"
 msgstr ""
 
-#: src/window.js:485 src/window.js:724 src/window.js:1331
+#: src/window.js:484 src/window.js:723 src/window.js:1333
 msgid "Set as Wallpaper"
 msgstr ""
 
-#: src/window.js:488
+#: src/window.js:487
 msgid "Apply this frame to your GNOME desktop"
 msgstr ""
 
-#: src/window.js:489
+#: src/window.js:488
 msgid "Choose wallpaper destination"
 msgstr ""
 
-#: src/window.js:496 src/window.js:517 src/window.js:856
+#: src/window.js:495 src/window.js:516 src/window.js:858
 msgid "Wallpaper Settings"
 msgstr ""
 
-#: src/window.js:529 src/window.js:533
+#: src/window.js:528 src/window.js:532
 msgid "Wallpaper mode"
 msgstr ""
 
-#: src/window.js:531
+#: src/window.js:530
 msgid "Still image"
 msgstr ""
 
-#: src/window.js:531
+#: src/window.js:530
 msgid "Animated shader"
 msgstr ""
 
-#: src/window.js:542
+#: src/window.js:541
 msgid "Animation frame rate"
 msgstr ""
 
-#: src/window.js:546
+#: src/window.js:545
 msgid "30 FPS · less power"
 msgstr ""
 
-#: src/window.js:547
+#: src/window.js:546
 msgid "60 FPS · smoother"
 msgstr ""
 
-#: src/window.js:549
+#: src/window.js:548
 msgid "Wallpaper frame rate"
 msgstr ""
 
-#: src/window.js:554 src/window.js:562
+#: src/window.js:553 src/window.js:561
 msgid "Wallpaper rendering"
 msgstr ""
 
-#: src/window.js:558
+#: src/window.js:557
 msgid "Compatibility (default)"
 msgstr ""
 
-#: src/window.js:559
+#: src/window.js:558
 msgid "GPU (experimental)"
 msgstr ""
 
-#: src/window.js:573
+#: src/window.js:572
 msgid ""
 "GPU mode may reduce CPU use but can cause flickering. Takes effect when you "
 "apply the wallpaper."
 msgstr ""
 
-#: src/window.js:580
+#: src/window.js:579
 msgid "Runs on the desktop after closing this app."
 msgstr ""
 
-#: src/window.js:587 src/window.js:714
+#: src/window.js:586 src/window.js:713
 msgid "Pause"
 msgstr ""
 
-#: src/window.js:595
+#: src/window.js:594
 msgid "Stop"
 msgstr ""
 
-#: src/window.js:610
+#: src/window.js:609
 msgid ""
 "Saves to {path}. Kitty reloads automatically; if disabled, reload its "
 "settings or open a new instance."
 msgstr ""
 
-#: src/window.js:619
+#: src/window.js:618
 msgid "Output resolution"
 msgstr ""
 
-#: src/window.js:621
+#: src/window.js:620
 msgid "This display"
 msgstr ""
 
-#: src/window.js:629
+#: src/window.js:628
 msgid "Wallpaper resolution"
 msgstr ""
 
-#: src/window.js:635 src/window.js:695
+#: src/window.js:634 src/window.js:694
 msgid "Applies a still image to light and dark appearances."
 msgstr ""
 
-#: src/window.js:641
+#: src/window.js:640
 msgid "Restore Previous Wallpaper"
 msgstr ""
 
-#: src/window.js:643
+#: src/window.js:642
 msgid "Restore Desktop Wallpaper"
 msgstr ""
 
-#: src/window.js:650
+#: src/window.js:649
 msgid "Restore Kitty Background"
 msgstr ""
 
-#: src/window.js:686
+#: src/window.js:685
 msgid ""
 "Animates behind terminal text with a dark tint. Requires Kitty 0.49 or newer "
 "with its shader compiler. Kitty controls animation timing and window size. "
@@ -3132,185 +3128,185 @@ msgid ""
 "moment to compile."
 msgstr ""
 
-#: src/window.js:689
+#: src/window.js:688
 msgid ""
 "Uses the current frame as a tinted Kitty background. Your desktop is "
 "unchanged."
 msgstr ""
 
-#: src/window.js:693
+#: src/window.js:692
 msgid ""
 "Animates on every display and sets its first frame as the still background. "
 "GNOME 50 or 51 on Wayland is required."
 msgstr ""
 
-#: src/window.js:699
+#: src/window.js:698
 msgid "Log out and back in to finish updating animation support."
 msgstr ""
 
-#: src/window.js:703
+#: src/window.js:702
 msgid "Starting desktop animation…"
 msgstr ""
 
-#: src/window.js:704
+#: src/window.js:703
 msgid "Playing on desktop"
 msgstr ""
 
-#: src/window.js:706
+#: src/window.js:705
 msgid "Ready. Keeps playing after closing this app."
 msgstr ""
 
-#: src/window.js:708
+#: src/window.js:707
 msgid ""
 "First use installs animation support. GNOME may require one logout before it "
 "is available."
 msgstr ""
 
-#: src/window.js:714
+#: src/window.js:713
 msgid "Resume"
 msgstr ""
 
-#: src/window.js:720
+#: src/window.js:719
 msgid "Set Kitty Background"
 msgstr ""
 
-#: src/window.js:721
+#: src/window.js:720
 msgid "Set Kitty Background (Still)"
 msgstr ""
 
-#: src/window.js:723
+#: src/window.js:722
 msgid "Set Animated Wallpaper"
 msgstr ""
 
-#: src/window.js:728
+#: src/window.js:727
 msgid "Apply this background to Kitty"
 msgstr ""
 
-#: src/window.js:729
+#: src/window.js:728
 msgid "Apply this wallpaper to your GNOME desktop"
 msgstr ""
 
-#: src/window.js:766
+#: src/window.js:765
 msgid "Deleted “{name}”"
 msgstr ""
 
-#: src/window.js:802
+#: src/window.js:801
 msgid "Saved “{name}”"
 msgstr ""
 
-#: src/window.js:818
+#: src/window.js:817
 msgid "Wait for the current image to finish rendering."
 msgstr ""
 
-#: src/window.js:853
+#: src/window.js:855
 msgid "Import Paper Settings"
 msgstr ""
 
-#: src/window.js:855
+#: src/window.js:857
 msgid "Paper Code"
 msgstr ""
 
-#: src/window.js:986
+#: src/window.js:988
 msgid "Custom"
 msgstr ""
 
-#: src/window.js:1024
+#: src/window.js:1026
 msgid "Remove from favorites"
 msgstr ""
 
-#: src/window.js:1058
+#: src/window.js:1060
 msgid "No favorites yet"
 msgstr ""
 
-#: src/window.js:1060
+#: src/window.js:1062
 msgid "No recent presets yet"
 msgstr ""
 
-#: src/window.js:1065
+#: src/window.js:1067
 msgid "Star a preset to keep it here."
 msgstr ""
 
-#: src/window.js:1067
+#: src/window.js:1069
 msgid "Applied desktop and Kitty presets appear here."
 msgstr ""
 
-#: src/window.js:1109
+#: src/window.js:1111
 msgid "Applied to Kitty"
 msgstr ""
 
-#: src/window.js:1209
+#: src/window.js:1211
 msgid "Wallpaper changes reset"
 msgstr ""
 
-#: src/window.js:1313
+#: src/window.js:1315
 msgid "Rendering…"
 msgstr ""
 
-#: src/window.js:1363
+#: src/window.js:1365
 msgid "Wallpaper applied, but the preset could not be saved: {error}"
 msgstr ""
 
-#: src/window.js:1397
+#: src/window.js:1399
 msgid "{name} set as wallpaper"
 msgstr ""
 
-#: src/window.js:1400 src/window.js:1479
+#: src/window.js:1402 src/window.js:1481
 msgid "Undo"
 msgstr ""
 
-#: src/window.js:1424
+#: src/window.js:1426
 msgid "Kitty background saved. Reload Kitty settings if needed."
 msgstr ""
 
-#: src/window.js:1439
+#: src/window.js:1441
 msgid "Kitty background restored. Reload Kitty settings if needed."
 msgstr ""
 
-#: src/window.js:1452
+#: src/window.js:1454
 msgid "Starting…"
 msgstr ""
 
-#: src/window.js:1478
+#: src/window.js:1480
 msgid "Animated wallpaper requested"
 msgstr ""
 
-#: src/window.js:1500
+#: src/window.js:1502
 msgid "Log Out to Finish Update"
 msgstr ""
 
-#: src/window.js:1501
+#: src/window.js:1503
 msgid "Log Out to Finish Setup"
 msgstr ""
 
-#: src/window.js:1510
+#: src/window.js:1512
 msgid "Got It"
 msgstr ""
 
-#: src/window.js:1516
+#: src/window.js:1518
 msgid "Export Wallpaper"
 msgstr ""
 
-#: src/window.js:1519
+#: src/window.js:1521
 msgid "PNG images"
 msgstr ""
 
-#: src/window.js:1530
+#: src/window.js:1532
 msgid "Wallpaper exported"
 msgstr ""
 
-#: src/window.js:1548
+#: src/window.js:1550
 msgid "Previous wallpaper restored"
 msgstr ""
 
-#: src/renderer/renderer.js:54
+#: src/renderer/renderer.js:68
 msgid "Unavailable"
 msgstr ""
 
-#: src/renderer/renderer.js:123
+#: src/renderer/renderer.js:137
 msgid "Choose the image again to reload this effect."
 msgstr ""
 
-#: src/renderer/renderer.js:257
+#: src/renderer/renderer.js:271
 msgid "A render is already in progress."
 msgstr ""
 

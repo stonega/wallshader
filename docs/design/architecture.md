@@ -223,8 +223,7 @@ without scheduling its render. It shows failures without replacing the current
 configuration.
 Existing settings with local file URIs remain importable on their original device.
 Paper component import parses literal values without evaluating JavaScript. Remote
-image URLs require the user to choose a local source. Copy Paper Code remains in
-the app menu and produces component code for use elsewhere.
+image URLs require the user to choose a local source.
 
 ## State and desktop integration
 

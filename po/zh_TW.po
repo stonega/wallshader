@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Wallshader\n"
 "Report-Msgid-Bugs-To: https://github.com/stonega/wallshader/issues\n"
-"POT-Creation-Date: 2026-10-30 14:30+0800\n"
+"POT-Creation-Date: 2026-11-07 15:49+0800\n"
 "PO-Revision-Date: 2026-10-20 00:00+0000\n"
 "Last-Translator: Wallshader translation draft\n"
 "Language-Team: zh_TW\n"
@@ -612,7 +612,7 @@ msgstr ""
 msgid "Edges"
 msgstr "邊緣"
 
-#: po/paper-catalog.js:142 src/window.js:300
+#: po/paper-catalog.js:142 src/window.js:299
 msgid "Effects"
 msgstr "效果"
 
@@ -952,7 +952,7 @@ msgstr ""
 msgid "Image Dithering"
 msgstr "影像抖色"
 
-#: po/paper-catalog.js:223 src/window.js:301
+#: po/paper-catalog.js:223 src/window.js:300
 msgid "Image Filters"
 msgstr "影像濾鏡"
 
@@ -1082,7 +1082,7 @@ msgstr "流動墨水"
 msgid "Lo-Fi"
 msgstr "低傳真"
 
-#: po/paper-catalog.js:254 src/window.js:302
+#: po/paper-catalog.js:254 src/window.js:301
 msgid "Logo Animations"
 msgstr "標誌動畫"
 
@@ -2766,7 +2766,7 @@ msgstr "預覽已關閉。"
 msgid "Rendering {name} took too long. Try a smaller image size."
 msgstr "繪製 {name} 耗時過長。請嘗試較小的影像尺寸。"
 
-#: src/preferences.js:12 src/window.js:182
+#: src/preferences.js:12 src/window.js:181
 msgid "Preferences"
 msgstr "偏好設定"
 
@@ -2931,172 +2931,168 @@ msgid "Import Paper Settings…"
 msgstr "匯入 Paper 設定…"
 
 #: src/window.js:180
-msgid "Copy Paper Code…"
-msgstr "複製 Paper 程式碼…"
-
-#: src/window.js:181
 msgid "Show Debug Info"
 msgstr "顯示除錯資訊"
 
-#: src/window.js:183
+#: src/window.js:182
 msgid "About Wallshader"
 msgstr "關於 Wallshader"
 
-#: src/window.js:184
+#: src/window.js:183
 msgid "Quit"
 msgstr "結束"
 
-#: src/window.js:198
+#: src/window.js:197
 msgid "Search wallpapers"
 msgstr "搜尋桌布"
 
-#: src/window.js:216
+#: src/window.js:215
 msgid "Export PNG…"
 msgstr "匯出 PNG…"
 
-#: src/window.js:221
+#: src/window.js:220
 msgid "Save Preset…"
 msgstr "儲存預設…"
 
-#: src/window.js:226
+#: src/window.js:225
 msgid "Copy Settings…"
 msgstr "複製設定…"
 
-#: src/window.js:231
+#: src/window.js:230
 msgid "Reset Changes"
 msgstr "重設變更"
 
-#: src/window.js:236 src/window.js:1024
+#: src/window.js:235 src/window.js:1026
 msgid "Add to favorites"
 msgstr "加入收藏"
 
-#: src/window.js:261
+#: src/window.js:260
 msgid "Preview unavailable"
 msgstr "預覽無法使用"
 
-#: src/window.js:271 src/window.js:1221
+#: src/window.js:270 src/window.js:1223
 msgid "Play preview"
 msgstr "播放預覽"
 
-#: src/window.js:271 src/window.js:1221
+#: src/window.js:270 src/window.js:1223
 msgid "Pause preview"
 msgstr "暫停預覽"
 
-#: src/window.js:299 src/window.js:329
+#: src/window.js:298 src/window.js:328
 msgid "All"
 msgstr "全部"
 
-#: src/window.js:335
+#: src/window.js:334
 msgid "Show all wallpapers"
 msgstr "顯示所有桌布"
 
-#: src/window.js:336
+#: src/window.js:335
 msgid "Choose a wallpaper category"
 msgstr "選擇桌布分類"
 
-#: src/window.js:347
+#: src/window.js:346
 msgid "Favorites"
 msgstr "收藏"
 
-#: src/window.js:348
+#: src/window.js:347
 msgid "Recent"
 msgstr "最近使用"
 
-#: src/window.js:434 src/window.js:1061
+#: src/window.js:433 src/window.js:1063
 msgid "No wallpapers found"
 msgstr "找不到桌布"
 
-#: src/window.js:439 src/window.js:1068
+#: src/window.js:438 src/window.js:1070
 msgid "Try a different search or collection."
 msgstr "請嘗試其他搜尋或集合。"
 
-#: src/window.js:448
+#: src/window.js:447
 msgid "Made with Paper Shaders"
 msgstr "使用 Paper Shaders 製作"
 
-#: src/window.js:462
+#: src/window.js:461
 msgid "Customize"
 msgstr "自訂"
 
-#: src/window.js:482
+#: src/window.js:481
 msgid "Desktop"
 msgstr "桌面"
 
-#: src/window.js:485 src/window.js:724 src/window.js:1331
+#: src/window.js:484 src/window.js:723 src/window.js:1333
 msgid "Set as Wallpaper"
 msgstr "設為桌布"
 
-#: src/window.js:488
+#: src/window.js:487
 msgid "Apply this frame to your GNOME desktop"
 msgstr "將此影格套用至 GNOME 桌面"
 
-#: src/window.js:489
+#: src/window.js:488
 msgid "Choose wallpaper destination"
 msgstr "選擇桌布目的地"
 
-#: src/window.js:496 src/window.js:517 src/window.js:856
+#: src/window.js:495 src/window.js:516 src/window.js:858
 msgid "Wallpaper Settings"
 msgstr "桌布設定"
 
-#: src/window.js:529 src/window.js:533
+#: src/window.js:528 src/window.js:532
 msgid "Wallpaper mode"
 msgstr "桌布模式"
 
-#: src/window.js:531
+#: src/window.js:530
 msgid "Still image"
 msgstr "靜態影像"
 
-#: src/window.js:531
+#: src/window.js:530
 msgid "Animated shader"
 msgstr "動態著色器"
 
-#: src/window.js:542
+#: src/window.js:541
 msgid "Animation frame rate"
 msgstr "動畫影格率"
 
-#: src/window.js:546
+#: src/window.js:545
 msgid "30 FPS · less power"
 msgstr "30 FPS · 更省電"
 
-#: src/window.js:547
+#: src/window.js:546
 msgid "60 FPS · smoother"
 msgstr "60 FPS · 更流暢"
 
-#: src/window.js:549
+#: src/window.js:548
 msgid "Wallpaper frame rate"
 msgstr "桌布影格率"
 
-#: src/window.js:554 src/window.js:562
+#: src/window.js:553 src/window.js:561
 msgid "Wallpaper rendering"
 msgstr "桌布繪製"
 
-#: src/window.js:558
+#: src/window.js:557
 msgid "Compatibility (default)"
 msgstr "相容模式（預設）"
 
-#: src/window.js:559
+#: src/window.js:558
 msgid "GPU (experimental)"
 msgstr "GPU（實驗性）"
 
-#: src/window.js:573
+#: src/window.js:572
 msgid ""
 "GPU mode may reduce CPU use but can cause flickering. Takes effect when you "
 "apply the wallpaper."
 msgstr "GPU 模式可能降低 CPU 使用率，但可能造成閃爍。套用桌布時生效。"
 
-#: src/window.js:580
+#: src/window.js:579
 msgid "Runs on the desktop after closing this app."
 msgstr "關閉應用程式後仍在桌面執行。"
 
-#: src/window.js:587 src/window.js:714
+#: src/window.js:586 src/window.js:713
 msgid "Pause"
 msgstr "暫停"
 
-#: src/window.js:595
+#: src/window.js:594
 msgid "Stop"
 msgstr "停止"
 
-#: src/window.js:610
+#: src/window.js:609
 msgid ""
 "Saves to {path}. Kitty reloads automatically; if disabled, reload its "
 "settings or open a new instance."
@@ -3104,35 +3100,35 @@ msgstr ""
 "儲存至 {path}。Kitty 會自動重新載入；如已停用，請重新載入設定或開啟新執行個"
 "體。"
 
-#: src/window.js:619
+#: src/window.js:618
 msgid "Output resolution"
 msgstr "輸出解析度"
 
-#: src/window.js:621
+#: src/window.js:620
 msgid "This display"
 msgstr "目前顯示器"
 
-#: src/window.js:629
+#: src/window.js:628
 msgid "Wallpaper resolution"
 msgstr "桌布解析度"
 
-#: src/window.js:635 src/window.js:695
+#: src/window.js:634 src/window.js:694
 msgid "Applies a still image to light and dark appearances."
 msgstr "將靜態影像套用至淺色和深色外觀。"
 
-#: src/window.js:641
+#: src/window.js:640
 msgid "Restore Previous Wallpaper"
 msgstr "還原先前桌布"
 
-#: src/window.js:643
+#: src/window.js:642
 msgid "Restore Desktop Wallpaper"
 msgstr "還原桌面桌布"
 
-#: src/window.js:650
+#: src/window.js:649
 msgid "Restore Kitty Background"
 msgstr "還原 Kitty 背景"
 
-#: src/window.js:686
+#: src/window.js:685
 msgid ""
 "Animates behind terminal text with a dark tint. Requires Kitty 0.49 or newer "
 "with its shader compiler. Kitty controls animation timing and window size. "
@@ -3143,13 +3139,13 @@ msgstr ""
 "器。Kitty 控制動畫時序和視窗大小。影像會最佳化為 128 像素和 256 色。首次使用"
 "時編譯可能需要片刻。"
 
-#: src/window.js:689
+#: src/window.js:688
 msgid ""
 "Uses the current frame as a tinted Kitty background. Your desktop is "
 "unchanged."
 msgstr "將目前影格用作帶色調的 Kitty 背景。不變更桌面。"
 
-#: src/window.js:693
+#: src/window.js:692
 #, fuzzy
 msgid ""
 "Animates on every display and sets its first frame as the still background. "
@@ -3158,173 +3154,173 @@ msgstr ""
 "在每個顯示器上播放動畫，並將第一個影格設為靜態背景。需要 Wayland 上的 GNOME "
 "50。"
 
-#: src/window.js:699
+#: src/window.js:698
 msgid "Log out and back in to finish updating animation support."
 msgstr "請登出並重新登入，以完成動畫支援更新。"
 
-#: src/window.js:703
+#: src/window.js:702
 msgid "Starting desktop animation…"
 msgstr "正在啟動桌面動畫…"
 
-#: src/window.js:704
+#: src/window.js:703
 msgid "Playing on desktop"
 msgstr "正在桌面播放"
 
-#: src/window.js:706
+#: src/window.js:705
 msgid "Ready. Keeps playing after closing this app."
 msgstr "已就緒。關閉應用程式後仍繼續播放。"
 
-#: src/window.js:708
+#: src/window.js:707
 msgid ""
 "First use installs animation support. GNOME may require one logout before it "
 "is available."
 msgstr "首次使用會安裝動畫支援。GNOME 可能需要登出一次才能使用。"
 
-#: src/window.js:714
+#: src/window.js:713
 msgid "Resume"
 msgstr "繼續"
 
-#: src/window.js:720
+#: src/window.js:719
 msgid "Set Kitty Background"
 msgstr "設定 Kitty 背景"
 
-#: src/window.js:721
+#: src/window.js:720
 msgid "Set Kitty Background (Still)"
 msgstr "設定 Kitty 背景（靜態）"
 
-#: src/window.js:723
+#: src/window.js:722
 msgid "Set Animated Wallpaper"
 msgstr "設定動態桌布"
 
-#: src/window.js:728
+#: src/window.js:727
 msgid "Apply this background to Kitty"
 msgstr "將此背景套用至 Kitty"
 
-#: src/window.js:729
+#: src/window.js:728
 msgid "Apply this wallpaper to your GNOME desktop"
 msgstr "將此桌布套用至 GNOME 桌面"
 
-#: src/window.js:766
+#: src/window.js:765
 msgid "Deleted “{name}”"
 msgstr "已刪除「{name}」"
 
-#: src/window.js:802
+#: src/window.js:801
 msgid "Saved “{name}”"
 msgstr "已儲存「{name}」"
 
-#: src/window.js:818
+#: src/window.js:817
 msgid "Wait for the current image to finish rendering."
 msgstr "請等待目前影像完成繪製。"
 
-#: src/window.js:853
+#: src/window.js:855
 msgid "Import Paper Settings"
 msgstr "匯入 Paper 設定"
 
-#: src/window.js:855
+#: src/window.js:857
 msgid "Paper Code"
 msgstr "Paper 程式碼"
 
-#: src/window.js:986
+#: src/window.js:988
 msgid "Custom"
 msgstr "自訂"
 
-#: src/window.js:1024
+#: src/window.js:1026
 msgid "Remove from favorites"
 msgstr "從收藏移除"
 
-#: src/window.js:1058
+#: src/window.js:1060
 msgid "No favorites yet"
 msgstr "尚無收藏"
 
-#: src/window.js:1060
+#: src/window.js:1062
 msgid "No recent presets yet"
 msgstr "尚無最近使用的預設"
 
-#: src/window.js:1065
+#: src/window.js:1067
 msgid "Star a preset to keep it here."
 msgstr "為預設加上星號以保留在此處。"
 
-#: src/window.js:1067
+#: src/window.js:1069
 msgid "Applied desktop and Kitty presets appear here."
 msgstr "已套用的桌面和 Kitty 預設將顯示在此處。"
 
-#: src/window.js:1109
+#: src/window.js:1111
 msgid "Applied to Kitty"
 msgstr "已套用至 Kitty"
 
-#: src/window.js:1209
+#: src/window.js:1211
 msgid "Wallpaper changes reset"
 msgstr "已重設桌布變更"
 
-#: src/window.js:1313
+#: src/window.js:1315
 msgid "Rendering…"
 msgstr "正在繪製…"
 
-#: src/window.js:1363
+#: src/window.js:1365
 msgid "Wallpaper applied, but the preset could not be saved: {error}"
 msgstr "桌布已套用，但無法儲存預設：{error}"
 
-#: src/window.js:1397
+#: src/window.js:1399
 msgid "{name} set as wallpaper"
 msgstr "已將 {name} 設為桌布"
 
-#: src/window.js:1400 src/window.js:1479
+#: src/window.js:1402 src/window.js:1481
 msgid "Undo"
 msgstr "復原"
 
-#: src/window.js:1424
+#: src/window.js:1426
 msgid "Kitty background saved. Reload Kitty settings if needed."
 msgstr "Kitty 背景已儲存。必要時請重新載入 Kitty 設定。"
 
-#: src/window.js:1439
+#: src/window.js:1441
 msgid "Kitty background restored. Reload Kitty settings if needed."
 msgstr "Kitty 背景已還原。必要時請重新載入 Kitty 設定。"
 
-#: src/window.js:1452
+#: src/window.js:1454
 msgid "Starting…"
 msgstr "正在啟動…"
 
-#: src/window.js:1478
+#: src/window.js:1480
 msgid "Animated wallpaper requested"
 msgstr "已請求動態桌布"
 
-#: src/window.js:1500
+#: src/window.js:1502
 msgid "Log Out to Finish Update"
 msgstr "登出以完成更新"
 
-#: src/window.js:1501
+#: src/window.js:1503
 msgid "Log Out to Finish Setup"
 msgstr "登出以完成設定"
 
-#: src/window.js:1510
+#: src/window.js:1512
 msgid "Got It"
 msgstr "知道了"
 
-#: src/window.js:1516
+#: src/window.js:1518
 msgid "Export Wallpaper"
 msgstr "匯出桌布"
 
-#: src/window.js:1519
+#: src/window.js:1521
 msgid "PNG images"
 msgstr "PNG 影像"
 
-#: src/window.js:1530
+#: src/window.js:1532
 msgid "Wallpaper exported"
 msgstr "桌布已匯出"
 
-#: src/window.js:1548
+#: src/window.js:1550
 msgid "Previous wallpaper restored"
 msgstr "已還原先前桌布"
 
-#: src/renderer/renderer.js:54
+#: src/renderer/renderer.js:68
 msgid "Unavailable"
 msgstr "無法使用"
 
-#: src/renderer/renderer.js:123
+#: src/renderer/renderer.js:137
 msgid "Choose the image again to reload this effect."
 msgstr "重新選擇影像以重新載入此效果。"
 
-#: src/renderer/renderer.js:257
+#: src/renderer/renderer.js:271
 msgid "A render is already in progress."
 msgstr "已有繪製正在進行。"
 
@@ -3343,3 +3339,6 @@ msgstr "Paper 著色器已變更，需要經過審查的 Kitty 移植版本。"
 #: src/renderer/kitty-texture.js:118
 msgid "Only one texture can be embedded in a Kitty shader."
 msgstr "Kitty 著色器只能嵌入一個紋理。"
+
+#~ msgid "Copy Paper Code…"
+#~ msgstr "複製 Paper 程式碼…"

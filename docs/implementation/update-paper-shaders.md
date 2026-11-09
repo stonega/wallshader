@@ -129,4 +129,4 @@ gap rather than claiming the update is fully tested.
 Report the old and new Paper versions, reviewed upstream commit, changelog changes
 applied, migration limitations, and check results. If publishing a Wallshader
 release, follow [Packages and releases](setup.md#packages-and-releases) for the
-required GitHub, Fedora COPR, and Ubuntu PPA publication steps.
+required GitHub and Fedora COPR publication steps.

@@ -34,7 +34,7 @@ explains this when needed. Still wallpapers and PNG export work without an exten
 
 ## Install
 
-Install from Fedora COPR, the Ubuntu PPA or the [Nix flake](#nixos) below, or download a package from
+Install from Fedora COPR or the [Nix flake](#nixos) below, or download a package from
 [GitHub Releases](https://github.com/stonega/wallshader/releases).
 Packages contain the app, renderer, icon, and live wallpaper extension. **Bun,
 Meson, and a source checkout are not needed to run a packaged installation.**
@@ -61,28 +61,6 @@ it from your download directory:
 
 ```sh
 sudo dnf install ./wallshader-*.noarch.rpm
-```
-
-### Ubuntu (PPA)
-
-On **Ubuntu 26.04 LTS**, add the
-[Wallshader PPA](https://launchpad.net/~xijieyin/+archive/ubuntu/ppa)
-and install:
-
-```sh
-sudo add-apt-repository ppa:xijieyin/ppa
-sudo apt update
-sudo apt install wallshader
-```
-
-If `add-apt-repository` is unavailable, install it with
-`sudo apt install software-properties-common`, then run the commands above.
-
-Updates arrive through normal APT upgrades:
-
-```sh
-sudo apt update
-sudo apt upgrade
 ```
 
 ### Debian / Ubuntu (downloaded package)

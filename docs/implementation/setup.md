@@ -303,12 +303,6 @@ before running the native suite.
 
 ## Packages and releases
 
-Ubuntu 26.04 PPA packaging and the GitHub Actions publishing workflow are described
-in the [PPA guide](ppa.md). Tagged releases also publish to `ppa:xijieyin/ppa`
-using the registered signing key and the enabled `PPA_ENABLED` variable. The workflow
-rebuilds and installs the source package in a clean Ubuntu container before upload,
-then verifies the released version in public APT metadata.
-
 The [Build and Release workflow](../../.github/workflows/build-and-release.yml)
 checks the code, runs the logic tests, and builds three architecture-independent
 assets on pushes to `main`, pull requests to `main`, and manual runs:

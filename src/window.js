@@ -831,6 +831,10 @@ export const WallshaderWindow = GObject.registerClass(
             : presetIdForShader(shader);
         this._remember();
         this.preset = fromPaperParams(id, params);
+        this.presetGrid.preferredKey = selectedPresetKey(
+          presetOptions(this.preset, this.store.state.savedPresets),
+          this.preset,
+        );
         this.store.state.selected = id;
         this._refreshSelection();
         this._changed();
@@ -1339,18 +1343,25 @@ export const WallshaderWindow = GObject.registerClass(
       try {
         const savedPresets = this.store.state.savedPresets;
         const options = presetOptions(this.preset, savedPresets);
+        // Keep the saved preset being edited even when its tile no longer matches.
+        const current = options.find(
+          (option) =>
+            option.savedId && option.key === this.presetGrid.preferredKey,
+        );
         // Playback advancing alone must not create another preset.
         if (
-          selectedPresetKey(options, this.preset) ||
-          selectedPresetKey(options, preset)
+          !current &&
+          (selectedPresetKey(options, this.preset) ||
+            selectedPresetKey(options, preset))
         )
           return;
         const preview = await this.preview.request('thumbnail', { preset });
         const saved = saveNamedPreset(
           this.store,
-          randomPresetName(preset, this.store.state.savedPresets),
+          current?.name ?? randomPresetName(preset, savedPresets),
           preset,
           preview,
+          current?.savedId,
         );
         this.preset = normalizePreset(preset.id, preset);
         this.presetGrid.preferredKey = `saved:${saved.id}`;

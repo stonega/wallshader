@@ -310,11 +310,17 @@ async function checkAnimatedWallpaper(window) {
   window._paused = true;
   await window.preview.pause(true);
   try {
+    window.resetPreset();
+    const initialCount = window.store.state.savedPresets.length;
+    let savedId;
+    let savedName;
     for (const [frame, speed, fps, rendering, selected] of [
       [0, 0, 30, 'compatibility', 1],
       [-8000, -2, 60, 'gpu', 3],
     ]) {
+      if (savedId) window.selectSavedPreset(savedId);
       window.preset = { ...window.preset, frame, speed };
+      window._changed();
       window.liveFps.selected = fps === 60 ? 1 : 0;
       window.liveRendering.selected = rendering === 'gpu' ? 1 : 0;
       window.resolution.selected = selected;
@@ -361,9 +367,22 @@ async function checkAnimatedWallpaper(window) {
       assert(
         saved &&
           /^#[0-9A-F]{6}$/.test(saved.name) &&
+          window.store.state.savedPresets.length === initialCount + 1 &&
+          (!savedId || (saved.id === savedId && saved.name === savedName)) &&
           savedPreviewFile(saved.id).query_exists(null) &&
           window.presetGrid.selectedKey === `saved:${saved.id}`,
-        'Animated apply did not save and select the applied configuration',
+        'Animated apply did not save the configuration or update the current saved preset in place',
+      );
+      savedId = saved.id;
+      savedName = saved.name;
+      const [, previewBytes] = savedPreviewFile(saved.id).load_contents(null);
+      const expectedPreview = await request.call(window.preview, 'thumbnail', {
+        preset: saved.preset,
+      });
+      assert(
+        `data:image/png;base64,${GLib.base64_encode(previewBytes)}` ===
+          expectedPreview,
+        'Animated apply did not update the saved thumbnail to the applied frame',
       );
     }
     assert(applied.length === 2, 'Animated reapply did not start animation');
@@ -423,7 +442,9 @@ async function checkAnimatedWallpaper(window) {
     assert(
       settings.get_string('picture-uri') !== previous &&
         window.wallpaper.canRestore &&
-        window.store.state.savedPresets.length === savedCount + 1,
+        window.store.state.savedPresets.length === savedCount &&
+        new Store().state.savedPresets.find((item) => item.id === savedId)
+          ?.preset.scale === 2.15,
       'Animation failure must leave the static first frame, its preset, and restore backup available',
     );
     assert(
@@ -517,8 +538,26 @@ async function checkStillWallpaperPresets(window) {
       window.store.state.savedPresets.length === initialCount + 1,
       'Reapplying saved still settings after playback advanced added a duplicate',
     );
+    // Editing a saved preset back to built-in settings must still update it.
+    window.preset = createPreset(window.preset.id);
+    window._changed();
+    await window.applyWallpaper();
+    const updated = new Store().state.savedPresets.find(
+      (item) => item.id === saved.id,
+    );
+    assert(
+      updated?.name === saved.name &&
+        updated.preset.frame === frame &&
+        presetFingerprint(updated.preset) ===
+          presetFingerprint(window.preset) &&
+        window.store.state.savedPresets.length === initialCount + 1 &&
+        window.presetGrid.selectedKey === `saved:${saved.id}`,
+      'Editing a saved preset to built-in settings did not update the current preset',
+    );
     // Let the editor's pending save finish before injecting a preset write failure.
     await settle();
+    const [, previousPreview] = savedPreviewFile(saved.id).load_contents(null);
+    const beforeUpdate = window.store.state.savedPresets;
     window.preset = { ...window.preset, scale: 3.14 };
     window.store.path = savedPreviewFile(saved.id).get_parent().get_path();
     const previous = window.wallpaper.settings.get_string('picture-uri');
@@ -533,6 +572,31 @@ async function checkStillWallpaperPresets(window) {
         !window._busy &&
         window.applyButton.sensitive,
       'A preset write failure must be reported while leaving the applied wallpaper usable',
+    );
+    const [, failedPreview] = savedPreviewFile(saved.id).load_contents(null);
+    assert(
+      window.store.state.savedPresets === beforeUpdate &&
+        GLib.base64_encode(failedPreview) ===
+          GLib.base64_encode(previousPreview) &&
+        presetFingerprint(
+          new Store().state.savedPresets.find((item) => item.id === saved.id)
+            .preset,
+        ) === presetFingerprint(updated.preset),
+      'A failed update changed the saved preset or its thumbnail',
+    );
+    window.store.path = storePath;
+    window.selectPaperPreset(1);
+    window.preset.scale = 3.14;
+    window._changed();
+    await window.applyWallpaper();
+    assert(
+      window.store.state.savedPresets.length === initialCount + 2 &&
+        window.store.state.savedPresets.at(-1).id !== saved.id &&
+        presetFingerprint(
+          window.store.state.savedPresets.find((item) => item.id === saved.id)
+            .preset,
+        ) === presetFingerprint(updated.preset),
+      'Editing a built-in preset overwrote the previously selected saved preset',
     );
   } finally {
     window.store.path = storePath;

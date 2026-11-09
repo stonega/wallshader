@@ -181,13 +181,18 @@ shows its preview, and suggests an editable random hex color name such as
 Applying a still or animated wallpaper also saves a named configuration when
 neither the editor settings nor the captured settings match an Original, Paper,
 or saved preset. Matching the editor settings before playback advances prevents
-duplicate saves on repeated applies. A new preset retains the applied frame and
+duplicate saves on repeated applies. The grid's preferred key retains the saved
+preset being edited when its settings no longer match the tile. Applying updates
+that entry and its PNG in place, preserving its ID and name, even when the edited
+settings match a built-in preset. Selecting a built-in preset or importing new
+settings replaces that editing origin. A new preset retains the applied frame and
 becomes the selected tile. Auto-save starts after the still wallpaper is applied,
 so failed captures or wallpaper writes do not add presets. A preset save failure
 is reported without cancelling the wallpaper or animation request.
 `saved-presets.js` writes a private PNG
 under the XDG data directory's `wallshader/presets/`, then atomically saves a new
-`savedPresets` entry in state.json. A failed settings write removes the new PNG
+`savedPresets` entry in state.json, or replaces the current saved entry. A failed
+settings write restores the previous PNG for updates, removes it for new entries,
 and leaves in-memory state intact. The additive state field retains version 2
 compatibility. Invalid entries are discarded individually during normalization;
 missing or damaged thumbnails are rendered again from their settings. Desktop

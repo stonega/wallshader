@@ -56,7 +56,9 @@ controls; detailed Paper parameter tooltips currently fall back to English.
    the current frame to a file.
 
 Applying a wallpaper automatically saves a new preset if its configuration does
-not match a built-in or saved preset. The new tile uses a random hex color name
+not match a built-in or saved preset. If you selected a saved preset and edited it,
+applying updates that preset's settings and thumbnail, keeping its name. Editing
+a built-in preset creates a saved copy. The new tile uses a random hex color name
 such as **#A3F07C** and keeps the applied frame. Applying the same configuration
 again reuses the existing preset.
 
@@ -66,8 +68,9 @@ name; keep or edit the name, then click **Save**. Its thumbnail appears in the s
 button on the right. Click that button to remove the saved configuration and its
 thumbnail; the current preview and desktop wallpaper stay unchanged.
 Names must be unique within a shader. Saving retains all shader controls,
-colors, source image, speed, and the captured animation frame. Later edits do not
-change that saved copy. Select its tile to restore it, including after restarting
+colors, source image, speed, and the captured animation frame. Later edits change
+the saved copy when you apply a wallpaper; use **Save Preset…** to make a separate
+copy. Select its tile to restore it, including after restarting
 the app. Saving and selecting presets do not apply a wallpaper. Wallpaper mode,
 desktop frame rate, rendering mode, and output resolution remain separate in Wallpaper Settings.
 

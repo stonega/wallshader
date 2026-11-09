@@ -44,7 +44,8 @@ Deletion checks cover saved-entry and thumbnail removal, failed-write preservati
 and keeping the editor configuration and desktop wallpaper unchanged.
 Apply checks cover automatic saving for still and animated wallpapers, exact-frame
 thumbnails, hex default names, duplicate prevention for built-in and saved presets,
-and save failures after a successful apply. Logic tests cover generated-name
+updates to the current saved preset without changing its ID or name, and thumbnail
+rollback on save failures after a successful apply. Logic tests cover generated-name
 collisions within a shader.
 `artifacts/save-preset-dialog.png` and `artifacts/preset-grid-{light,dark}.png`
 show the dialog and thumbnail grid. Logic tests cover saved-state normalization,
